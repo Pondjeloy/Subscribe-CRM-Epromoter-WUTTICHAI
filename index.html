@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>LG Subscribe CRM · WUTTICHAI</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: { fontFamily: {
+      sans:    ['"IBM Plex Sans Thai"','"Plus Jakarta Sans"','ui-sans-serif','system-ui','sans-serif'],
+      display: ['"Plus Jakarta Sans"','"IBM Plex Sans Thai"','ui-sans-serif','sans-serif']
+    }}}
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js"></script>
+<style>
+  :root { --accent:#C8102E; --accent-tint:color-mix(in srgb,#C8102E 7%,white); --accent-soft:color-mix(in srgb,#C8102E 13%,white); }
+  html  { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  body  { font-family:'IBM Plex Sans Thai','Plus Jakarta Sans',system-ui,sans-serif; margin:0; padding-bottom:env(safe-area-inset-bottom); animation:pgLoad .2s ease-out both; }
+  @keyframes pgLoad { from{opacity:0} to{opacity:1} }
+  .font-display { font-family:'Plus Jakarta Sans','IBM Plex Sans Thai',sans-serif; }
+  [x-cloak] { display:none!important; }
+  ::selection { background:var(--accent-soft); }
+  *::-webkit-scrollbar { width:5px; height:5px; }
+  *::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:9999px; }
+  *::-webkit-scrollbar-track { background:transparent; }
+  .tabular-nums { font-variant-numeric:tabular-nums; }
+
+  /* ── Tones ── */
+  .tone-sky     { background:#f0f9ff; color:#0369a1; }
+  .tone-violet  { background:#f5f3ff; color:#6d28d9; }
+  .tone-indigo  { background:#eef2ff; color:#4338ca; }
+  .tone-amber   { background:#fffbeb; color:#92400e; }
+  .tone-emerald { background:#ecfdf5; color:#065f46; }
+  .tone-orange  { background:#fff7ed; color:#c2410c; }
+  .tone-rose    { background:#fff1f2; color:#be123c; }
+  .tone-slate   { background:#f1f5f9; color:#475569; }
+
+  /* ── Navbar ── */
+  .navbar { display:flex; align-items:center; padding:0 20px; min-height:56px; border-bottom:1px solid #e0e0e0; background:#fff; gap:12px; }
+  .logo-box { width:40px; height:40px; border-radius:8px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#fff; flex-shrink:0; }
+  .nav-title { font-size:14px; font-weight:500; color:#111; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nav-sub   { font-size:11px; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nav-sub b { color:var(--accent); font-weight:500; }
+  .tab-group { display:flex; background:#f2f2f2; border-radius:999px; padding:3px; gap:2px; }
+  .tab { width:116px; text-align:center; border-radius:999px; border:none; background:transparent; font-size:13px; font-weight:500; color:#aaa; cursor:pointer; white-space:nowrap; transition:color .15s; text-decoration:none; font-family:inherit; line-height:1; padding:5px 0; }
+  .tab.active { color:#111; }
+  .tab:hover:not(.active) { color:#555; }
+  .btn-reload { display:flex; align-items:center; gap:5px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; font-family:inherit; white-space:nowrap; }
+  .btn-reload:disabled { opacity:.6; cursor:wait; }
+  .btn-reload svg { width:14px; height:14px; flex-shrink:0; }
+  .btn-icon { width:32px; height:32px; border-radius:999px; border:0.5px solid #ddd; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#888; }
+  .btn-icon:hover { background:#f5f5f5; color:#333; }
+  .btn-icon svg { width:15px; height:15px; flex-shrink:0; }
+  .btn-text { display:flex; align-items:center; gap:5px; border:0.5px solid #ddd; border-radius:999px; padding:6px 14px; background:transparent; font-size:13px; color:#111; cursor:pointer; font-family:inherit; text-decoration:none; white-space:nowrap; }
+  .btn-text:hover { background:#f5f5f5; }
+  .btn-text svg { width:14px; height:14px; flex-shrink:0; color:#888; }
+
+  /* ── Table ── */
+  .row-stripe:nth-child(odd)  { background:white; }
+  .row-stripe:nth-child(even) { background:rgba(248,250,252,.5); }
+  .row-stripe:hover { background:var(--accent-tint)!important; }
+
+  /* ── Highlight flags ── */
+  .hl-flag { width:13px; height:13px; border-radius:50%; border:2px solid #e2e8f0; background:transparent; cursor:pointer; flex-shrink:0; transition:transform .15s,border-color .15s,background .15s; display:inline-block; vertical-align:middle; }
+  .hl-flag:hover { transform:scale(1.25); }
+  .hl-flag.hl-1 { background:#eab308; border-color:#eab308; }
+  .hl-flag.hl-2 { background:#f97316; border-color:#f97316; }
+  .hl-flag.hl-3 { background:#22c55e; border-color:#22c55e; }
+  tr.tr-hl-1 { background:rgba(234,179,8,.06)!important; }
+  tr.tr-hl-2 { background:rgba(249,115,22,.06)!important; }
+  tr.tr-hl-3 { background:rgba(34,197,94,.07)!important; }
+  .mob-hl-1 { border-left:3px solid #eab308!important; background:rgba(234,179,8,.06)!important; }
+  .mob-hl-2 { border-left:3px solid #f97316!important; background:rgba(249,115,22,.06)!important; }
+  .mob-hl-3 { border-left:3px solid #22c55e!important; background:rgba(34,197,94,.07)!important; }
+
+  /* ── Mobile ── */
+  .mobile-list { display:none; flex-direction:column; gap:8px; }
+  @media(max-width:768px) {
+    .desktop-table { display:none!important; }
+    .mobile-list   { display:flex!important; }
+    .chips-scroll  { overflow-x:auto; flex-wrap:nowrap!important; -webkit-overflow-scrolling:touch; }
+    .chips-scroll::-webkit-scrollbar { display:none; }
+    .chips-scroll .filter-chip { flex-shrink:0; }
+  }
+
+  /* ── Loading dots ── */
+  .dots span { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin:0 3px; animation:bounce .9s infinite; }
+  .dots span:nth-child(2){animation-delay:.15s} .dots span:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+  /* ── Login ── */
+  .login-shell { min-height:100vh; display:grid; place-items:center; padding:24px;
+    background: radial-gradient(circle at 18% 18%,rgba(200,16,46,.12),transparent 32%),
+                radial-gradient(circle at 82% 12%,rgba(15,118,110,.1),transparent 28%),
+                linear-gradient(180deg,#fff 0%,#f8fafc 54%,#f1f5f9 100%); }
+  .login-card  { width:min(100%,420px); background:rgba(255,255,255,.92); border:1px solid rgba(226,232,240,.92); border-radius:22px; padding:30px; box-shadow:0 26px 70px rgba(15,23,42,.12); backdrop-filter:blur(14px); }
+  .login-input { width:100%; height:46px; border-radius:14px; border:1px solid #dbe3ee; background:#fff; padding:0 14px; font-size:15px; outline:none; font-family:inherit; transition:border-color .16s,box-shadow .16s; box-sizing:border-box; }
+  .login-input:focus { border-color:rgba(200,16,46,.55); box-shadow:0 0 0 4px rgba(200,16,46,.1); }
+  .login-btn   { height:46px; width:100%; border-radius:14px; color:#fff; font-weight:800; font-size:15px; background:linear-gradient(135deg,#c8102e,#e23a54); box-shadow:0 14px 26px rgba(200,16,46,.22); border:none; cursor:pointer; font-family:inherit; transition:transform .16s,box-shadow .16s; }
+  .login-btn:hover { transform:translateY(-1px); box-shadow:0 18px 32px rgba(200,16,46,.28); }
+
+  /* ── Modal overlay ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+
+  /* ── Drawer ── */
+  .drawer-bd    { position:fixed; inset:0; background:rgba(15,23,42,.2); backdrop-filter:blur(2px); transition:opacity .3s; }
+  .drawer-panel { position:absolute; top:0; right:0; height:100%; width:100%; max-width:440px; background:#fff; box-shadow:-20px 0 60px rgba(15,23,42,.13); display:flex; flex-direction:column; transition:transform .3s cubic-bezier(.16,1,.3,1); }
+
+  /* ── Mobile navbar ── */
+  @media(max-width:640px) {
+    .navbar { display:grid; grid-template-columns:32px minmax(0,1fr) auto auto; grid-template-areas:"logo copy settings reload" "tabs tabs tabs tabs"; min-height:0; height:auto; padding:8px 12px 10px; padding-top:calc(8px + env(safe-area-inset-top)); gap:8px; align-items:center; }
+    .logo-box { width:32px; height:32px; font-size:12px; }
+    .navbar .logo-box { grid-area:logo; }
+    .nav-copy { grid-area:copy; max-width:none; }
+    .nav-title { font-size:13px; font-weight:700; line-height:1.2; }
+    .nav-sub   { font-size:10.5px; line-height:1.25; }
+    .nav-spacer { display:none; }
+    .tab-group { grid-area:tabs; width:100%; display:grid; grid-auto-flow:column; grid-auto-columns:1fr; padding:4px; border-radius:14px; }
+    .tab { width:100%; padding:9px 8px; font-size:13px; font-weight:700; }
+    .btn-reload { grid-area:reload; height:36px; min-width:80px; padding:0 12px; font-size:13px; font-weight:700; }
+    .btn-reload svg { width:18px; height:18px; }
+    .btn-icon,.btn-text { display:none; }
+    .btn-settings { display:flex; grid-area:settings; width:32px; height:36px; }
+    main { padding-top:14px!important; padding-left:14px!important; padding-right:14px!important; }
+  }
+</style>
+</head>
+<body x-data="app()" x-init="init()" class="bg-[#fafafb] text-slate-900 min-h-screen">
+
+<!-- ═══ LOGIN ═══ -->
+<section x-show="!isLoggedIn" x-cloak class="login-shell">
+  <form class="login-card" @submit.prevent="login()">
+    <div class="flex items-center gap-4 mb-7">
+      <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
+      <div>
+        <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI</div>
+      </div>
+    </div>
+    <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
+    <input class="login-input" type="password" x-model="loginPw" placeholder="ใส่รหัสผ่าน" autocomplete="current-password" autofocus/>
+    <div x-show="loginErr" class="mt-3 text-[13px] text-rose-600" x-text="loginErr"></div>
+    <button type="submit" class="login-btn mt-5">เข้าสู่ระบบ</button>
+    <div class="mt-4 text-[12px] text-slate-400">ลืมรหัสผ่าน? ติดต่อผู้ดูแลระบบ</div>
+  </form>
+</section>
+
+<!-- ═══ CONFIG MODAL ═══ -->
+<div class="modal-overlay" x-show="isLoggedIn && showConfig" x-transition style="display:none" @click.self="showConfig=false">
+  <div class="bg-white rounded-2xl p-7 max-w-[520px] w-full shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <div class="font-display font-bold text-[18px]">⚙️ ตั้งค่า Apps Script URL</div>
+      <button @click="showConfig=false" class="h-9 w-9 grid place-items-center rounded-xl text-slate-400 hover:bg-slate-100 transition text-xl">×</button>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-4 mb-4 text-[13px] leading-relaxed text-slate-600">
+      <div class="font-semibold mb-1">📋 วิธีรับ URL (ทำครั้งเดียว)</div>
+      <div><b>1.</b> Google Sheet → Extensions → Apps Script → วางโค้ด Code.gs</div>
+      <div><b>2.</b> Run → testConnection → Authorize</div>
+      <div><b>3.</b> Deploy → Web App · Execute as: Me · Anyone → คัดลอก URL</div>
+    </div>
+    <input type="url" x-model="configUrl" placeholder="https://script.google.com/macros/s/.../exec"
+      class="w-full h-11 px-4 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[14px] mb-3" style="font-family:inherit"/>
+    <div class="flex gap-2 mb-4">
+      <button class="h-10 px-4 rounded-xl text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition"
+              @click="testConn()" :disabled="!configUrl||testLoading">
+        <span x-show="!testLoading">🔌 ทดสอบ</span><span x-show="testLoading">กำลังทดสอบ...</span>
+      </button>
+      <span x-show="testMsg" class="text-[13px] flex-1 flex items-center" :class="testOk?'text-emerald-600':'text-rose-600'" x-text="testMsg"></span>
+    </div>
+    <div class="flex gap-3">
+      <button class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white" style="background:var(--accent)" @click="saveConfig()" :disabled="!configUrl">บันทึก & โหลดข้อมูล</button>
+      <button class="h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition" @click="showConfig=false">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOLLOW-UP MODAL ═══ -->
+<div class="modal-overlay" x-show="fuModal" x-transition style="display:none" @click.self="cancelFu()">
+  <div class="bg-white rounded-2xl p-6 max-w-[420px] w-full shadow-2xl">
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <div class="font-display font-bold text-[18px]">เลือกวันเวลาให้ติดต่อมาใหม่</div>
+        <div class="text-[13px] text-slate-500 mt-0.5">ระบบจะใส่ข้อความในช่องบันทึก</div>
+      </div>
+      <button @click="cancelFu()" class="h-9 w-9 grid place-items-center rounded-xl text-slate-400 hover:bg-slate-100 transition text-xl">×</button>
+    </div>
+    <label class="block text-[12px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">วันและเวลา</label>
+    <input type="datetime-local" x-model="fuDateTime"
+      class="w-full h-11 px-4 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[14px] text-slate-700"/>
+    <div x-show="fuErr" class="mt-3 text-[13px] text-rose-600" x-text="fuErr"></div>
+    <div class="flex gap-3 mt-5">
+      <button class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white transition" style="background:var(--accent)" @click="confirmFu()">ใส่ในช่องบันทึก</button>
+      <button class="h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition" @click="cancelFu()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══ -->
+<header x-show="isLoggedIn" x-cloak class="sticky top-0 z-30" style="backdrop-filter:blur(10px)">
+  <nav class="navbar">
+    <div class="logo-box font-display">LG</div>
+    <div class="nav-copy min-w-0">
+      <div class="nav-title">Subscribe CRM</div>
+      <div class="nav-sub">Epromoter <b>WUTTICHAI</b><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+    </div>
+    <div class="nav-spacer flex-1"></div>
+    <div class="tab-group">
+      <span class="tab active">รายชื่อลูกค้า</span>
+    </div>
+    <div class="nav-spacer flex-1"></div>
+    <button class="btn-reload" @click="fetchData()" :disabled="loading">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-14.6 7.1"/><path d="M3 12A9 9 0 0 1 17.6 4.9"/><path d="M7 19H3v4"/><path d="M17 5h4V1"/></svg>
+      <span x-show="!loading">โหลด</span><span x-show="loading">กำลังโหลด...</span>
+    </button>
+    <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
+    </button>
+    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Jun2026/" target="_blank" class="btn-text">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 15h.01M12 15h.01M15.5 15h.01"/></svg>
+      คำนวณ
+    </a>
+    <button class="btn-icon" @click="logout()" title="ออกจากระบบ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 0 0-2-2h-5"/></svg>
+    </button>
+  </nav>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main x-show="isLoggedIn" x-cloak class="mx-auto max-w-[1500px] px-5 py-5 space-y-5">
+
+  <!-- No URL -->
+  <div x-show="!apiUrl" class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-20 text-center">
+    <div class="text-[40px] mb-3">🔗</div>
+    <div class="font-display font-bold text-[18px] text-slate-800 mb-1">ยังไม่ได้ตั้งค่า URL</div>
+    <div class="text-[14px] text-slate-500 mb-5">กรุณาตั้งค่า Apps Script URL ก่อน</div>
+    <button class="h-11 px-6 rounded-full text-[14px] font-bold text-white" style="background:var(--accent)" @click="showConfig=true">⚙️ ตั้งค่า URL</button>
+  </div>
+
+  <div x-show="apiUrl">
+    <!-- Loading -->
+    <div x-show="loading" class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-20 text-center">
+      <div class="dots mb-3"><span></span><span></span><span></span></div>
+      <div class="text-[14px] text-slate-400">กำลังดึงข้อมูลจาก Google Sheet...</div>
+    </div>
+
+    <!-- Error -->
+    <div x-show="loadErr && !loading" class="rounded-2xl bg-white ring-1 ring-rose-200 p-5">
+      <div class="font-semibold text-rose-600 mb-1">⚠️ โหลดข้อมูลไม่ได้</div>
+      <div class="text-[13px] text-slate-500 whitespace-pre-line" x-text="loadErr"></div>
+      <div class="mt-3 text-[13px] text-slate-500 bg-slate-50 rounded-xl p-3 leading-relaxed">
+        <b>วิธีแก้:</b><br/>
+        1. Apps Script → Run → testConnection → Authorize<br/>
+        2. Deploy → Manage Deployments → Edit → New version → Deploy<br/>
+        3. ตรวจสอบว่า SPREADSHEET_ID ถูกต้อง
+      </div>
+      <button class="mt-3 h-9 px-4 rounded-full text-[13px] font-semibold ring-1 ring-rose-200 text-rose-700 hover:bg-rose-50 transition" @click="fetchData()">ลองใหม่</button>
+    </div>
+
+    <div x-show="!loading">
+
+      <!-- ── Metrics ── -->
+      <section class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+        <!-- Total card -->
+        <div class="relative overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/70 px-6 py-5 flex flex-col justify-between">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <div class="text-[11px] font-bold uppercase tracking-[.15em] text-slate-400">ทั้งหมด</div>
+              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ WUTTICHAI</div>
+            </div>
+            <button @click="clearFilters()"
+              class="text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
+              :class="!filterSource ? 'text-white' : 'text-slate-500 bg-slate-100 hover:bg-slate-200'"
+              :style="!filterSource ? 'background:var(--accent)' : ''">ทั้งหมด</button>
+          </div>
+          <div class="font-display font-extrabold tabular-nums tracking-tighter text-slate-900 leading-none text-[68px] my-1" x-text="customers.length"></div>
+          <div>
+            <div class="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100 gap-px mt-2">
+              <template x-for="sd in sourceDefs" :key="sd.key">
+                <span class="h-full rounded-full opacity-80" :class="sd.barClass"
+                  :style="'width:'+( customers.filter(c=>c.source===sd.key).length / Math.max(customers.length,1)*100 )+'%'"></span>
+              </template>
+            </div>
+            <div class="mt-1.5 text-[11.5px] text-slate-400">กระจาย <span x-text="sourceDefs.length"></span> แหล่ง</div>
+          </div>
+        </div>
+
+        <!-- Source strip -->
+        <div class="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-slate-100">
+            <template x-for="sd in sourceSummary" :key="sd.key">
+              <button @click="toggleSource(sd.key)"
+                class="group relative text-left px-4 py-4 transition-colors"
+                :class="filterSource===sd.key ? 'bg-[var(--accent-tint)]' : 'hover:bg-slate-50'">
+                <span x-show="filterSource===sd.key" class="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style="background:var(--accent)"></span>
+                <div class="text-[10.5px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2" x-text="sd.label"></div>
+                <div class="font-display font-extrabold tabular-nums tracking-tight leading-none text-[30px]"
+                     :class="filterSource===sd.key ? 'text-[var(--accent)]' : 'text-slate-900'"
+                     x-text="sd.count"></div>
+                <div class="mt-2"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="sd.toneClass" x-text="sd.short"></span></div>
+              </button>
+            </template>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── List View ── -->
+      <div class="space-y-4">
+
+        <!-- Status chips -->
+        <section class="space-y-3">
+          <div class="flex items-center gap-3 chips-scroll">
+            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0">Status</span>
+            <div class="flex items-center gap-2 flex-wrap chips-scroll">
+              <button @click="setFilterStatus('')"
+                class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                :class="filterStatus==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                :style="filterStatus==='' ? 'background:var(--accent)' : ''">
+                ทั้งหมด
+                <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full" :class="filterStatus==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'" x-text="customers.length"></span>
+              </button>
+              <template x-for="s in statusDefs.filter(x=>x.value!=='')" :key="s.value">
+                <button @click="setFilterStatus(s.value)"
+                  class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                  :class="filterStatus===s.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterStatus===s.value ? 'background:var(--accent)' : ''">
+                  <span x-text="s.label"></span>
+                  <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
+                        :class="filterStatus===s.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countByStatus(s.value)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Highlight chips -->
+          <div class="flex items-start gap-3">
+            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0 mt-2">สี</span>
+            <div class="flex items-center gap-2 flex-wrap chips-scroll">
+              <button @click="setFilterHL(null)"
+                class="h-8 px-3 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
+                :class="filterHL===null ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
+                :style="filterHL===null ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
+                ทั้งหมด
+                <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                      :class="filterHL===null ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
+                      :style="filterHL===null ? 'color:var(--accent)' : ''"
+                      x-text="customers.length"></span>
+              </button>
+              <template x-for="h in hlFilterDefs" :key="h.value">
+                <button @click="setFilterHL(h.value)"
+                  class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
+                  :class="filterHL===h.value ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
+                  :style="filterHL===h.value ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
+                  <span class="hl-flag shrink-0" :class="h.hlClass" :style="!h.hlClass ? 'border-color:#cbd5e1' : ''"></span>
+                  <span x-text="h.short"></span>
+                  <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                        :class="filterHL===h.value ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
+                        :style="filterHL===h.value ? 'color:var(--accent)' : ''"
+                        x-text="countByHL(h.value)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Activity chips -->
+          <div class="flex items-start gap-3">
+            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0 mt-2">บันทึก</span>
+            <div class="flex items-center gap-2 flex-wrap chips-scroll">
+              <template x-for="a in activityFilters" :key="a.key">
+                <button @click="setFilterActivity(a.key)"
+                  class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
+                  :class="filterActivity===a.key ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
+                  :style="filterActivity===a.key ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="filterActivity===a.key ? '' : 'bg-slate-300'" :style="filterActivity===a.key ? 'background:var(--accent)' : ''"></span>
+                  <span x-text="a.label.replace(/^[^\s]+\s/,'')"></span>
+                  <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                        :class="filterActivity===a.key ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
+                        :style="filterActivity===a.key ? 'color:var(--accent)' : ''"
+                        x-text="countByActivity(a.key)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <!-- Search row -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" :value="search" @input="setSearch($event.target.value)" placeholder="ค้นหาชื่อ เบอร์ หรืออีเมล…"
+              class="w-full h-11 pl-11 pr-4 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[14px] text-slate-700 placeholder:text-slate-400 transition"/>
+          </div>
+          <span class="text-[13px] text-slate-400 tabular-nums whitespace-nowrap">
+            <span class="font-bold text-slate-700" x-text="filtered.length"></span> รายการ
+          </span>
+          <button x-show="hasFilter" @click="clearFilters()"
+            class="h-11 px-3.5 rounded-xl text-[13px] font-medium text-slate-500 bg-white ring-1 ring-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5 transition">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            ล้าง
+          </button>
+          <button @click="exportCSV()"
+            class="h-11 px-3.5 rounded-xl text-[13px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 inline-flex items-center gap-1.5 transition">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg>
+            CSV
+          </button>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="desktop-table rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse min-w-[960px]">
+              <thead>
+                <tr class="bg-slate-50/95">
+                  <th class="px-5 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('id')">
+                    <span class="inline-flex items-center gap-1">#
+                      <span class="inline-flex flex-col -space-y-1">
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='id'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='id'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                      </span>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('source')">
+                    <span class="inline-flex items-center gap-1">ที่มา
+                      <span class="inline-flex flex-col -space-y-1">
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='source'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='source'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                      </span>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('name')">
+                    <span class="inline-flex items-center gap-1">ชื่อ
+                      <span class="inline-flex flex-col -space-y-1">
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='name'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='name'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                      </span>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400">เบอร์โทร</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('productType')">สินค้า</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400">ชำระเงิน</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('status')">
+                    <span class="inline-flex items-center gap-1">Status
+                      <span class="inline-flex flex-col -space-y-1">
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='status'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='status'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                      </span>
+                    </span>
+                  </th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 min-w-[200px]">บันทึกล่าสุด</th>
+                  <th class="pr-5 py-2.5 w-[44px]"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-if="paginated.length===0">
+                  <tr><td colspan="9" class="py-16 text-center">
+                    <div class="text-[14px] text-slate-400">ไม่พบรายชื่อที่ตรงกับเงื่อนไข</div>
+                  </td></tr>
+                </template>
+                <template x-for="c in paginated" :key="c.id">
+                  <tr @click="openDrawer(c)" class="row-stripe border-b border-slate-100 cursor-pointer group"
+                      :class="[selectedCustomer&&selectedCustomer.id===c.id?'!bg-[var(--accent-tint)]':'', hlTrClass(c)]">
+                    <td class="pl-5 pr-2 h-[34px] text-[12px] tabular-nums text-slate-400 font-medium" x-text="c.id"></td>
+                    <td class="px-3">
+                      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap" :class="srcToneClass(c.source)" x-text="srcShort(c.source)"></span>
+                    </td>
+                    <td class="px-3 max-w-[300px]">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <button class="hl-flag" :class="hlClass(c)" :title="hlLabel(c)" @click.stop="cycleHL(c)"></button>
+                        <span class="font-semibold text-slate-800 truncate text-[13.5px]" x-text="c.name||'—'"></span>
+                        <span class="flex items-center gap-1 text-[11.5px] shrink-0">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--accent);opacity:.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                          <span class="text-slate-400" x-show="c.province" x-text="c.province"></span>
+                          <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="c.age+'ปี'"></span>
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-3 whitespace-nowrap">
+                      <span class="font-semibold text-slate-800 tabular-nums tracking-tight text-[13.5px]" x-text="fmtPhone(c.phone)"></span>
+                    </td>
+                    <td class="px-3 text-[13px] text-slate-600 whitespace-nowrap" x-text="c.productType||'—'"></td>
+                    <td class="px-3">
+                      <span x-show="c.paymentChannel" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold" :style="paymentStyle(c.paymentChannel)" x-text="c.paymentChannel"></span>
+                      <span x-show="!c.paymentChannel" class="text-[12px] text-slate-400">—</span>
+                    </td>
+                    <td class="px-3">
+                      <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold" :class="statusToneClass(c.status)">
+                        <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(c.status)"></span>
+                        <span x-text="statusLabel(c.status)"></span>
+                      </span>
+                    </td>
+                    <td class="px-3 max-w-[260px]">
+                      <div x-show="c.parsedNotes.length===0" class="text-[11.5px] text-slate-400 italic">—</div>
+                      <div x-show="c.parsedNotes.length>0" class="flex items-baseline gap-2">
+                        <span x-show="c.parsedNotes[0].date" class="text-[11px] tabular-nums text-slate-400 font-medium shrink-0" x-text="fmtNoteDate(c.parsedNotes[0].date)"></span>
+                        <span class="text-[11.5px] text-slate-500 truncate" x-text="c.parsedNotes[0].text"></span>
+                        <span x-show="c.parsedNotes.length>1" class="text-[10px] font-bold shrink-0" style="color:var(--accent)" x-text="'+'+(c.parsedNotes.length-1)"></span>
+                      </div>
+                    </td>
+                    <td class="pr-5 pl-2 text-right">
+                      <span class="inline-grid place-items-center h-8 w-8 rounded-lg text-slate-300 group-hover:text-[var(--accent)] group-hover:bg-white transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mobile cards -->
+        <div class="mobile-list">
+          <template x-if="paginated.length===0">
+            <div class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-12 text-center text-[13px] text-slate-400">ไม่พบข้อมูล</div>
+          </template>
+          <template x-for="c in paginated" :key="c.id">
+            <div @click="openDrawer(c)" class="bg-white ring-1 ring-slate-200/70 rounded-xl p-3.5 cursor-pointer active:bg-slate-50 transition" :class="hlMobClass(c)">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                  <button class="hl-flag" :class="hlClass(c)" @click.stop="cycleHL(c)"></button>
+                  <span class="font-semibold text-slate-800 text-[14px] truncate" x-text="c.name||'—'"></span>
+                </div>
+                <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold shrink-0" :class="statusToneClass(c.status)">
+                  <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(c.status)"></span>
+                  <span x-text="statusLabel(c.status)"></span>
+                </span>
+              </div>
+              <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="srcToneClass(c.source)" x-text="srcShort(c.source)"></span>
+                <span class="text-[12px] font-semibold text-slate-700 tabular-nums" x-text="fmtPhone(c.phone)"></span>
+                <span x-show="c.province" class="text-[11.5px] text-slate-400" x-text="'📍'+c.province"></span>
+              </div>
+              <div x-show="c.parsedNotes.length>0" class="flex items-baseline gap-2 pt-1.5 border-t border-slate-100 mt-1.5">
+                <span class="text-[10px] tabular-nums text-slate-400 shrink-0" x-text="fmtNoteDate(c.parsedNotes[0].date)"></span>
+                <span class="text-[11px] text-slate-500 truncate" x-text="c.parsedNotes[0].text"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between px-1 pt-1">
+          <div class="text-[12.5px] text-slate-400">
+            แสดง <span class="font-semibold text-slate-600 tabular-nums" x-text="Math.min((page-1)*pageSize+1,filtered.length)"></span>–<span class="font-semibold text-slate-600 tabular-nums" x-text="Math.min(page*pageSize,filtered.length)"></span>
+            จาก <span class="font-semibold text-slate-600 tabular-nums" x-text="filtered.length"></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="page=Math.max(1,page-1)" :disabled="page===1"
+              class="h-8 w-8 grid place-items-center rounded-lg text-slate-300 hover:bg-white hover:text-slate-600 hover:ring-1 hover:ring-slate-200 transition disabled:opacity-40">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <template x-for="p in pageRange" :key="p">
+              <button @click="page=p"
+                class="h-8 min-w-[32px] px-2 grid place-items-center rounded-lg text-[12.5px] font-bold tabular-nums transition"
+                :class="p===page ? 'text-white' : 'text-slate-500 hover:bg-white hover:ring-1 hover:ring-slate-200'"
+                :style="p===page ? 'background:var(--accent)' : ''"
+                x-text="p"></button>
+            </template>
+            <button @click="page=Math.min(totalPages,page+1)" :disabled="page===totalPages"
+              class="h-8 w-8 grid place-items-center rounded-lg text-slate-400 hover:bg-white hover:text-slate-600 hover:ring-1 hover:ring-slate-200 transition disabled:opacity-40">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <div class="h-5 w-px bg-slate-200"></div>
+            <select x-model.number="pageSize" @change="page=1"
+              class="h-8 pl-3 pr-6 rounded-lg bg-white ring-1 ring-slate-200 text-[12.5px] text-slate-600 font-medium focus:outline-none"
+              style="appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 fill=%22%2394a3b8%22><path d=%22M0 0l5 6 5-6z%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;padding-right:24px">
+              <option value="25">25/หน้า</option>
+              <option value="50">50/หน้า</option>
+              <option value="100">100/หน้า</option>
+            </select>
+          </div>
+        </div>
+
+      </div><!-- /list -->
+    </div><!-- /!loading -->
+  </div><!-- /apiUrl -->
+</main>
+
+<!-- ═══ DRAWER ═══ -->
+<div class="fixed inset-0 z-40" :class="showDrawer ? '' : 'pointer-events-none'">
+  <div class="drawer-bd absolute inset-0" :class="showDrawer ? 'opacity-100' : 'opacity-0 pointer-events-none'" @click="closeDrawer()"></div>
+  <aside class="drawer-panel" :class="showDrawer ? 'translate-x-0' : 'translate-x-full'">
+    <template x-if="selectedCustomer">
+      <div style="display:contents">
+        <!-- Drawer header -->
+        <div class="px-6 pt-6 pb-5 border-b border-slate-100">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-3.5">
+              <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-bold text-[15px]" style="background:var(--accent)"
+                   x-text="(selectedCustomer.name||'').trim().slice(0,2).toUpperCase()||'?'"></div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <div class="font-display font-bold text-[17px] text-slate-900 leading-tight max-w-[260px]" x-text="selectedCustomer.name||'—'"></div>
+                  <button class="hl-flag" :class="hlClass(selectedCustomer)" :title="hlLabel(selectedCustomer)" @click="cycleHL(selectedCustomer)"></button>
+                </div>
+                <div class="text-[12px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span x-text="'#'+selectedCustomer.id"></span>
+                  <span class="text-slate-300" x-show="selectedCustomer.province">·</span>
+                  <span x-show="selectedCustomer.province" x-text="'📍 '+selectedCustomer.province"></span>
+                  <span x-show="selectedCustomer.age" x-text="selectedCustomer.age+' ปี'"></span>
+                  <span class="text-slate-300" x-show="selectedCustomer.row">·</span>
+                  <span class="text-[11px]" x-show="selectedCustomer.row" x-text="'แถว '+selectedCustomer.row"></span>
+                </div>
+              </div>
+            </div>
+            <button @click="closeDrawer()" class="h-9 w-9 grid place-items-center rounded-lg text-slate-400 hover:bg-slate-100 transition">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-2 mt-3 flex-wrap">
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold" :class="srcToneClass(selectedCustomer.source)" x-text="selectedCustomer.source"></span>
+            <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold" :class="statusToneClass(selectedCustomer.status)">
+              <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(selectedCustomer.status)"></span>
+              <span x-text="statusLabel(selectedCustomer.status)||'(ยังไม่ระบุ)'"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Drawer body -->
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+          <!-- Quick actions -->
+          <div class="flex gap-2.5">
+            <a :href="'tel:'+rawPhone(selectedCustomer.phone)"
+               class="flex-1 h-10 rounded-xl text-[13px] font-semibold inline-flex items-center justify-center gap-2 text-white transition" style="background:var(--accent)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 12.5 12.5 0 0 0 .7 2.7 2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5 12.5 12.5 0 0 0 2.7.7A2 2 0 0 1 22 16.9z"/></svg>
+              โทรออก
+            </a>
+            <button @click="copyInfo()"
+              class="flex-1 h-10 rounded-xl text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:bg-slate-50 inline-flex items-center justify-center gap-2 transition">
+              📋 คัดลอก
+            </button>
+            <button @click="openCalc()"
+              class="flex-1 h-10 rounded-xl text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:bg-slate-50 inline-flex items-center justify-center gap-2 transition">
+              🧮 คำนวณ
+            </button>
+          </div>
+
+          <!-- Contact info -->
+          <div class="grid grid-cols-2 gap-4">
+            <div x-show="selectedCustomer.phone">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">เบอร์โทร</div>
+              <div class="text-[14px] text-slate-800 font-semibold tabular-nums" x-text="fmtPhone(selectedCustomer.phone)"></div>
+            </div>
+            <div x-show="selectedCustomer.email">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Email</div>
+              <div class="text-[13px] text-slate-600 truncate" x-text="selectedCustomer.email"></div>
+            </div>
+            <div x-show="selectedCustomer.lineId">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">LINE ID</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.lineId"></div>
+            </div>
+            <div x-show="selectedCustomer.productType">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.productType"></div>
+            </div>
+            <div x-show="selectedCustomer.paymentChannel">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
+            </div>
+          </div>
+
+          <!-- Status changer -->
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">เปลี่ยนสถานะ</div>
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              <template x-for="s in statusDefs.filter(x=>x.value!=='')" :key="s.value">
+                <button @click="pendingStatus=s.value"
+                  class="h-8 px-3 rounded-lg text-[12.5px] font-medium transition"
+                  :class="pendingStatus===s.value ? 'text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
+                  :style="pendingStatus===s.value ? 'background:var(--accent)' : ''"
+                  x-text="s.label"></button>
+              </template>
+            </div>
+            <div class="flex gap-2">
+              <button @click="saveStatus()" :disabled="!pendingStatus||savingStatus"
+                class="flex-1 h-10 rounded-xl text-[13.5px] font-bold text-white disabled:opacity-40 transition" style="background:var(--accent)">
+                <span x-show="!savingStatus">💾 บันทึก Status</span>
+                <span x-show="savingStatus">กำลังบันทึก...</span>
+              </button>
+              <button x-show="pendingStatus" @click="pendingStatus=''"
+                class="h-10 px-4 rounded-xl text-[13px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition">ยกเลิก</button>
+            </div>
+            <div x-show="saveMsg" class="mt-2 text-[13px]" :class="saveOk?'text-emerald-600':'text-rose-600'" x-text="saveMsg"></div>
+          </div>
+
+          <!-- Activity picker -->
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">📝 บันทึกกิจกรรม</div>
+            <div class="flex gap-2">
+              <select x-model="selectedActivity"
+                class="flex-1 h-10 pl-3 pr-8 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[13px] text-slate-700 appearance-none"
+                style="background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%226%22 fill=%22%2394a3b8%22><path d=%22M0 0l5 6 5-6z%22/></svg>');background-repeat:no-repeat;background-position:right 10px center">
+                <option value="">— เลือกกิจกรรม —</option>
+                <template x-for="a in activityOpts" :key="a.label">
+                  <option :value="a.label" x-text="a.label"></option>
+                </template>
+              </select>
+              <button @click="selectedActivity && addActivity(activityOpts.find(a=>a.label===selectedActivity)); selectedActivity=''"
+                :disabled="!selectedActivity"
+                class="h-10 px-4 rounded-xl text-white text-[13px] font-bold transition disabled:opacity-40 shrink-0" style="background:var(--accent)">
+                บันทึก
+              </button>
+            </div>
+          </div>
+
+          <!-- Notes history -->
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-3">ประวัติการติดต่อ</div>
+            <div x-show="notesLoading" class="text-[12px] text-slate-400 text-center py-4">กำลังโหลด...</div>
+            <div x-show="!notesLoading && sheetNotes.length===0" class="text-[12px] text-slate-400 text-center py-4">ยังไม่มีบันทึก</div>
+            <ol x-show="!notesLoading" class="relative border-l-2 border-slate-100 ml-1.5 space-y-4 max-h-[260px] overflow-y-auto">
+              <template x-for="(note, i) in sheetNotes" :key="i">
+                <li class="pl-5 relative">
+                  <span class="absolute -left-[7px] top-1 h-3 w-3 rounded-full ring-4 ring-white"
+                        :class="i===0 ? '' : 'bg-slate-300'"
+                        :style="i===0 ? 'background:var(--accent)' : ''"></span>
+                  <div class="text-[13px] text-slate-600 leading-relaxed" x-text="note"></div>
+                  <button @click="deleteNote(i)" class="text-[11px] text-slate-300 hover:text-rose-500 transition mt-0.5">ลบ</button>
+                </li>
+              </template>
+            </ol>
+            <div x-show="syncMsg" class="mt-2 text-[12px] rounded-lg px-3 py-2"
+                 :class="syncOk===true?'bg-emerald-50 text-emerald-700':syncOk===false?'bg-rose-50 text-rose-700':'bg-amber-50 text-amber-700'"
+                 x-text="syncMsg"></div>
+          </div>
+        </div>
+
+        <!-- Footer note input -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+          <div class="flex gap-2">
+            <input type="text" x-model="newNote" @keydown.enter="addNote()" placeholder="เพิ่มบันทึกการติดต่อ…"
+              class="flex-1 h-10 px-3.5 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[13.5px] placeholder:text-slate-400"/>
+            <button @click="addNote()" :disabled="!newNote.trim()"
+              class="h-10 px-4 rounded-xl text-white text-[13px] font-bold transition disabled:opacity-40" style="background:var(--accent)">บันทึก</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </aside>
+</div>
+
+<script>
+const LOGIN_PASSWORD    = 'wuttichai1234';
+const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
+const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
+const CACHE_KEY         = 'lgCrmCache_wuttichai';
+const HL_KEY            = 'lgDashHL_wuttichai';
+const PROMOTER          = 'WUTTICHAI';
+const CACHE_TTL         = 30 * 60 * 1000; // 30 min
+
+function app() {
+  return {
+    /* ── Auth ── */
+    isLoggedIn: localStorage.getItem(LOGIN_SESSION_KEY) === 'yes',
+    loginPw: '', loginErr: '',
+
+    /* ── Config ── */
+    apiUrl:    localStorage.getItem(API_URL_KEY) || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
+    configUrl: localStorage.getItem(API_URL_KEY) || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
+    showConfig: false,
+    testLoading: false, testMsg: '', testOk: false,
+
+    /* ── Data ── */
+    customers: [], loading: false, loadErr: null, lastFetch: '',
+
+    /* ── Filters ── */
+    search: '', filterSource: '', filterStatus: '', filterActivity: '', filterHL: null,
+    sortCol: 'id', sortDir: 'desc', page: 1, pageSize: 25,
+    _frozenRows: null,
+
+    /* ── Drawer ── */
+    showDrawer: false, selectedCustomer: null,
+    pendingStatus: '', savingStatus: false, saveMsg: '', saveOk: false,
+    sheetNotes: [], notesLoading: false, newNote: '',
+    syncMsg: '', syncOk: null,
+
+    /* ── Follow-up modal ── */
+    fuModal: false, fuDateTime: '', fuErr: '', _pendingFuActivity: null,
+
+    /* ── Activity picker ── */
+    selectedActivity: '',
+
+    /* ── Highlights ── */
+    highlights: (() => { try { return JSON.parse(localStorage.getItem(HL_KEY)||'{}'); } catch { return {}; } })(),
+
+    /* ── Definitions ── */
+    activityOpts: [
+      {label:'📵 ไม่รับสาย'},
+      {label:'📵 ไม่รับสายมากกว่า 2 ครั้ง'},
+      {label:'📴 ตัดสาย'},
+      {label:'☎️ เบอร์ผิด'},
+      {label:'❌ ติดต่อไม่ได้'},
+      {label:'🚫 ติดบูโร'},
+      {label:'⚠️ ไม่เข้าเงื่อนไข'},
+      {label:'🙅 ไม่สะดวก'},
+      {label:'🔁 ให้ติดต่อมาใหม่', needsDateTime:true},
+      {label:'📄 รอยื่นเอกสาร'},
+      {label:'😐 ไม่สนใจแล้ว'},
+      {label:'🤔 ยังไม่ตัดสินใจ'},
+      {label:'❓ สอบถามข้อมูลเบื้องต้น'},
+      {label:'✉️ ส่งรายละเอียดทาง Email'},
+      {label:'🛒 ส่ง RemoteOrder รอชำระเงิน'},
+      {label:'💬 แอดไลน์ให้ข้อมูลเพิ่มเติม'},
+      {label:'🛍️ สนใจซื้อแบบปกติ'},
+      {label:'🛍️ ซื้อไปแล้ว'},
+      {label:'⏩ ไม่สนใจผ่อนนาน'},
+      {label:'🗂️ ไม่สะดวกยื่นเอกสาร'},
+      {label:'✅ ทำรายการสำเร็จเรียบร้อย'},
+    ],
+
+    activityFilters: [
+      {label:'📵 ไม่รับสาย',            key:'ไม่รับสาย'},
+      {label:'📵 ไม่รับสาย >2',         key:'ไม่รับสายมากกว่า 2 ครั้ง'},
+      {label:'📴 ตัดสาย',              key:'ตัดสาย'},
+      {label:'☎️ เบอร์ผิด',             key:'เบอร์ผิด'},
+      {label:'❌ ติดต่อไม่ได้',         key:'ติดต่อไม่ได้'},
+      {label:'🔁 ติดต่อมาใหม่',        key:'ติดต่อมาใหม่'},
+      {label:'🙅 ไม่สะดวก',            key:'ไม่สะดวก'},
+      {label:'📄 รอยื่นเอกสาร',        key:'รอยื่นเอกสาร'},
+      {label:'😐 ไม่สนใจแล้ว',         key:'ไม่สนใจแล้ว'},
+      {label:'🤔 ยังไม่ตัดสินใจ',      key:'ยังไม่ตัดสินใจ'},
+      {label:'❓ สอบถามเบื้องต้น',     key:'สอบถามข้อมูลเบื้องต้น'},
+      {label:'✉️ ส่ง Email',           key:'ส่งรายละเอียดทาง Email'},
+      {label:'🚫 ติดบูโร',             key:'ติดบูโร'},
+      {label:'⚠️ ไม่เข้าเงื่อนไข',    key:'ไม่เข้าเงื่อนไข'},
+      {label:'🛒 RemoteOrder',          key:'RemoteOrder'},
+      {label:'💬 แอดไลน์',             key:'แอดไลน์'},
+      {label:'🛍️ ซื้อแบบปกติ',         key:'ซื้อแบบปกติ'},
+      {label:'🛍️ ซื้อไปแล้ว',         key:'ซื้อไปแล้ว'},
+      {label:'⏩ ไม่สนใจผ่อนนาน',     key:'ไม่สนใจผ่อนนาน'},
+      {label:'🗂️ ไม่สะดวกยื่นเอกสาร', key:'ไม่สะดวกยื่นเอกสาร'},
+      {label:'✅ ปิดการขาย',           key:'ทำรายการสำเร็จ'},
+    ],
+
+    statusDefs: [
+      {value:'',                  label:'ทั้งหมด'},
+      {value:'Called',            label:'Called'},
+      {value:'Follow up',         label:'Follow up'},
+      {value:'Unqualified',       label:'Unqualified'},
+      {value:'Called buy denied', label:'Called but denied'},
+      {value:'No Credit Card',    label:'No Credit Card'},
+      {value:'Purchased',         label:'Purchased'},
+    ],
+
+    hlFilterDefs: [
+      {value:1, short:'สนใจ',     hlClass:'hl-1', label:'🟡 สนใจ'},
+      {value:2, short:'โอกาสสูง', hlClass:'hl-2', label:'🟠 มีโอกาสสูง'},
+      {value:3, short:'ใกล้ปิด',  hlClass:'hl-3', label:'🟢 ใกล้ปิดแล้ว'},
+      {value:0, short:'ไม่ระบุ',   hlClass:'',     label:'ไม่มีสี'},
+    ],
+
+    sourceDefs: [
+      {key:'Meta Densu',                   short:'Meta',    label:'Meta Densu',    toneClass:'tone-violet', barClass:'bg-violet-400'},
+      {key:'Meta Credit',                  short:'Meta CC', label:'Meta Credit',   toneClass:'tone-amber',  barClass:'bg-amber-400'},
+      {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400'},
+      {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500'},
+      {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400'},
+      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP Braner', toneClass:'tone-rose',   barClass:'bg-rose-400'},
+    ],
+
+    /* ── Init ── */
+    init() {
+      if (this.isLoggedIn && this.apiUrl) {
+        if (!this._loadCache()) this.fetchData();
+      }
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeDrawer(); });
+    },
+
+    /* ── Auth ── */
+    login() {
+      if (this.loginPw === LOGIN_PASSWORD) {
+        this.isLoggedIn = true; this.loginPw = ''; this.loginErr = '';
+        localStorage.setItem(LOGIN_SESSION_KEY, 'yes');
+        if (this.apiUrl) this.fetchData();
+      } else {
+        this.loginErr = 'รหัสผ่านไม่ถูกต้อง'; this.loginPw = '';
+      }
+    },
+    logout() {
+      this.isLoggedIn = false; this.showDrawer = false; this.customers = [];
+      localStorage.removeItem(LOGIN_SESSION_KEY);
+    },
+
+    /* ── Config ── */
+    saveConfig() {
+      this.apiUrl = this.configUrl.trim();
+      localStorage.setItem(API_URL_KEY, this.apiUrl);
+      this.testMsg = ''; this.showConfig = false;
+      if (this.apiUrl) this.fetchData();
+    },
+    async testConn() {
+      if (!this.configUrl) return;
+      this.testLoading = true; this.testMsg = '';
+      try {
+        const j = await jsonpCall(this.configUrl.trim(), {action:'ping'});
+        this.testMsg = j.success ? '✅ เชื่อมต่อสำเร็จ' : '⚠️ '+(j.error||'error');
+        this.testOk  = !!j.success;
+      } catch(e) { this.testMsg = '❌ '+e.message; this.testOk = false; }
+      this.testLoading = false;
+    },
+
+    /* ── Data ── */
+    _persistCache() {
+      try {
+        const data = this.customers.map(({parsedNotes, ...rest}) => rest);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now()}));
+      } catch {}
+    },
+    _loadCache() {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return false;
+        const {data, ts} = JSON.parse(raw);
+        if (Date.now() - ts > CACHE_TTL) return false;
+        this.customers = data.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
+        this._frozenRows = null;
+        const mins = Math.round((Date.now()-ts)/60000);
+        this.lastFetch = 'cache · '+(mins < 1 ? 'เมื่อกี้' : mins+' นาทีที่แล้ว');
+        return true;
+      } catch { return false; }
+    },
+    async fetchData() {
+      if (!this.apiUrl) { this.showConfig = true; return; }
+      this.loading = true; this.loadErr = null;
+      try {
+        const json = await jsonpCall(this.apiUrl, {action:'getCustomers', promoter:PROMOTER});
+        if (!json.success) throw new Error(json.error||'API error');
+        const raw = json.data || [];
+        this.customers = raw.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
+        this._frozenRows = null; this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
+        const n = new Date();
+        this.lastFetch = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
+        localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now()}));
+      } catch(e) {
+        this.loadErr = e.message;
+      }
+      this.loading = false;
+    },
+    _parseNotes(s) {
+      if (!s?.trim()) return [];
+      return s.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(line => {
+        const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{4})(?:\s+\d{2}:\d{2})?\s*[—\-]\s*([\s\S]+)$/);
+        return m ? {date:m[1], text:m[2].trim()} : {date:'', text:line};
+      }).reverse();
+    },
+
+    /* ── Computed ── */
+    get filtered() {
+      let list = [...this.customers];
+      const q = this.search.trim().toLowerCase();
+      if (q) list = list.filter(c =>
+        (c.name||'').toLowerCase().includes(q) ||
+        (c.phone||'').includes(q) ||
+        (c.email||'').toLowerCase().includes(q)
+      );
+      if (this.filterSource)   list = list.filter(c => c.source === this.filterSource);
+      if (this.filterStatus)   list = list.filter(c => c.status === this.filterStatus);
+      if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
+      if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
+      const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
+      const numCols = ['id','row','age'];
+      return list.sort((a,b) => {
+        if (numCols.includes(col)) return (Number(a[col]||0) - Number(b[col]||0)) * dir;
+        const av = String(a[col]||'').toLowerCase(), bv = String(b[col]||'').toLowerCase();
+        return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
+      });
+    },
+    get totalPages()  { return Math.max(1, Math.ceil(this.filtered.length / this.pageSize)); },
+    get paginated() {
+      if (this._frozenRows !== null) return this._frozenRows;
+      if (this.page > this.totalPages) this.page = this.totalPages;
+      const s = (this.page-1) * this.pageSize;
+      return this.filtered.slice(s, s + this.pageSize);
+    },
+    get pageRange() {
+      const total=this.totalPages, cur=this.page, d=2, pages=[];
+      for (let p=Math.max(1,cur-d); p<=Math.min(total,cur+d); p++) pages.push(p);
+      return pages;
+    },
+    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterActivity||this.filterHL!==null); },
+    get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>c.source===sd.key).length})); },
+
+    /* ── Filter methods ── */
+    setSort(col) {
+      this._frozenRows = null;
+      if (this.sortCol === col) this.sortDir = this.sortDir==='asc' ? 'desc' : 'asc';
+      else { this.sortCol = col; this.sortDir = 'asc'; }
+      this.page = 1;
+    },
+    toggleSource(key)      { this._frozenRows=null; this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
+    setFilterStatus(val)   { this._frozenRows=null; this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
+    setFilterActivity(key) { this._frozenRows=null; this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
+    setFilterHL(val)       { this._frozenRows=null; this.filterHL = this.filterHL===val ? null : val; this.page=1; },
+    setSearch(val)         { this._frozenRows=null; this.search=val; this.page=1; },
+    countByStatus(val)     { return this.customers.filter(c => c.status===val).length; },
+    _activityAliases: {
+      'ไม่สนใจแล้ว': ['ไม่สนใจแล้ว', 'ยังไม่สนใจ'],
+    },
+    _activityKeys(key)     { return this._activityAliases[key] || [key]; },
+    _matchActivity(text, filterKey) {
+      const t = String(text || '');
+      return this._activityKeys(filterKey).some(k => t.includes(k));
+    },
+    countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
+    countByHL(val)         { return this.customers.filter(c => this.getHL(c) === val).length; },
+
+    /* ── Style helpers ── */
+    statusToneClass(s) {
+      return {'':'tone-slate','Called':'tone-sky','Follow up':'tone-amber','Unqualified':'tone-slate',
+              'Called buy denied':'tone-rose','No Credit Card':'tone-orange','Purchased':'tone-emerald'}[s] || 'tone-slate';
+    },
+    statusDotClass(s) {
+      return {'':'bg-slate-400','Called':'bg-sky-400','Follow up':'bg-amber-400','Unqualified':'bg-slate-400',
+              'Called buy denied':'bg-rose-400','No Credit Card':'bg-orange-400','Purchased':'bg-emerald-500'}[s] || 'bg-slate-400';
+    },
+    statusLabel(s) {
+      return {'':'— ยังไม่ระบุ','Called':'Called','Follow up':'Follow up','Unqualified':'Unqualified',
+              'Called buy denied':'Called but denied','No Credit Card':'No Credit Card','Purchased':'Purchased'}[s] ?? (s||'— ยังไม่ระบุ');
+    },
+    srcToneClass(src) { const d=this.sourceDefs.find(s=>s.key===src); return d?d.toneClass:'tone-slate'; },
+    srcShort(src)     { const d=this.sourceDefs.find(s=>s.key===src); return d?d.short:src; },
+    paymentStyle(val) {
+      if (!val) return '';
+      const v = val.toLowerCase();
+      if (v.includes('เครดิต')||v.includes('credit'))                         return 'background:#dcfce7;color:#15803d;font-weight:700';
+      if (v.includes('เดบิต')||v.includes('debit')||v.includes('หักผ่านบัญชี')) return 'background:#bae6fd;color:#075985;font-weight:700';
+      if (v.includes('เงินสด')||v.includes('cash'))                           return 'background:#fde68a;color:#92400e;font-weight:700';
+      if (v.includes('โอน')||v.includes('transfer'))                          return 'background:#bfdbfe;color:#1e40af;font-weight:700';
+      if (v.includes('ผ่อน')||v.includes('install'))                          return 'background:#e9d5ff;color:#6b21a8;font-weight:700';
+      if (v.includes('พร้อมเพย์')||v.includes('promptpay'))                  return 'background:#fecdd3;color:#9f1239;font-weight:700';
+      return 'background:#e2e8f0;color:#334155;font-weight:600';
+    },
+
+    /* ── Highlights ── */
+    _hlKey(c)    { return c.phone || ('id:'+c.id); },
+    getHL(c)     { return this.highlights[this._hlKey(c)] || 0; },
+    cycleHL(c) {
+      const key = this._hlKey(c), next = ((this.highlights[key]||0)+1)%4;
+      const h = {...this.highlights};
+      if (next===0) delete h[key]; else h[key]=next;
+      this.highlights = h;
+      localStorage.setItem(HL_KEY, JSON.stringify(h));
+    },
+    hlClass(c)    { const v=this.getHL(c); return v?'hl-'+v:''; },
+    hlTrClass(c)  { const v=this.getHL(c); return v?'tr-hl-'+v:''; },
+    hlMobClass(c) { const v=this.getHL(c); return v?'mob-hl-'+v:''; },
+    hlLabel(c)    { return ['กดเพื่อไฮไลต์','🟡 สนใจ','🟠 มีโอกาสสูง','🟢 ใกล้ปิดแล้ว!'][this.getHL(c)]; },
+
+    /* ── Drawer ── */
+    openDrawer(c) {
+      this.selectedCustomer = c;
+      this.pendingStatus = ''; this.saveMsg = ''; this.newNote = '';
+      this.sheetNotes = [...c.parsedNotes].map(n => n.date ? n.date+' — '+n.text : n.text);
+      this.syncMsg = ''; this.syncOk = null;
+      this.showDrawer = true;
+      this.loadSheetNotes();
+    },
+    closeDrawer() {
+      this.showDrawer = false;
+      this._frozenRows = null;
+    },
+
+    async saveStatus() {
+      if (!this.pendingStatus || !this.selectedCustomer) return;
+      this._frozenRows = [...this.paginated];
+      this.savingStatus = true; this.saveMsg = '';
+      try {
+        const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, status:this.pendingStatus, promoter:PROMOTER});
+        if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
+        const ns = this.pendingStatus;
+        this.selectedCustomer.status = ns;
+        const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
+        if (idx >= 0) this.customers[idx].status = ns;
+        this._persistCache();
+        this.saveMsg = '✅ บันทึก Status เรียบร้อย'; this.saveOk = true; this.pendingStatus = '';
+      } catch(e) { this.saveMsg = '⚠️ '+e.message; this.saveOk = false; }
+      this.savingStatus = false;
+    },
+
+    copyInfo() {
+      const c = this.selectedCustomer; if (!c) return;
+      const lines = ['👤 '+(c.name||''), c.phone?'📞 '+c.phone:'', c.email?'✉️ '+c.email:'',
+                     c.lineId?'💬 LINE: '+c.lineId:'', c.province?'📍 '+c.province:'',
+                     c.productType?'🛒 '+c.productType:'', '📋 ที่มา: '+c.source].filter(Boolean).join('\n');
+      navigator.clipboard?.writeText(lines).then(()=>{ this.saveMsg='📋 คัดลอกแล้ว'; this.saveOk=true; setTimeout(()=>this.saveMsg='',2000); });
+    },
+    openCalc() {
+      const c = this.selectedCustomer; if (!c) return;
+      localStorage.setItem('lgCalcCustomer', JSON.stringify({name:c.name, phone:c.phone, customerType:'new', source:c.source}));
+      window.open('https://pondjeloy.github.io/LG_Subscribe_Calculator_Jun2026/','_blank');
+    },
+
+    async loadSheetNotes() {
+      if (!this.apiUrl || !this.selectedCustomer) return;
+      this.notesLoading = true;
+      try {
+        const r = await jsonpCall(this.apiUrl, {action:'getNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, promoter:PROMOTER}, 12000);
+        if (r?.success) {
+          const raw = r.notes || '';
+          this.sheetNotes = raw.split(/\r?\n/).filter(l=>l.trim()).reverse();
+          this._syncNotes(raw);
+        } else {
+          this.syncMsg = '⚠️ โหลดบันทึกไม่ได้: '+(r?.error||'API error'); this.syncOk = false;
+        }
+      } catch(e) {
+        this.syncMsg = '⚠️ โหลดบันทึกไม่ได้: '+e.message; this.syncOk = false;
+      }
+      this.notesLoading = false;
+    },
+    _syncNotes(rawNotes) {
+      const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
+      if (idx < 0) return;
+      this.customers[idx].notes = rawNotes;
+      this.customers[idx].parsedNotes = this._parseNotes(rawNotes);
+      this.selectedCustomer.parsedNotes = this.customers[idx].parsedNotes;
+      this._persistCache();
+    },
+
+    addActivity(a) {
+      if (a.needsDateTime) {
+        this._pendingFuActivity = a;
+        this.fuDateTime = this._defaultFuDt();
+        this.fuErr = '';
+        this.fuModal = true;
+        return;
+      }
+      this._draftNote(a.label);
+    },
+    _draftNote(text) {
+      const t = String(text||'').trim();
+      if (!t) return;
+      this.newNote = this.newNote.trim() ? this.newNote.trim()+' / '+t : t;
+    },
+    _defaultFuDt() {
+      const d = new Date(); d.setDate(d.getDate()+1);
+      d.setMinutes(Math.ceil(d.getMinutes()/15)*15, 0, 0);
+      const p = n => String(n).padStart(2,'0');
+      return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+    },
+    _fmtFuDt(val) {
+      const d = new Date(val); if (isNaN(d)) return '';
+      const date = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+      return date+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' น.';
+    },
+    confirmFu() {
+      if (!this.fuDateTime) { this.fuErr='กรุณาเลือกวันและเวลา'; return; }
+      const when = this._fmtFuDt(this.fuDateTime);
+      if (!when) { this.fuErr='วันเวลาไม่ถูกต้อง'; return; }
+      const label = (this._pendingFuActivity?.label||'🔁 ให้ติดต่อมาใหม่')+': '+when;
+      this.cancelFu();
+      this._draftNote(label);
+    },
+    cancelFu() { this.fuModal=false; this._pendingFuActivity=null; this.fuDateTime=''; this.fuErr=''; },
+
+    async addNote() {
+      const text = this.newNote.trim(); if (!text) return;
+      const now = new Date();
+      const date = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+      this.newNote = '';
+      await this._syncNote(date+' — '+text);
+    },
+    async _syncNote(entry) {
+      if (!this.apiUrl || !this.selectedCustomer) return;
+      this.syncMsg = '💾 กำลังบันทึก...'; this.syncOk = null;
+      try {
+        const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, note:entry, promoter:PROMOTER}, 12000);
+        if (r?.success) {
+          this.sheetNotes = [entry, ...this.sheetNotes];
+          const raw = [...this.sheetNotes].reverse().join('\n');
+          this._syncNotes(raw);
+          this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'; this.syncOk = true;
+        } else throw new Error((r?.error)||'API error');
+      } catch(e) { this.syncMsg = '⚠️ บันทึกไม่ได้: '+e.message; this.syncOk = false; }
+      setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 4000);
+    },
+    async deleteNote(idx) {
+      const remaining = this.sheetNotes.filter((_,i) => i!==idx);
+      const raw = [...remaining].reverse().join('\n');
+      try {
+        const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, notes:raw, promoter:PROMOTER}, 12000);
+        if (r?.success) { this.sheetNotes = remaining; this._syncNotes(raw); }
+        else throw new Error(r?.error||'ลบไม่ได้');
+      } catch(e) { this.syncMsg='⚠️ ลบไม่ได้: '+e.message; this.syncOk=false; setTimeout(()=>this.syncMsg='',3000); }
+    },
+
+    /* ── Phone utils ── */
+    _normPhone(phone) {
+      if (!phone) return '';
+      let p = String(phone).replace(/\D/g,'');
+      if ((p.startsWith('660') && p.length===12) || (p.startsWith('66') && p.length===11)) p='0'+p.slice(2);
+      if (p.length===9) p='0'+p;
+      return p;
+    },
+    fmtPhone(phone) {
+      if (!phone) return '—';
+      const p = this._normPhone(phone);
+      if (p.length===10) return p.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3');
+      return p || String(phone);
+    },
+    rawPhone(phone) { return this._normPhone(phone); },
+    fmtNoteDate(d) {
+      if (!d) return '';
+      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (!m) return d;
+      const yr = parseInt(m[3]);
+      return parseInt(m[1])+'/'+parseInt(m[2])+'/'+(yr>=2500?yr-2500:yr+543-2500);
+    },
+
+    /* ── Export ── */
+    exportCSV() {
+      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','อายุ','สินค้า','ชำระเงิน','Status','ที่มา'];
+      const rows = this.filtered.map(c => [c.id, c.name||'', this.rawPhone(c.phone)||'', c.email||'',
+                                            c.lineId||'', c.province||'', c.age||'', c.productType||'',
+                                            c.paymentChannel||'', c.status||'', c.source||'']);
+      const csv  = [cols,...rows].map(r => r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+      const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = 'LGSubscribe_WUTTICHAI_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.click(); URL.revokeObjectURL(url);
+    },
+  };
+}
+
+function jsonpCall(baseUrl, params={}, timeout=15000) {
+  return new Promise((resolve, reject) => {
+    const cbName = '__lgCb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    const timer  = setTimeout(() => { cleanup(); reject(new Error('หมดเวลา (timeout) — ตรวจสอบว่า Deploy แล้วและ Authorize แล้ว')); }, timeout);
+    function cleanup() { clearTimeout(timer); delete window[cbName]; document.getElementById(cbName)?.remove(); }
+    window[cbName] = data => { cleanup(); resolve(data); };
+    const url = new URL(baseUrl);
+    Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+    url.searchParams.set('callback', cbName);
+    const script = document.createElement('script');
+    script.id  = cbName;
+    script.src = url.toString();
+    script.onerror = () => { cleanup(); reject(new Error('โหลด Script ไม่ได้ — URL ผิด หรือยังไม่ได้ Deploy')); };
+    document.head.appendChild(script);
+  });
+}
+</script>
+</body>
+</html>
