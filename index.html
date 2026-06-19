@@ -142,7 +142,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต 19 มิ.ย. 69 v5</div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต 19 มิ.ย. 69 v6</div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -209,7 +209,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v5</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v6</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -811,7 +811,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '19 มิ.ย. 69 v5';
+const CRM_BUILD       = '19 มิ.ย. 69 v6';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
@@ -1279,20 +1279,13 @@ function app() {
     fmtPhone(phone) {
       if (!phone) return '—';
       const p = this._normPhone(phone);
-      if (p.length===10) return p.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3');
+      if (p.length===10) return p;
       return p || String(phone);
     },
     rawPhone(phone) { return this._normPhone(phone); },
-    _lineIntlPhone(phone) {
-      const p = this._normPhone(phone);
-      if (!p) return '';
-      if (p.startsWith('66')) return p;
-      if (p.startsWith('0')) return '66' + p.slice(1);
-      return '66' + p;
-    },
     lineUrlFromPhone(phone) {
-      const intl = this._lineIntlPhone(phone);
-      return intl ? `line://ti/p/~${intl}` : '';
+      const p = this._normPhone(phone);
+      return (p && p.length === 10) ? `line://ti/p/~${p}` : '';
     },
     lineUrlFromId(lineId) {
       const id = String(lineId || '').trim();
