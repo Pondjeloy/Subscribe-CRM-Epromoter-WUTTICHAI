@@ -494,7 +494,14 @@
                       </span>
                     </span>
                   </th>
-                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 min-w-[200px]">บันทึกล่าสุด</th>
+<th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 min-w-[200px] cursor-pointer select-none" @click="setSort('lastNote')">
+                    <span class="inline-flex items-center gap-1">บันทึกล่าสุด
+                      <span class="inline-flex flex-col -space-y-1">
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='lastNote'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='lastNote'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                      </span>
+                    </span>
+                  </th>
                   <th class="pr-5 py-2.5 w-[44px]"></th>
                 </tr>
               </thead>
@@ -1017,10 +1024,11 @@ function app() {
       const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
       const numCols = ['id','row','age'];
       return list.sort((a,b) => {
-        if (this.filterHL === 'ranked') {
+        if (this.filterHL === 'ranked' && col !== 'lastNote') {
           const hd = this.getHL(b) - this.getHL(a);
           if (hd) return hd;
         }
+        if (col === 'lastNote') return (this._noteTimestamp(a) - this._noteTimestamp(b)) * dir;
         if (numCols.includes(col)) return (Number(a[col]||0) - Number(b[col]||0)) * dir;
         const av = String(a[col]||'').toLowerCase(), bv = String(b[col]||'').toLowerCase();
         return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
@@ -1045,9 +1053,10 @@ function app() {
     setSort(col) {
       this._frozenRows = null;
       if (this.sortCol === col) this.sortDir = this.sortDir==='asc' ? 'desc' : 'asc';
-      else { this.sortCol = col; this.sortDir = 'asc'; }
+      else { this.sortCol = col; this.sortDir = col === 'lastNote' ? 'desc' : 'asc'; }
       this.page = 1;
     },
+    _noteTimestamp
     toggleSource(key)      { this._frozenRows=null; this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
     clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
