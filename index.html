@@ -1286,6 +1286,26 @@ function app() {
       if (p.startsWith('0')) return '66' + p.slice(1);
       return '66' + p;
     },
+    lineUrlFromPhone(phone) {
+      const intl = this._lineIntlPhone(phone);
+      return intl ? `https://line.me/ti/p/~${intl}` : '';
+    },
+    lineUrlFromId(lineId) {
+      const id = String(lineId || '').trim();
+      if (!id) return '';
+      if (id.startsWith('@')) return `https://line.me/R/ti/p/${encodeURIComponent(id)}`;
+      return `https://line.me/ti/p/~${encodeURIComponent(id.replace(/^~/, ''))}`;
+    },
+    openLineUrl(url) {
+      if (!url) return;
+      const el = document.createElement('a');
+      el.href = url;
+      el.rel = 'noopener';
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      el.click();
+      el.remove();
+    },
     fmtNoteDate(d) {
       if (!d) return '';
       const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
