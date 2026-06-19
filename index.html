@@ -379,6 +379,21 @@
                       :style="filterHL===null ? 'color:var(--accent)' : ''"
                       x-text="customers.length"></span>
               </button>
+              <button @click="setFilterHL('ranked')"
+                class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
+                :class="filterHL==='ranked' ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
+                :style="filterHL==='ranked' ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
+                <span class="inline-flex items-center shrink-0">
+                  <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                  <span class="h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-white -ml-1"></span>
+                  <span class="h-2.5 w-2.5 rounded-full bg-yellow-500 ring-2 ring-white -ml-1"></span>
+                </span>
+                <span>แสดงสีทั้งหมด</span>
+                <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
+                      :class="filterHL==='ranked' ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
+                      :style="filterHL==='ranked' ? 'color:var(--accent)' : ''"
+                      x-text="countByHLRanked()"></span>
+              </button>
               <template x-for="h in hlFilterDefs" :key="h.value">
                 <button @click="setFilterHL(h.value)"
                   class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
@@ -997,10 +1012,15 @@ function app() {
       if (this.filterStatus)   list = list.filter(c => c.status === this.filterStatus);
       if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
-      if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
+      if (this.filterHL === 'ranked') list = list.filter(c => this.getHL(c) > 0);
+      else if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
       const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
       const numCols = ['id','row','age'];
       return list.sort((a,b) => {
+        if (this.filterHL === 'ranked') {
+          const hd = this.getHL(b) - this.getHL(a);
+          if (hd) return hd;
+        }
         if (numCols.includes(col)) return (Number(a[col]||0) - Number(b[col]||0)) * dir;
         const av = String(a[col]||'').toLowerCase(), bv = String(b[col]||'').toLowerCase();
         return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
