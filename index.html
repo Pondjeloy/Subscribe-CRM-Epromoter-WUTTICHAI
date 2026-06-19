@@ -142,7 +142,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต 19 มิ.ย. 69 v4</div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต 19 มิ.ย. 69 v5</div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -209,7 +209,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v4</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v5</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -811,7 +811,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '19 มิ.ย. 69 v4';
+const CRM_BUILD       = '19 มิ.ย. 69 v5';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
@@ -1292,23 +1292,26 @@ function app() {
     },
     lineUrlFromPhone(phone) {
       const intl = this._lineIntlPhone(phone);
-      return intl ? `https://line.me/ti/p/~${intl}` : '';
+      return intl ? `line://ti/p/~${intl}` : '';
     },
     lineUrlFromId(lineId) {
       const id = String(lineId || '').trim();
       if (!id) return '';
-      if (id.startsWith('@')) return `https://line.me/R/ti/p/${encodeURIComponent(id)}`;
-      return `https://line.me/ti/p/~${encodeURIComponent(id.replace(/^~/, ''))}`;
+      if (id.startsWith('@')) return `line://ti/p/${encodeURIComponent(id)}`;
+      return `line://ti/p/~${encodeURIComponent(id.replace(/^~/, ''))}`;
     },
-    openLineUrl(url) {
-      if (!url) return;
-      const el = document.createElement('a');
-      el.href = url;
-      el.rel = 'noopener';
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      el.click();
-      el.remove();
+    _lineWebUrl(schemeUrl) {
+      return String(schemeUrl || '').replace(/^line:\/\//i, 'https://');
+    },
+    openLineUrl(schemeUrl) {
+      if (!schemeUrl) return;
+      const webUrl = this._lineWebUrl(schemeUrl);
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = webUrl;
+        return;
+      }
+      window.location.href = schemeUrl;
     },
     fmtNoteDate(d) {
       if (!d) return '';
