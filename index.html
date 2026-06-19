@@ -220,7 +220,7 @@
     <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
-    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Jun2026/" target="_blank" class="btn-text">
+    <a href="lg_subscribe_calculator_.html" target="_blank" class="btn-text">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 15h.01M12 15h.01M15.5 15h.01"/></svg>
       คำนวณ
     </a>
@@ -332,6 +332,34 @@
                   <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
                         :class="filterStatus===s.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByStatus(s.value)"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Payment chips -->
+          <div class="flex items-center gap-3 chips-scroll">
+            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0">ชำระเงิน</span>
+            <div class="flex items-center gap-2 flex-wrap chips-scroll">
+              <button @click="setFilterPayment('')"
+                class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                :class="filterPayment==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                :style="filterPayment==='' ? 'background:var(--accent)' : ''">
+                ทั้งหมด
+                <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
+                      :class="filterPayment==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                      x-text="customers.length"></span>
+              </button>
+              <template x-for="p in paymentFilterDefs" :key="p.key">
+                <button @click="setFilterPayment(p.key)"
+                  class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                  :class="filterPayment===p.key ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterPayment===p.key ? 'background:var(--accent)' : ''">
+                  <span class="h-2 w-2 rounded-full shrink-0" :style="filterPayment===p.key ? 'background:rgba(255,255,255,.85)' : p.dotStyle"></span>
+                  <span x-text="p.label"></span>
+                  <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
+                        :class="filterPayment===p.key ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countByPayment(p.key)"></span>
                 </button>
               </template>
             </div>
@@ -770,7 +798,7 @@ function app() {
     customers: [], loading: false, loadErr: null, lastFetch: '',
 
     /* ── Filters ── */
-    search: '', filterSource: '', filterStatus: '', filterActivity: '', filterHL: null,
+    search: '', filterSource: '', filterStatus: '', filterPayment: '', filterActivity: '', filterHL: null,
     sortCol: 'id', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
 
@@ -846,6 +874,12 @@ function app() {
       {value:'Called buy denied', label:'Called but denied'},
       {value:'No Credit Card',    label:'No Credit Card'},
       {value:'Purchased',         label:'Purchased'},
+    ],
+
+    paymentFilterDefs: [
+      {key:'credit', label:'บัตรเครดิต',       dotStyle:'background:#22c55e'},
+      {key:'bank',   label:'หักบัญชีธนาคาร',   dotStyle:'background:#f59e0b'},
+      {key:'debit',  label:'บัตรเดบิต',        dotStyle:'background:#0ea5e9'},
     ],
 
     hlFilterDefs: [
@@ -961,6 +995,7 @@ function app() {
       );
       if (this.filterSource)   list = list.filter(c => c.source === this.filterSource);
       if (this.filterStatus)   list = list.filter(c => c.status === this.filterStatus);
+      if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
       if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
       const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
@@ -983,7 +1018,7 @@ function app() {
       for (let p=Math.max(1,cur-d); p<=Math.min(total,cur+d); p++) pages.push(p);
       return pages;
     },
-    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterActivity||this.filterHL!==null); },
+    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterPayment||this.filterActivity||this.filterHL!==null); },
     get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>c.source===sd.key).length})); },
 
     /* ── Filter methods ── */
@@ -994,8 +1029,9 @@ function app() {
       this.page = 1;
     },
     toggleSource(key)      { this._frozenRows=null; this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
+    setFilterPayment(key)  { this._frozenRows=null; this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
     setFilterActivity(key) { this._frozenRows=null; this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
     setFilterHL(val)       { this._frozenRows=null; this.filterHL = this.filterHL===val ? null : val; this.page=1; },
     setSearch(val)         { this._frozenRows=null; this.search=val; this.page=1; },
@@ -1010,6 +1046,16 @@ function app() {
     },
     countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
     countByHL(val)         { return this.customers.filter(c => this.getHL(c) === val).length; },
+    _paymentType(channel) {
+      const v = String(channel || '').toLowerCase().trim();
+      if (!v) return '';
+      if (v.includes('หัก') || v.includes('หักผ่านบัญชี') || v.includes('หักบัญชี')) return 'bank';
+      if (v.includes('เครดิต') || v.includes('credit')) return 'credit';
+      if (v.includes('เดบิต') || v.includes('debit')) return 'debit';
+      return '';
+    },
+    _matchPayment(channel, filterKey) { return this._paymentType(channel) === filterKey; },
+    countByPayment(key)    { return this.customers.filter(c => this._matchPayment(c.paymentChannel, key)).length; },
 
     /* ── Style helpers ── */
     statusToneClass(s) {
@@ -1094,7 +1140,7 @@ function app() {
     openCalc() {
       const c = this.selectedCustomer; if (!c) return;
       localStorage.setItem('lgCalcCustomer', JSON.stringify({name:c.name, phone:c.phone, customerType:'new', source:c.source}));
-      window.open('https://pondjeloy.github.io/LG_Subscribe_Calculator_Jun2026/','_blank');
+      window.open('lg_subscribe_calculator_.html','_blank');
     },
 
     async loadSheetNotes() {
