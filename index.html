@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8"/>
@@ -1022,7 +1022,8 @@ function app() {
         (c.email||'').toLowerCase().includes(q)
       );
       if (this.filterSource)   list = list.filter(c => c.source === this.filterSource);
-      if (this.filterStatus)   list = list.filter(c => c.status === this.filterStatus);
+      if (this.filterStatus === '__unset__') list = list.filter(c => !c.status);
+      else if (this.filterStatus) list = list.filter(c => c.status === this.filterStatus);
       if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
       if (this.filterHL === 'ranked') list = list.filter(c => this.getHL(c) > 0);
@@ -1078,7 +1079,10 @@ function app() {
     setFilterActivity(key) { this._frozenRows=null; this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
     setFilterHL(val)       { this._frozenRows=null; this.filterHL = this.filterHL===val ? null : val; this.page=1; },
     setSearch(val)         { this._frozenRows=null; this.search=val; this.page=1; },
-    countByStatus(val)     { return this.customers.filter(c => c.status===val).length; },
+    countByStatus(val) {
+      if (val === '__unset__') return this.customers.filter(c => !c.status).length;
+      return this.customers.filter(c => c.status === val).length;
+    },
     _activityAliases: {
       'ไม่สนใจแล้ว': ['ไม่สนใจแล้ว', 'ยังไม่สนใจ'],
     },
