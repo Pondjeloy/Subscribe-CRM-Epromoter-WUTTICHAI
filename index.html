@@ -96,6 +96,13 @@
   .dots span:nth-child(2){animation-delay:.15s} .dots span:nth-child(3){animation-delay:.3s}
   @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 
+
+  /* ── Quick View + Active filters ── */
+  .qv-btn-active { background:linear-gradient(135deg,var(--accent),#e23a54); border-color:transparent!important; box-shadow:0 8px 20px rgba(200,16,46,.22); }
+  .active-filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; background:var(--accent-tint); border:1px solid color-mix(in srgb,var(--accent) 15%,white); border-radius:12px; }
+  .active-filter-chip { display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 4px 0 10px; border-radius:999px; background:#fff; border:1px solid color-mix(in srgb,var(--accent) 20%,white); font-size:12px; font-weight:600; color:#334155; }
+  .active-filter-remove { width:20px; height:20px; border-radius:999px; border:none; background:transparent; color:#94a3b8; font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .active-filter-remove:hover { background:#fee2e2; color:var(--accent); }
   /* ── Login ── */
   .login-shell { min-height:100vh; display:grid; place-items:center; padding:24px;
     background: radial-gradient(circle at 18% 18%,rgba(200,16,46,.12),transparent 32%),
@@ -311,6 +318,27 @@
         </div>
       </section>
 
+      <!-- Quick Views -->
+      <section class="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">Quick View</span>
+          <span class="text-[11px] text-slate-400">กดครั้งเดียว · กดซ้ำเพื่อยกเลิก</span>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <template x-for="qv in quickViewDefs" :key="qv.id">
+            <button @click="applyQuickView(qv.id)"
+              class="qv-btn text-left px-4 py-3 rounded-xl border transition-all"
+              :class="activeQuickView===qv.id ? 'qv-btn-active' : 'bg-slate-50/80 border-slate-200/80 hover:border-slate-300 hover:bg-white'">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-lg leading-none" x-text="qv.emoji"></span>
+                <span class="text-[13.5px] font-bold" :class="activeQuickView===qv.id ? 'text-white' : 'text-slate-800'" x-text="qv.label"></span>
+              </div>
+              <div class="text-[11px] pl-7" :class="activeQuickView===qv.id ? 'text-white/75' : 'text-slate-400'" x-text="qv.desc"></div>
+            </button>
+          </template>
+        </div>
+      </section>
+
       <!-- ── List View ── -->
       <div class="space-y-4">
 
@@ -454,6 +482,18 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg>
             CSV
           </button>
+        </div>
+
+        <!-- Active filters -->
+        <div x-show="activeFilterTags.length" x-cloak class="active-filter-bar">
+          <span class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-500 shrink-0">กำลังกรอง</span>
+          <template x-for="(tag, ti) in activeFilterTags" :key="tag.id + '-' + ti">
+            <span class="active-filter-chip">
+              <span x-text="tag.label"></span>
+              <button type="button" @click="removeFilterTag(tag.id)" class="active-filter-remove" aria-label="ลบตัวกรอง">&times;</button>
+            </span>
+          </template>
+          <button type="button" @click="clearFilters()" class="text-[12px] font-semibold ml-auto shrink-0 hover:underline" style="color:var(--accent)">ล้างทั้งหมด</button>
         </div>
 
         <!-- Desktop table -->
@@ -826,7 +866,8 @@ function app() {
     customers: [], loading: false, loadErr: null, lastFetch: '',
 
     /* ── Filters ── */
-    search: '', filterSource: '', filterStatus: '', filterPayment: '', filterActivity: '', filterHL: null,
+    search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
+    activeQuickView: '',
     sortCol: 'id', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
 
@@ -846,6 +887,13 @@ function app() {
     highlights: (() => { try { return JSON.parse(localStorage.getItem(HL_KEY)||'{}'); } catch { return {}; } })(),
 
     /* ── Definitions ── */
+
+    quickViewDefs: [
+      {id:'unset',    emoji:'📋', label:'ยังไม่ทำ',     desc:'ยังไม่ระบุ Status'},
+      {id:'followup', emoji:'📞', label:'ต้องติดตาม',   desc:'Called · Follow up'},
+      {id:'hot',      emoji:'🔥', label:'มีโอกาสปิด',   desc:'มีสีสนใจขึ้นไป'},
+      {id:'docs',     emoji:'📄', label:'รอเอกสาร',     desc:'รอยื่นเอกสาร'},
+    ],
     activityOpts: [
       {label:'📵 ไม่รับสาย'},
       {label:'📵 ไม่รับสายมากกว่า 2 ครั้ง'},
@@ -1023,7 +1071,8 @@ function app() {
         (c.email||'').toLowerCase().includes(q)
       );
       if (this.filterSource)   list = list.filter(c => c.source === this.filterSource);
-      if (this.filterStatus === '__unset__') list = list.filter(c => !c.status);
+      if (this.filterStatusGroup?.length) list = list.filter(c => this.filterStatusGroup.includes(c.status));
+      else if (this.filterStatus === '__unset__') list = list.filter(c => !c.status);
       else if (this.filterStatus) list = list.filter(c => c.status === this.filterStatus);
       if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
@@ -1054,7 +1103,32 @@ function app() {
       for (let p=Math.max(1,cur-d); p<=Math.min(total,cur+d); p++) pages.push(p);
       return pages;
     },
-    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterPayment||this.filterActivity||this.filterHL!==null); },
+    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterStatusGroup?.length||this.filterPayment||this.filterActivity||this.filterHL!==null); },
+    get activeFilterTags() {
+      const tags = [];
+      const q = this.search.trim();
+      if (q) tags.push({ id:'search', label:'ค้นหา: ' + q });
+      if (this.filterSource) tags.push({ id:'source', label:'ที่มา: ' + this.srcShort(this.filterSource) });
+      if (this.filterStatusGroup?.length) tags.push({ id:'statusGroup', label:'Status: Called + Follow up' });
+      else if (this.filterStatus === '__unset__') tags.push({ id:'status', label:'Status: ไม่ระบุ' });
+      else if (this.filterStatus) tags.push({ id:'status', label:'Status: ' + this.statusLabel(this.filterStatus) });
+      if (this.filterPayment) {
+        const p = this.paymentFilterDefs.find(x => x.key === this.filterPayment);
+        tags.push({ id:'payment', label:'ชำระ: ' + (p?.label || this.filterPayment) });
+      }
+      if (this.filterActivity) {
+        const a = this.activityFilters.find(x => x.key === this.filterActivity);
+        const lbl = (a?.label || this.filterActivity).replace(/^[^\s]+\s/, '');
+        tags.push({ id:'activity', label:'บันทึก: ' + lbl });
+      }
+      if (this.filterHL === 'ranked') tags.push({ id:'hl', label:'สี: มีสีทั้งหมด' });
+      else if (this.filterHL !== null) {
+        const h = this.hlFilterDefs.find(x => x.value === this.filterHL);
+        tags.push({ id:'hl', label:'สี: ' + (h?.short || this.filterHL) });
+      }
+      return tags;
+    },
+
     get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>c.source===sd.key).length})); },
 
     /* ── Filter methods ── */
@@ -1073,13 +1147,36 @@ function app() {
       if (y >= 2500) y -= 543;
       return new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10), parseInt(m[4], 10), parseInt(m[5], 10)).getTime();
     },
-    toggleSource(key)      { this._frozenRows=null; this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
-    setFilterStatus(val)   { this._frozenRows=null; this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
-    setFilterPayment(key)  { this._frozenRows=null; this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
-    setFilterActivity(key) { this._frozenRows=null; this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
-    setFilterHL(val)       { this._frozenRows=null; this.filterHL = this.filterHL===val ? null : val; this.page=1; },
-    setSearch(val)         { this._frozenRows=null; this.search=val; this.page=1; },
+    _resetQuickView()      { this.activeQuickView=''; this.filterStatusGroup=null; },
+    applyQuickView(id) {
+      this._frozenRows=null;
+      if (this.activeQuickView===id) { this.clearFilters(); return; }
+      this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null;
+      this.filterPayment=''; this.filterActivity=''; this.filterHL=null;
+      this.activeQuickView=id;
+      if (id==='unset') this.filterStatus='__unset__';
+      else if (id==='followup') { this.filterStatusGroup=['Called','Follow up']; this.sortCol='lastNote'; this.sortDir='desc'; }
+      else if (id==='hot') { this.filterHL='ranked'; this.sortCol='lastNote'; this.sortDir='desc'; }
+      else if (id==='docs') this.filterActivity='รอยื่นเอกสาร';
+      this.page=1;
+    },
+    removeFilterTag(id) {
+      this._frozenRows=null; this._resetQuickView();
+      if (id==='search') this.search='';
+      else if (id==='source') this.filterSource='';
+      else if (id==='status' || id==='statusGroup') { this.filterStatus=''; this.filterStatusGroup=null; }
+      else if (id==='payment') this.filterPayment='';
+      else if (id==='activity') this.filterActivity='';
+      else if (id==='hl') this.filterHL=null;
+      this.page=1;
+    },
+    toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.activeQuickView=''; this.page=1; },
+    setFilterStatus(val)   { this._frozenRows=null; this._resetQuickView(); this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
+    setFilterPayment(key)  { this._frozenRows=null; this._resetQuickView(); this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
+    setFilterActivity(key) { this._frozenRows=null; this._resetQuickView(); this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
+    setFilterHL(val)       { this._frozenRows=null; this._resetQuickView(); this.filterHL = this.filterHL===val ? null : val; this.page=1; },
+    setSearch(val)         { this._frozenRows=null; this._resetQuickView(); this.search=val; this.page=1; },
     countByStatus(val) {
       if (val === '__unset__') return this.customers.filter(c => !c.status).length;
       return this.customers.filter(c => c.status === val).length;
