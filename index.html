@@ -1062,7 +1062,15 @@ function app() {
       else { this.sortCol = col; this.sortDir = col === 'lastNote' ? 'desc' : 'asc'; }
       this.page = 1;
     },
-    _noteTimestamp
+    _noteTimestamp(c) {
+      const d = c.parsedNotes?.[0]?.date;
+      if (!d) return 0;
+      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if (!m) return 0;
+      let y = parseInt(m[3], 10);
+      if (y >= 2500) y -= 543;
+      return new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10), parseInt(m[4], 10), parseInt(m[5], 10)).getTime();
+    },
     toggleSource(key)      { this._frozenRows=null; this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
     clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
