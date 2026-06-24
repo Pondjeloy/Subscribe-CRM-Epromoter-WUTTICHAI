@@ -111,37 +111,44 @@
     box-shadow: 0 14px 36px rgba(200,16,46,.22);
     transform: translateY(-2px);
   }
+  .source-card-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 420 / 401;
+    overflow: hidden;
+    border-radius: 18px;
+  }
   .source-card img {
     display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 416 / 401;
+    height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: top center;
   }
   .source-card-count {
     position: absolute;
-    right: 14px;
-    bottom: 14px;
+    right: 18px;
+    bottom: 22px;
     left: auto;
-    min-width: 36px;
-    height: 36px;
-    padding: 0 10px;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    z-index: 2;
+    padding: 0;
+    min-width: 0;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+    box-shadow: none;
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 800;
-    font-size: 18px;
+    font-size: 30px;
     line-height: 1;
-    color: #fff;
-    background: rgba(15,23,42,.72);
-    backdrop-filter: blur(8px);
-    box-shadow: 0 6px 18px rgba(15,23,42,.18);
+    color: #334155;
+    text-shadow: 0 1px 0 rgba(255,255,255,.85), 0 0 10px rgba(255,255,255,.65);
+    pointer-events: none;
   }
   .source-card.is-active .source-card-count {
-    background: linear-gradient(135deg, #c8102e, #e23a54);
+    color: var(--accent);
+    background: none;
   }
   .source-card-check {
     position: absolute;
@@ -371,8 +378,10 @@
               <button @click="toggleSource(sd.key)"
                 class="source-card text-left ring-1 ring-slate-200/80 hover:ring-slate-300 hover:shadow-md"
                 :class="filterSource===sd.key ? 'is-active ring-2 ring-[var(--accent)]' : ''">
-                <img :src="sd.img" :alt="sd.label" loading="lazy" decoding="async"/>
-                <span class="source-card-count tabular-nums" x-text="sd.count"></span>
+                <div class="source-card-media">
+                  <img :src="sd.img" :alt="sd.label" loading="lazy" decoding="async"/>
+                  <span class="source-card-count tabular-nums" x-text="sd.count"></span>
+                </div>
                 <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
               </button>
             </template>
