@@ -97,6 +97,66 @@
   @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 
 
+
+  /* ── Source channel cards ── */
+  .source-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #fff;
+    transition: transform .2s ease, box-shadow .2s ease, ring-color .2s ease;
+  }
+  .source-card:hover { transform: translateY(-2px); }
+  .source-card.is-active {
+    box-shadow: 0 14px 36px rgba(200,16,46,.22);
+    transform: translateY(-2px);
+  }
+  .source-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 416 / 348;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .source-card-count {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1;
+    color: #fff;
+    background: rgba(15,23,42,.72);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 6px 18px rgba(15,23,42,.18);
+  }
+  .source-card.is-active .source-card-count {
+    background: linear-gradient(135deg, #c8102e, #e23a54);
+  }
+  .source-card-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #c8102e, #e23a54);
+    box-shadow: 0 8px 20px rgba(200,16,46,.35);
+  }
   /* ── Quick View + Active filters ── */
   .qv-btn-active { background:linear-gradient(135deg,var(--accent),#e23a54); border-color:transparent!important; box-shadow:0 8px 20px rgba(200,16,46,.22); }
   .active-filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; background:var(--accent-tint); border:1px solid color-mix(in srgb,var(--accent) 15%,white); border-radius:12px; }
@@ -300,18 +360,19 @@
         </div>
 
         <!-- Source strip -->
-        <div class="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y divide-slate-100">
+        <div>
+          <div class="flex items-center justify-between mb-3 px-0.5">
+            <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">ช่องทาง Lead</div>
+            <div class="text-[11px] text-slate-400">กดเพื่อกรอง · กดซ้ำเพื่อยกเลิก</div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <template x-for="sd in sourceSummary" :key="sd.key">
               <button @click="toggleSource(sd.key)"
-                class="group relative text-left px-4 py-4 transition-colors"
-                :class="filterSource===sd.key ? 'bg-[var(--accent-tint)]' : 'hover:bg-slate-50'">
-                <span x-show="filterSource===sd.key" class="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style="background:var(--accent)"></span>
-                <div class="text-[10.5px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2" x-text="sd.label"></div>
-                <div class="font-display font-extrabold tabular-nums tracking-tight leading-none text-[30px]"
-                     :class="filterSource===sd.key ? 'text-[var(--accent)]' : 'text-slate-900'"
-                     x-text="sd.count"></div>
-                <div class="mt-2"><span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="sd.toneClass" x-text="sd.short"></span></div>
+                class="source-card text-left ring-1 ring-slate-200/80 hover:ring-slate-300 hover:shadow-md"
+                :class="filterSource===sd.key ? 'is-active ring-2 ring-[var(--accent)]' : ''">
+                <img :src="sd.img" :alt="sd.label" loading="lazy" decoding="async"/>
+                <span class="source-card-count tabular-nums" x-text="sd.count"></span>
+                <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
               </button>
             </template>
           </div>
@@ -967,12 +1028,12 @@ function app() {
     ],
 
     sourceDefs: [
-      {key:'Meta Densu',                   short:'Meta',    label:'Meta Densu',    toneClass:'tone-violet', barClass:'bg-violet-400'},
-      {key:'Meta Credit',                  short:'Meta CC', label:'Meta Credit',   toneClass:'tone-amber',  barClass:'bg-amber-400'},
-      {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400'},
-      {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500'},
-      {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400'},
-      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP Braner', toneClass:'tone-rose',   barClass:'bg-rose-400'},
+      {key:'Meta Densu',                   short:'Meta',    label:'Meta Densu',    toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png'},
+      {key:'Meta Credit',                  short:'Meta CC', label:'Meta Credit',   toneClass:'tone-amber',  barClass:'bg-amber-400', img:'assets/channels/meta-credit.png'},
+      {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
+      {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
+      {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
+      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP Braner', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png'},
     ],
 
     /* ── Init ── */
