@@ -1262,6 +1262,7 @@ function app() {
     },
     countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
     countByHL(val)         { return this.customers.filter(c => this.getHL(c) === val).length; },
+    countByHLRanked()      { return this.customers.filter(c => this.getHL(c) > 0).length; },
     _paymentType(channel) {
       const v = String(channel || '').toLowerCase().trim();
       if (!v) return '';
