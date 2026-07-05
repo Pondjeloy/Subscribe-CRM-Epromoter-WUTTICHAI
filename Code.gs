@@ -14,15 +14,14 @@
 //  หมายเหตุ: 'Lead Subscribe Lg.com' คืนกลับเป็นค่าเดิมแล้ว
 //  (รอบที่แล้วแก้ผิดชีตเพราะเข้าใจผิดว่าภาพที่ส่งมาคือชีตนี้)
 //
-//  [เพิ่มใหม่] 'POP UP Bannar' — ชีต lead จาก POP UP Banner (โครงสร้างใหม่)
-//  A=วันที่ B=ชื่อ C=เบอร์ D=ประเภทสินค้า E=สินค้า F=Sale Consultant
-//  G=สถานะ H=หมายเหตุ  (picCol=F/5 statusCol=G/6 notesCol=H/7)
-//
-//  [Sync ก.ค. 2569] Spreadsheet ใหม่ + ชื่อชีต Meta เป็น *July*
+//  [Sync ก.ค. 2569] Spreadsheet ใหม่
 //  https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
 //
-//  [Dedup ก.ค. 2569] รวมหลีดเบอร์ซ้ำ (Meta Densu July + Meta Credit July ฯลฯ)
-//  ไม่อ่านชีตมิถุนายน: Meta Densu / Meta Credit (ไม่มี July)
+//  [July ก.ค. 2569] ชีตใหม่เพิ่ม: Meta Densu July (คอลัมน์ A–O เหมือน Meta Densu เดิม)
+//  A=จังหวัด B=ประเภท C=ชำระ D=วันที่ลงทะเบียน E=เวลา F=ชื่อ G=เพศ
+//  H=อายุ/เบอร์สำรอง I=เบอร์/อีเมล J=อีเมล/รุ่น K–L=อาชีพ M=Status N=PIC O=Remark
+//  กรองเฉพาะแถวที่ D = ก.ค. 2569 · รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
+//  POP UP = Lead Subscribe POP UP Braner (มิ.ย. — ถูกต้องแล้ว)
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
@@ -30,7 +29,7 @@ var PROMOTER       = 'POND';
 
 var SHEET_NAMES = [
   'Meta Densu July','Meta Credit July','Lead Subscribe Lg.com',
-  'Lead LG Success','Lead Consult','POP UP Bannar'
+  'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner'
 ];
 
 // ── ทดสอบก่อน Deploy ครั้งแรก ──────────────────────────
@@ -75,53 +74,14 @@ function getSheetConfig(name) {
 
     'Meta Densu July': {
       picCol:13, statusCol:12, notesCol:14,
-      parse: function(row, disp) {
-        // H(7)=age/phone-fallback  I(8)=phone-or-email  J(9)=email-fallback
-        var hDisp = cleanDisplay(row[7], disp&&disp[7]);
-        var iVal  = clean(row[8]);
-        var jVal  = clean(row[9]);
-
-        // Email: first of I, J that contains @
-        var email = '';
-        if (iVal.indexOf('@') !== -1)      email = iVal;
-        else if (jVal.indexOf('@') !== -1) email = jVal;
-
-        // Phone: I first (if ≥9 digits, no @), else try H
-        function isPhone(v) {
-          return v.replace(/\D/g,'').length >= 9 && v.indexOf('@') === -1;
-        }
-        var phone = isPhone(iVal) ? iVal : (isPhone(hDisp) ? hDisp : '');
-
-        // Age: H(7) — calcAge returns '' if H turns out to be phone
-        var ageRaw = calcAge(row[7]);
-        var age = (String(ageRaw).replace(/\D/g,'').length >= 9) ? '' : ageRaw;
-
-        return {
-          name:           clean(row[5]),      // F
-          phone:          phone,
-          email:          email,
-          age:            age,
-          gender:         clean(row[6]),      // G
-          paymentChannel: clean(row[3]),
-          province:       clean(row[0]),
-          productType:    clean(row[1]),
-          lineId:         ''
-        };
-      }
+      julyDateCol:3,
+      parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
     'Meta Credit July': {
       picCol:12, statusCol:11, notesCol:13,
-      parse: function(row, disp) { return {
-        name:           clean(row[5]),                          // F
-        phone:          cleanDisplay(row[7], disp&&disp[7]),   // H
-        email:          clean(row[8]),                          // I
-        age:            calcAge(row[6]),                        // G
-        paymentChannel: clean(row[3]),
-        province:       clean(row[0]),
-        productType:    clean(row[1]),
-        lineId:         ''
-      };}
+      julyDateCol:3,
+      parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
     'Lead Subscribe Lg.com': {
@@ -169,20 +129,19 @@ function getSheetConfig(name) {
       };}
     },
 
-    'POP UP Bannar': {
-      picCol:5, statusCol:6, notesCol:7,
-      parse: function(row, disp) {
-        var type = clean(row[3]), product = clean(row[4]);
-        var productType = product ? (type ? type+' · '+product : product) : type;
+    'Lead Subscribe POP UP Braner': {
+      picCol:11, statusCol:10, notesCol:12,
+      parse: function(row) {
+        var first = clean(row[2]), last = clean(row[3]);
         return {
-          name:           clean(row[1]),                        // B
-          phone:          cleanDisplay(row[2], disp&&disp[2]),  // C
-          email:          '',
+          name:           (first+' '+last).trim(),
+          phone:          clean(row[5]),
+          email:          clean(row[4]),
           age:            '',
           paymentChannel: '',
-          province:       '',
-          productType:    productType,                          // D + E
-          lineId:         ''
+          province:       clean(row[7]),
+          productType:    clean(row[8]),
+          lineId:         clean(row[6])
         };
       }
     }
@@ -211,6 +170,8 @@ function getCustomers(promoter) {
       var row = data[i];
       if (row.length <= cfg.picCol) continue;
       if (!isPromoter(row[cfg.picCol], promoter)) continue;
+
+      if (cfg.julyDateCol !== undefined && !isJuly2026Row(row, cfg.julyDateCol, disp[i])) continue;
 
       var fields = cfg.parse(row, disp[i]);
       if (!fields.name && !fields.phone) continue;
@@ -374,14 +335,58 @@ function calcAge(val) {
   return clean(val);
 }
 
-// ── Dedup หลีดเบอร์ซ้ำ (July) ───────────────────────────
+// ── Meta July parse (A–O) ─────────────────────────────
+function parseMetaJulyRow(row, disp) {
+  var hDisp = cleanDisplay(row[7], disp&&disp[7]);
+  var iVal  = clean(row[8]);
+  var jVal  = clean(row[9]);
+  var email = '';
+  if (iVal.indexOf('@') !== -1)      email = iVal;
+  else if (jVal.indexOf('@') !== -1) email = jVal;
+  function isPhone(v) {
+    return v.replace(/\D/g,'').length >= 9 && v.indexOf('@') === -1;
+  }
+  var phone = isPhone(iVal) ? iVal : (isPhone(hDisp) ? hDisp : '');
+  var ageRaw = calcAge(row[7]);
+  var age = (String(ageRaw).replace(/\D/g,'').length >= 9) ? '' : ageRaw;
+  return {
+    name:           clean(row[5]),
+    phone:          phone,
+    email:          email,
+    age:            age,
+    gender:         clean(row[6]),
+    paymentChannel: clean(row[2]),
+    province:       clean(row[0]),
+    productType:    clean(row[1]),
+    lineId:         ''
+  };
+}
+
+function isJuly2026Row(row, dateCol, dispRow) {
+  var v = row[dateCol];
+  var dispVal = dispRow && dispRow[dateCol];
+  if (v === null || v === undefined || v === '') return false;
+  var d;
+  if (v instanceof Date) d = v;
+  else if (typeof v === 'number' && v > 1000) d = new Date(Math.round((v - 25569) * 86400 * 1000));
+  else {
+    var s = clean(dispVal || v);
+    var m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) {
+      var y = parseInt(m[3], 10);
+      if (y >= 2500) y -= 543;
+      d = new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10));
+    }
+  }
+  if (!d || isNaN(d.getTime())) return false;
+  return d.getFullYear() === 2026 && d.getMonth() === 6;
+}
+
+// ── Dedup เฉพาะ Meta Densu July + Meta Credit July ─────
+var META_PAIR = {'Meta Densu July':true, 'Meta Credit July':true};
 var SOURCE_PRIORITY = {
   'Meta Densu July': 1,
-  'Meta Credit July': 2,
-  'Lead Subscribe Lg.com': 3,
-  'Lead LG Success': 4,
-  'Lead Consult': 5,
-  'POP UP Bannar': 6
+  'Meta Credit July': 2
 };
 
 function phoneKey(phone) {
@@ -400,8 +405,8 @@ function pickPreferredCustomer(a, b) {
   return (a.row || 0) >= (b.row || 0) ? a : b;
 }
 
-function dedupeCustomers(list) {
-  var byPhone = {}, noPhone = [], out = [], id = 1, k, i, a;
+function dedupeMetaOnly(list) {
+  var byPhone = {}, noPhone = [], out = [], k, i, a;
   for (i = 0; i < list.length; i++) {
     var c = list[i];
     var key = phoneKey(c.phone);
@@ -414,9 +419,7 @@ function dedupeCustomers(list) {
     bucket.alts.push({source: loser.source, row: loser.row, status: loser.status});
   }
   for (k in byPhone) {
-    var b = byPhone[k];
-    var p = b.p;
-    p.id = id++;
+    var b = byPhone[k], p = b.p;
     if (b.alts.length) {
       p.altRows = b.alts;
       p.sourceMerged = p.source;
@@ -427,6 +430,16 @@ function dedupeCustomers(list) {
     }
     out.push(p);
   }
-  for (i = 0; i < noPhone.length; i++) { noPhone[i].id = id++; out.push(noPhone[i]); }
-  return out;
+  return out.concat(noPhone);
+}
+
+function dedupeCustomers(list) {
+  var meta = [], rest = [], i, id = 1;
+  for (i = 0; i < list.length; i++) {
+    if (META_PAIR[list[i].source]) meta.push(list[i]);
+    else rest.push(list[i]);
+  }
+  var merged = dedupeMetaOnly(meta).concat(rest);
+  for (i = 0; i < merged.length; i++) merged[i].id = id++;
+  return merged;
 }

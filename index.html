@@ -916,12 +916,13 @@
 </div>
 
 <script>
-const CRM_BUILD       = '5 ก.ค. 69 v8';
+const CRM_BUILD       = '5 ก.ค. 69 v9';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v8';
-const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Credit July':2,'Lead Subscribe Lg.com':3,'Lead LG Success':4,'Lead Consult':5,'POP UP Bannar':6};
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v9';
+const META_PAIR         = {'Meta Densu July':true,'Meta Credit July':true};
+const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Credit July':2};
 function normalizeSource(src) { return src || ''; }
 function phoneKey(phone) {
   let d = String(phone||'').replace(/\D/g,'');
@@ -936,7 +937,7 @@ function pickPreferredCustomer(a, b) {
   if (sa !== sb) return sa > sb ? a : b;
   return (a.row||0) >= (b.row||0) ? a : b;
 }
-function dedupeCustomersByPhone(list) {
+function dedupeMetaOnly(list) {
   const byPhone = new Map(), noPhone = [], out = [];
   for (const c of (list||[])) {
     const key = phoneKey(c.phone);
@@ -948,10 +949,8 @@ function dedupeCustomersByPhone(list) {
     bucket.p = {...winner};
     bucket.alts.push({source:loser.source, row:loser.row, status:loser.status});
   }
-  let id = 1;
   for (const bucket of byPhone.values()) {
     const p = bucket.p;
-    p.id = id++;
     if (bucket.alts.length) {
       p.altRows = bucket.alts;
       p.sourceMerged = p.source;
@@ -961,8 +960,13 @@ function dedupeCustomersByPhone(list) {
     }
     out.push(p);
   }
-  for (const c of noPhone) { c.id = id++; out.push(c); }
-  return out;
+  return out.concat(noPhone);
+}
+function dedupeCustomersByPhone(list) {
+  const meta = [], rest = [];
+  for (const c of (list||[])) (META_PAIR[c.source] ? meta : rest).push(c);
+  let id = 1;
+  return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
 const HL_KEY            = 'lgDashHL_wuttichai';
 const PROMOTER          = 'WUTTICHAI';
@@ -1085,12 +1089,12 @@ function app() {
     ],
 
     sourceDefs: [
-      {key:'Meta Densu July',             short:'Meta',    label:'Meta Densu July', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png'},
+      {key:'Meta Densu July',             short:'Meta',    label:'Meta Densu July (ใหม่)', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png'},
       {key:'Meta Credit July',            short:'Meta CC', label:'Meta Credit July', toneClass:'tone-amber',  barClass:'bg-amber-400', img:'assets/channels/meta-credit.png'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
-      {key:'POP UP Bannar',                short:'POP UP',  label:'POP UP Banner', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png'},
+      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP Braner', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png'},
     ],
 
     /* ── Init ── */
