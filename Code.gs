@@ -20,7 +20,8 @@
 //  [July ก.ค. 2569] ชีตใหม่เพิ่ม: Meta Densu July (คอลัมน์ A–O เหมือน Meta Densu เดิม)
 //  A=จังหวัด B=ประเภท C=ชำระ D=วันที่ลงทะเบียน E=เวลา F=ชื่อ G=เพศ
 //  H=อายุ/เบอร์สำรอง I=เบอร์/อีเมล J=อีเมล/รุ่น K–L=อาชีพ M=Status N=PIC O=Remark
-//  กรองเฉพาะแถวที่ D = ก.ค. 2569 · รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
+//  อ่านทุกแถวในชีต Meta Densu July (ไม่กรองวันที่ D — ชื่อชีตคือ July แล้ว)
+//  รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
 //  POP UP = Lead Subscribe POP UP Braner (มิ.ย. — ถูกต้องแล้ว)
 // ════════════════════════════════════════════════════════
 
@@ -74,13 +75,11 @@ function getSheetConfig(name) {
 
     'Meta Densu July': {
       picCol:13, statusCol:12, notesCol:14,
-      julyDateCol:3,
       parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
     'Meta Credit July': {
       picCol:12, statusCol:11, notesCol:13,
-      julyDateCol:3,
       parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
@@ -170,8 +169,6 @@ function getCustomers(promoter) {
       var row = data[i];
       if (row.length <= cfg.picCol) continue;
       if (!isPromoter(row[cfg.picCol], promoter)) continue;
-
-      if (cfg.julyDateCol !== undefined && !isJuly2026Row(row, cfg.julyDateCol, disp[i])) continue;
 
       var fields = cfg.parse(row, disp[i]);
       if (!fields.name && !fields.phone) continue;
