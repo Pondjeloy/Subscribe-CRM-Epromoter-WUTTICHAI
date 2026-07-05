@@ -20,6 +20,9 @@
 //
 //  [Sync ก.ค. 2569] Spreadsheet ใหม่ + ชื่อชีต Meta เป็น *July*
 //  https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
+//
+//  [Dedup ก.ค. 2569] รวมหลีดเบอร์ซ้ำ (Meta Densu July + Meta Credit July ฯลฯ)
+//  ไม่อ่านชีตมิถุนายน: Meta Densu / Meta Credit (ไม่มี July)
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
@@ -240,7 +243,8 @@ function getCustomers(promoter) {
       all.push(cust);
     }
   }
-  return { success:true, count:all.length, data:all };
+  var deduped = dedupeCustomers(all);
+  return { success:true, count:deduped.length, rawCount:all.length, data:deduped };
 }
 
 // ── updateStatus ────────────────────────────────────────
@@ -386,4 +390,62 @@ function calcAge(val) {
     if (age>0 && age<120) return age;
   }
   return clean(val);
+}
+
+// ── Dedup หลีดเบอร์ซ้ำ (July) ───────────────────────────
+var SOURCE_PRIORITY = {
+  'Meta Densu July': 1,
+  'Meta Credit July': 2,
+  'Lead Subscribe Lg.com': 3,
+  'Lead LG Success': 4,
+  'Lead Consult': 5,
+  'POP UP Bannar': 6,
+  'Lead Subscribe POP UP Braner': 7
+};
+
+function phoneKey(phone) {
+  var d = clean(phone).replace(/\D/g, '');
+  if (d.length >= 11 && d.indexOf('66') === 0) d = '0' + d.slice(2);
+  if (d.length === 9) d = '0' + d;
+  return d.length >= 9 ? d : '';
+}
+
+function pickPreferredCustomer(a, b) {
+  var pa = SOURCE_PRIORITY[a.source] || 50;
+  var pb = SOURCE_PRIORITY[b.source] || 50;
+  if (pa !== pb) return pa < pb ? a : b;
+  var sa = clean(a.status).length, sb = clean(b.status).length;
+  if (sa !== sb) return sa > sb ? a : b;
+  return (a.row || 0) >= (b.row || 0) ? a : b;
+}
+
+function dedupeCustomers(list) {
+  var byPhone = {}, noPhone = [], out = [], id = 1, k, i, a;
+  for (i = 0; i < list.length; i++) {
+    var c = list[i];
+    var key = phoneKey(c.phone);
+    if (!key) { noPhone.push(c); continue; }
+    if (!byPhone[key]) { byPhone[key] = {p: c, alts: []}; continue; }
+    var bucket = byPhone[key];
+    var winner = pickPreferredCustomer(bucket.p, c);
+    var loser  = winner === bucket.p ? c : bucket.p;
+    bucket.p = winner;
+    bucket.alts.push({source: loser.source, row: loser.row, status: loser.status});
+  }
+  for (k in byPhone) {
+    var b = byPhone[k];
+    var p = b.p;
+    p.id = id++;
+    if (b.alts.length) {
+      p.altRows = b.alts;
+      p.sourceMerged = p.source;
+      for (a = 0; a < b.alts.length; a++) {
+        if (p.sourceMerged.indexOf(b.alts[a].source) === -1)
+          p.sourceMerged += ' · ' + b.alts[a].source;
+      }
+    }
+    out.push(p);
+  }
+  for (i = 0; i < noPhone.length; i++) { noPhone[i].id = id++; out.push(noPhone[i]); }
+  return out;
 }

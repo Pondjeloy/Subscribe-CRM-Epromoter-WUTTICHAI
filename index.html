@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI</title>
+<title>LG Subscribe CRM · POND</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -218,7 +218,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต 19 มิ.ย. 69 v6</div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต 19 มิ.ย. 69 v6</div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -285,7 +285,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v6</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v6</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -299,7 +299,7 @@
     <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
-    <a href="lg_subscribe_calculator_.html" target="_blank" class="btn-text">
+    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Jul2026/" target="_blank" class="btn-text">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 15h.01M12 15h.01M15.5 15h.01"/></svg>
       คำนวณ
     </a>
@@ -349,7 +349,7 @@
           <div class="flex items-start justify-between mb-3">
             <div>
               <div class="text-[11px] font-bold uppercase tracking-[.15em] text-slate-400">ทั้งหมด</div>
-              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ WUTTICHAI</div>
+              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ POND</div>
             </div>
             <button @click="clearFilters()"
               class="text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
@@ -609,7 +609,7 @@
                       </span>
                     </span>
                   </th>
-<th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 min-w-[200px] cursor-pointer select-none" @click="setSort('lastNote')">
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 min-w-[200px] cursor-pointer select-none" @click="setSort('lastNote')">
                     <span class="inline-flex items-center gap-1">บันทึกล่าสุด
                       <span class="inline-flex flex-col -space-y-1">
                         <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='lastNote'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
@@ -631,7 +631,7 @@
                       :class="[selectedCustomer&&selectedCustomer.id===c.id?'!bg-[var(--accent-tint)]':'', hlTrClass(c)]">
                     <td class="pl-5 pr-2 h-[34px] text-[12px] tabular-nums text-slate-400 font-medium" x-text="c.id"></td>
                     <td class="px-3">
-                      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap" :class="srcToneClass(c.source)" x-text="srcShort(c.source)"></span>
+                      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                     </td>
                     <td class="px-3 max-w-[300px]">
                       <div class="flex items-center gap-2 min-w-0">
@@ -696,7 +696,7 @@
                 </span>
               </div>
               <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="srcToneClass(c.source)" x-text="srcShort(c.source)"></span>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                 <span class="text-[12px] font-semibold text-slate-700 tabular-nums" x-text="fmtPhone(c.phone)"></span>
                 <span x-show="c.province" class="text-[11.5px] text-slate-400" x-text="'📍'+c.province"></span>
               </div>
@@ -778,7 +778,10 @@
             </button>
           </div>
           <div class="flex items-center gap-2 mt-3 flex-wrap">
-            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold" :class="srcToneClass(selectedCustomer.source)" x-text="srcLabel(selectedCustomer.source)"></span>
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold" :class="srcToneClass(selectedCustomer.source)" x-text="displaySource(selectedCustomer)"></span>
+            <div x-show="selectedCustomer?.altRows?.length" class="mt-1 text-[12px] text-amber-700 bg-amber-50 rounded-lg px-2.5 py-1.5">
+              รวมหลีดเบอร์ซ้ำจาก: <span x-text="selectedCustomer.sourceMerged"></span>
+            </div>
             <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold" :class="statusToneClass(selectedCustomer.status)">
               <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(selectedCustomer.status)"></span>
               <span x-text="statusLabel(selectedCustomer.status)||'(ยังไม่ระบุ)'"></span>
@@ -913,15 +916,56 @@
 </div>
 
 <script>
-const CRM_BUILD       = '5 ก.ค. 69 v7';
+const CRM_BUILD       = '5 ก.ค. 69 v8';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v7';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v8';
+const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Credit July':2,'Lead Subscribe Lg.com':3,'Lead LG Success':4,'Lead Consult':5,'POP UP Bannar':6,'Lead Subscribe POP UP Braner':7};
+function normalizeSource(src) { return src || ''; }
+function phoneKey(phone) {
+  let d = String(phone||'').replace(/\D/g,'');
+  if (d.length >= 11 && d.startsWith('66')) d = '0' + d.slice(2);
+  if (d.length === 9) d = '0' + d;
+  return d.length >= 9 ? d : '';
+}
+function pickPreferredCustomer(a, b) {
+  const pa = SOURCE_PRIORITY[a.source] || 50, pb = SOURCE_PRIORITY[b.source] || 50;
+  if (pa !== pb) return pa < pb ? a : b;
+  const sa = String(a.status||'').length, sb = String(b.status||'').length;
+  if (sa !== sb) return sa > sb ? a : b;
+  return (a.row||0) >= (b.row||0) ? a : b;
+}
+function dedupeCustomersByPhone(list) {
+  const byPhone = new Map(), noPhone = [], out = [];
+  for (const c of (list||[])) {
+    const key = phoneKey(c.phone);
+    if (!key) { noPhone.push({...c}); continue; }
+    if (!byPhone.has(key)) { byPhone.set(key, {p:{...c}, alts:[]}); continue; }
+    const bucket = byPhone.get(key);
+    const winner = pickPreferredCustomer(bucket.p, c);
+    const loser = winner === bucket.p ? c : bucket.p;
+    bucket.p = {...winner};
+    bucket.alts.push({source:loser.source, row:loser.row, status:loser.status});
+  }
+  let id = 1;
+  for (const bucket of byPhone.values()) {
+    const p = bucket.p;
+    p.id = id++;
+    if (bucket.alts.length) {
+      p.altRows = bucket.alts;
+      p.sourceMerged = p.source;
+      for (const alt of bucket.alts) {
+        if (!p.sourceMerged.includes(alt.source)) p.sourceMerged += ' · ' + alt.source;
+      }
+    }
+    out.push(p);
+  }
+  for (const c of noPhone) { c.id = id++; out.push(c); }
+  return out;
+}
 const HL_KEY            = 'lgDashHL_wuttichai';
 const PROMOTER          = 'WUTTICHAI';
-const SOURCE_ALIASES    = {'Meta Densu':'Meta Densu July','Meta Credit':'Meta Credit July'};
-function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
 function app() {
@@ -1117,7 +1161,7 @@ function app() {
       try {
         const json = await jsonpCall(this.apiUrl, {action:'getCustomers', promoter:PROMOTER});
         if (!json.success) throw new Error(json.error||'API error');
-        const raw = json.data || [];
+        const raw = dedupeCustomersByPhone(json.data || []);
         this.customers = raw.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
         this._frozenRows = null; this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
         const n = new Date();
@@ -1131,7 +1175,7 @@ function app() {
     _parseNotes(s) {
       if (!s?.trim()) return [];
       return s.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(line => {
-        const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{4})(?:\s+\d{2}:\d{2})?\s*[—\-]\s*([\s\S]+)$/);
+        const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{2}:\d{2})\s*[—\-]\s*([\s\S]+)$/);
         return m ? {date:m[1], text:m[2].trim()} : {date:'', text:line};
       }).reverse();
     },
@@ -1145,7 +1189,7 @@ function app() {
         (c.phone||'').includes(q) ||
         (c.email||'').toLowerCase().includes(q)
       );
-      if (this.filterSource)   list = list.filter(c => normalizeSource(c.source) === this.filterSource);
+      if (this.filterSource)   list = list.filter(c => this.customerMatchesSource(c, this.filterSource));
       if (this.filterStatusGroup?.length) list = list.filter(c => this.filterStatusGroup.includes(c.status));
       else if (this.filterStatus === '__unset__') list = list.filter(c => !c.status);
       else if (this.filterStatus) list = list.filter(c => c.status === this.filterStatus);
@@ -1204,7 +1248,7 @@ function app() {
       return tags;
     },
 
-    get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>normalizeSource(c.source)===sd.key).length})); },
+    get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>this.customerMatchesSource(c, sd.key)).length})); },
 
     /* ── Filter methods ── */
     setSort(col) {
@@ -1291,6 +1335,17 @@ function app() {
       return {'':'— ยังไม่ระบุ','Called':'Called','Follow up':'Follow up','Unqualified':'Unqualified',
               'Called buy denied':'Called but denied','No Credit Card':'No Credit Card','Purchased':'Purchased'}[s] ?? (s||'— ยังไม่ระบุ');
     },
+    customerMatchesSource(c, key) {
+      if (!c || !key) return false;
+      if (c.source === key) return true;
+      if ((c.sourceMerged||'').includes(key)) return true;
+      return (c.altRows||[]).some(r => r.source === key);
+    },
+    displaySource(c) {
+      if (!c) return '—';
+      if (c.sourceMerged) return c.sourceMerged.split(' · ').map(s => this.srcShort(s)).join(' + ');
+      return this.srcShort(c.source);
+    },
     srcToneClass(src) { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.toneClass:'tone-slate'; },
     srcShort(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.short:normalizeSource(src)||src; },
     srcLabel(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.label:normalizeSource(src)||src; },
@@ -1340,8 +1395,11 @@ function app() {
       this._frozenRows = [...this.paginated];
       this.savingStatus = true; this.saveMsg = '';
       try {
-        const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, status:this.pendingStatus, promoter:PROMOTER});
-        if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
+        const targets = [{source:this.selectedCustomer.source, row:this.selectedCustomer.row}, ...(this.selectedCustomer.altRows||[])];
+        for (const t of targets) {
+          const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER});
+          if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
+        }
         const ns = this.pendingStatus;
         this.selectedCustomer.status = ns;
         const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
@@ -1417,7 +1475,8 @@ function app() {
     async addNote() {
       const text = this.newNote.trim(); if (!text) return;
       const now = new Date();
-      const date = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const date = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})+' '
+                  +String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
       this.newNote = '';
       await this._syncNote(date+' — '+text);
     },
@@ -1497,7 +1556,7 @@ function app() {
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href = url; a.download = 'LGSubscribe_WUTTICHAI_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.href = url; a.download = 'LGSubscribe_POND_'+new Date().toISOString().slice(0,10)+'.csv';
       a.click(); URL.revokeObjectURL(url);
     },
   };
