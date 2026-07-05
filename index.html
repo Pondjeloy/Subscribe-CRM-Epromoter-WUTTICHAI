@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · POND</title>
+<title>LG Subscribe CRM · POND · v9</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -218,7 +218,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต 19 มิ.ย. 69 v6</div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต <span x-text="crmBuild"></span></div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -285,7 +285,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold">19 มิ.ย. 69 v6</span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -974,6 +974,7 @@ const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
 function app() {
   return {
+    crmBuild: CRM_BUILD,
     /* ── Auth ── */
     isLoggedIn: localStorage.getItem(LOGIN_SESSION_KEY) === 'yes',
     loginPw: '', loginErr: '',
@@ -1099,6 +1100,12 @@ function app() {
 
     /* ── Init ── */
     init() {
+      const verKey = 'lgCrmBuildVer';
+      if (localStorage.getItem(verKey) !== CRM_BUILD) {
+        localStorage.removeItem(CACHE_KEY);
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8'].forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(verKey, CRM_BUILD);
+      }
       if (this.isLoggedIn && this.apiUrl) {
         if (!this._loadCache()) this.fetchData();
       }
