@@ -30,8 +30,7 @@ var PROMOTER       = 'POND';
 
 var SHEET_NAMES = [
   'Meta Densu July','Meta Credit July','Lead Subscribe Lg.com',
-  'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner',
-  'POP UP Bannar'
+  'Lead LG Success','Lead Consult','POP UP Bannar'
 ];
 
 // ── ทดสอบก่อน Deploy ครั้งแรก ──────────────────────────
@@ -168,23 +167,6 @@ function getSheetConfig(name) {
         productType:    clean(row[9]),
         lineId:         clean(row[7])
       };}
-    },
-
-    'Lead Subscribe POP UP Braner': {
-      picCol:11, statusCol:10, notesCol:12,
-      parse: function(row) {
-        var first = clean(row[2]), last = clean(row[3]);
-        return {
-          name:           (first+' '+last).trim(),
-          phone:          clean(row[5]),
-          email:          clean(row[4]),
-          age:            '',
-          paymentChannel: '',
-          province:       clean(row[7]),
-          productType:    clean(row[8]),
-          lineId:         clean(row[6])
-        };
-      }
     },
 
     'POP UP Bannar': {
@@ -399,8 +381,7 @@ var SOURCE_PRIORITY = {
   'Lead Subscribe Lg.com': 3,
   'Lead LG Success': 4,
   'Lead Consult': 5,
-  'POP UP Bannar': 6,
-  'Lead Subscribe POP UP Braner': 7
+  'POP UP Bannar': 6
 };
 
 function phoneKey(phone) {
