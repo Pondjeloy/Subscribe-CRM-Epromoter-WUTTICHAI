@@ -17,9 +17,9 @@
 //  [Sync ก.ค. 2569] Spreadsheet ใหม่
 //  https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
 //
-//  [July ก.ค. 2569] ชีตใหม่เพิ่ม: Meta Densu July (คอลัมน์ A–O เหมือน Meta Densu เดิม)
-//  A=จังหวัด B=ประเภท C=ชำระ D=วันที่ลงทะเบียน E=เวลา F=ชื่อ G=เพศ
-//  H=อายุ/เบอร์สำรอง I=เบอร์/อีเมล J=อีเมล/รุ่น K–L=อาชีพ M=Status N=PIC O=Remark
+//  [July ก.ค. 2569] Meta Densu July — เลื่อนคอลัมน์ท้าย +1 จาก Meta Densu เดิม
+//  Meta Densu เดิม: M=Status N=PIC(Epromoter) O=Remark
+//  Meta Densu July:  N=Status O=PIC(Epromoter) P=Remark  (picCol=14)
 //  อ่านทุกแถวในชีต Meta Densu July (ไม่กรองวันที่ D — ชื่อชีตคือ July แล้ว)
 //  รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
 //  POP UP = Lead Subscribe POP UP Braner (มิ.ย. — ถูกต้องแล้ว)
@@ -74,7 +74,7 @@ function getSheetConfig(name) {
   var cfg = {
 
     'Meta Densu July': {
-      picCol:13, statusCol:12, notesCol:14,
+      picCol:14, statusCol:13, notesCol:15,
       parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
