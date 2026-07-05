@@ -1,5 +1,7 @@
+Google Sheet (July 2026):
+https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI/edit
+
+Apps Script Web App:
 https://script.google.com/macros/s/AKfycbzOd5x11Wpm6AK_ImHlZZvsGQUwKTOSYS1uFDBJNNZe9WLCOYEPCKkNaajuw-fSUBYA/exec
-
-
 
 https://script.google.com/macros/s/AKfycby2LqcJQFN4vEyrblxINpnLAwvitsi28izRmbn65cZFXTsx4lw6k1P4yFanVokkXAUC/exec

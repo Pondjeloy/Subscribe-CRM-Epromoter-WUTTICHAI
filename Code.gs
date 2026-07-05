@@ -13,10 +13,23 @@
 //
 //  หมายเหตุ: 'Lead Subscribe Lg.com' คืนกลับเป็นค่าเดิมแล้ว
 //  (รอบที่แล้วแก้ผิดชีตเพราะเข้าใจผิดว่าภาพที่ส่งมาคือชีตนี้)
+//
+//  [เพิ่มใหม่] 'POP UP Bannar' — ชีต lead จาก POP UP Banner (โครงสร้างใหม่)
+//  A=วันที่ B=ชื่อ C=เบอร์ D=ประเภทสินค้า E=สินค้า F=Sale Consultant
+//  G=สถานะ H=หมายเหตุ  (picCol=F/5 statusCol=G/6 notesCol=H/7)
+//
+//  [Sync ก.ค. 2569] Spreadsheet ใหม่ + ชื่อชีต Meta เป็น *July*
+//  https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
 // ════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = '13rWPSzpyfoEFVyMLgcIHRG9f_ODpo26mYQdvKsEJWns';
+var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
 var PROMOTER       = 'POND';
+
+var SHEET_NAMES = [
+  'Meta Densu July','Meta Credit July','Lead Subscribe Lg.com',
+  'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner',
+  'POP UP Bannar'
+];
 
 // ── ทดสอบก่อน Deploy ครั้งแรก ──────────────────────────
 function testConnection() {
@@ -58,7 +71,7 @@ function doGet(e) {
 function getSheetConfig(name) {
   var cfg = {
 
-    'Meta Densu': {
+    'Meta Densu July': {
       picCol:13, statusCol:12, notesCol:14,
       parse: function(row, disp) {
         // H(7)=age/phone-fallback  I(8)=phone-or-email  J(9)=email-fallback
@@ -95,7 +108,7 @@ function getSheetConfig(name) {
       }
     },
 
-    'Meta Credit': {
+    'Meta Credit July': {
       picCol:12, statusCol:11, notesCol:13,
       parse: function(row, disp) { return {
         name:           clean(row[5]),                          // F
@@ -169,6 +182,24 @@ function getSheetConfig(name) {
           lineId:         clean(row[6])
         };
       }
+    },
+
+    'POP UP Bannar': {
+      picCol:5, statusCol:6, notesCol:7,
+      parse: function(row, disp) {
+        var type = clean(row[3]), product = clean(row[4]);
+        var productType = product ? (type ? type+' · '+product : product) : type;
+        return {
+          name:           clean(row[1]),                        // B
+          phone:          cleanDisplay(row[2], disp&&disp[2]),  // C
+          email:          '',
+          age:            '',
+          paymentChannel: '',
+          province:       '',
+          productType:    productType,                          // D + E
+          lineId:         ''
+        };
+      }
     }
   };
   return cfg[name] || null;
@@ -177,10 +208,7 @@ function getSheetConfig(name) {
 // ── getCustomers ────────────────────────────────────────
 function getCustomers(promoter) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheetNames = [
-    'Meta Densu','Meta Credit','Lead Subscribe Lg.com',
-    'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner'
-  ];
+  var sheetNames = SHEET_NAMES;
   var all = [], idNum = 1;
 
   for (var s = 0; s < sheetNames.length; s++) {
@@ -266,10 +294,7 @@ function updateNotes(sheetName, rowNum, notes) {
 // ── debugSheets ─────────────────────────────────────────
 function debugSheets(promoter) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheetNames = [
-    'Meta Densu','Meta Credit','Lead Subscribe Lg.com',
-    'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner'
-  ];
+  var sheetNames = SHEET_NAMES;
   var report = [];
   sheetNames.forEach(function(sName) {
     var cfg   = getSheetConfig(sName);
@@ -293,8 +318,7 @@ function debugSheets(promoter) {
 function getHeaders() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var result = {};
-  ['Meta Densu','Meta Credit','Lead Subscribe Lg.com',
-   'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner'].forEach(function(n) {
+  SHEET_NAMES.forEach(function(n) {
     var sheet = ss.getSheetByName(n);
     if (!sheet) { result[n]='ไม่พบ Sheet'; return; }
     result[n] = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0]
