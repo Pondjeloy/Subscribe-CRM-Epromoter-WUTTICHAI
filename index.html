@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · POND · v10</title>
+<title>LG Subscribe CRM · WUTTICHAI · v11</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -218,7 +218,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต <span x-text="crmBuild"></span></div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต <span x-text="crmBuild"></span></div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -285,7 +285,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -321,6 +321,26 @@
   </div>
 
   <div x-show="apiUrl">
+
+    <!-- Test mode banner -->
+    <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
+      <b>🧪 โหมดทดสอบ v11</b> — ชีตกรกฎาคม · Meta = logic ก.ค. · หลีดอื่น = mapping มิ.ย. · <span class="text-amber-700">ยังไม่ deploy GitHub</span>
+      <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
+        รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
+        <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
+      </span>
+      <div x-show="sourceDebugLines.length" class="mt-2 flex flex-wrap gap-1.5">
+        <template x-for="line in sourceDebugLines" :key="line.key">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+            :class="line.found ? 'bg-white/80 text-amber-900 ring-1 ring-amber-200' : 'bg-rose-100 text-rose-700 ring-1 ring-rose-200'">
+            <span x-text="line.short"></span>
+            <span class="tabular-nums" x-text="line.api"></span>
+            <span x-show="!line.found" class="text-[10px]">ไม่พบชีต</span>
+          </span>
+        </template>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div x-show="loading" class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-20 text-center">
       <div class="dots mb-3"><span></span><span></span><span></span></div>
@@ -349,7 +369,7 @@
           <div class="flex items-start justify-between mb-3">
             <div>
               <div class="text-[11px] font-bold uppercase tracking-[.15em] text-slate-400">ทั้งหมด</div>
-              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ POND</div>
+              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ WUTTICHAI</div>
             </div>
             <button @click="clearFilters()"
               class="text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
@@ -386,6 +406,20 @@
                 <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
               </button>
             </template>
+          </div>
+          <!-- Meta column legend -->
+          <div x-show="isMetaFilterActive() && showMetaLegend"
+            class="mt-3 rounded-xl bg-violet-50 ring-1 ring-violet-200/80 px-4 py-3 text-[12px] text-violet-900 leading-relaxed">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="font-bold text-[11px] uppercase tracking-[.1em] text-violet-700" x-text="metaLegendTitle"></div>
+              <button type="button" @click="showMetaLegend=false"
+                class="text-[11px] font-semibold text-violet-600 hover:underline shrink-0">ซ่อนคำอธิบาย</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1">
+              <template x-for="item in activeMetaColumnLegend" :key="item.col">
+                <div><span class="font-bold tabular-nums" x-text="item.col"></span> = <span x-text="item.label"></span></div>
+              </template>
+            </div>
           </div>
         </div>
       </section>
@@ -766,7 +800,7 @@
                 <div class="text-[12px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
                   <span x-text="'#'+selectedCustomer.id"></span>
                   <span class="text-slate-300" x-show="selectedCustomer.province">·</span>
-                  <span x-show="selectedCustomer.province" x-text="'📍 '+selectedCustomer.province"></span>
+                  <span x-show="selectedCustomer.province" x-text="'📍 '+selectedCustomer.province+(isMetaSource(selectedCustomer.source)?' (C)':'')"></span>
                   <span x-show="selectedCustomer.age" x-text="selectedCustomer.age+' ปี'"></span>
                   <span class="text-slate-300" x-show="selectedCustomer.row">·</span>
                   <span class="text-[11px]" x-show="selectedCustomer.row" x-text="'แถว '+selectedCustomer.row"></span>
@@ -826,12 +860,28 @@
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.lineId"></div>
             </div>
             <div x-show="selectedCustomer.productType">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า</div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า <span x-show="isMetaSource(selectedCustomer.source)" class="normal-case font-semibold text-slate-300">(E)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.productType"></div>
             </div>
             <div x-show="selectedCustomer.paymentChannel">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน</div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300">(A)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
+            </div>
+            <div x-show="isMetaSource(selectedCustomer.source) && selectedCustomer.convenientDate">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300">(F)</span></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.convenientDate"></div>
+            </div>
+            <div x-show="isMetaSource(selectedCustomer.source) && selectedCustomer.contactTime">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300">(G)</span></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.contactTime"></div>
+            </div>
+            <div x-show="isMetaSource(selectedCustomer.source)" class="rounded-xl bg-violet-50 ring-1 ring-violet-100 px-3 py-2.5">
+              <div class="text-[10px] font-bold uppercase tracking-[.1em] text-violet-600 mb-1.5" x-text="normalizeSource(selectedCustomer.source)==='Meta Densu' ? 'คอลัมน์ชีต Meta Densu (เก่า)' : 'คอลัมน์ชีต Meta Densu July'"></div>
+              <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-violet-800">
+                <template x-for="item in (normalizeSource(selectedCustomer.source)==='Meta Densu' ? metaLegacyColumnLegend : metaColumnLegend)" :key="'d-'+item.col">
+                  <div><b x-text="item.col"></b> <span x-text="item.label"></span></div>
+                </template>
+              </div>
             </div>
           </div>
 
@@ -916,14 +966,14 @@
 </div>
 
 <script>
-const CRM_BUILD       = '6 ก.ค. 69 v10';
+const CRM_BUILD       = '6 ก.ค. 69 v11';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v10';
-const META_PAIR         = {'Meta Densu July':true,'Meta Credit July':true};
-const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Credit July':2};
-const SOURCE_ALIASES    = {'Meta Densu':'Meta Densu July','Meta Credit':'Meta Credit July'};
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v11';
+const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
+const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
+const SOURCE_ALIASES    = {};
 function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
 function phoneKey(phone) {
   let d = String(phone||'').replace(/\D/g,'');
@@ -987,7 +1037,9 @@ function app() {
     testLoading: false, testMsg: '', testOk: false,
 
     /* ── Data ── */
+    testMode: false,
     customers: [], loading: false, loadErr: null, lastFetch: '',
+    sourceCounts: null, sheetsFound: null, rawCount: null,
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
@@ -1090,9 +1142,37 @@ function app() {
       {value:0, short:'ไม่ระบุ',   hlClass:'',     label:'ไม่มีสี'},
     ],
 
+    showMetaLegend: false,
+    metaColumnLegend: [
+      {col:'A', label:'ช่องทางการชำระเงิน'},
+      {col:'C', label:'จังหวัด'},
+      {col:'E', label:'สินค้า'},
+      {col:'F', label:'วันที่สะดวก'},
+      {col:'G', label:'ช่วงเวลาในการติดต่อ'},
+      {col:'H', label:'ชื่อ'},
+      {col:'I', label:'อายุ'},
+      {col:'J', label:'เบอร์โทร'},
+      {col:'K', label:'Email'},
+      {col:'N', label:'ดำเนินการ / สถานะ'},
+      {col:'O', label:'Epromoter'},
+    ],
+    metaLegacyColumnLegend: [
+      {col:'A', label:'จังหวัด'},
+      {col:'B', label:'สินค้า'},
+      {col:'D', label:'ช่องทางชำระเงิน'},
+      {col:'F', label:'ชื่อ'},
+      {col:'H/I', label:'เบอร์โทร'},
+      {col:'J', label:'Email'},
+      {col:'M', label:'ดำเนินการ / สถานะ'},
+      {col:'N', label:'Epromoter'},
+      {col:'O', label:'หมายเหตุ'},
+    ],
+
     sourceDefs: [
-      {key:'Meta Densu July',             short:'Meta',    label:'Meta Densu July (ใหม่)', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png'},
-      {key:'Meta Credit July',            short:'Meta CC', label:'Meta Credit July', toneClass:'tone-amber',  barClass:'bg-amber-400', img:'assets/channels/meta-credit.png'},
+      {key:'Meta Densu July',             short:'Meta ก.ค.', label:'Meta Densu July', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
+        columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · H=ชื่อ · J=เบอร์ · N=สถานะ · O=Epromoter'},
+      {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
+        columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · N=Epromoter · F=ชื่อ · I=เบอร์'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
@@ -1104,7 +1184,7 @@ function app() {
       const verKey = 'lgCrmBuildVer';
       if (localStorage.getItem(verKey) !== CRM_BUILD) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9'].forEach(k => localStorage.removeItem(k));
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11_test'].forEach(k => localStorage.removeItem(k));
         localStorage.setItem(verKey, CRM_BUILD);
       }
       if (this.isLoggedIn && this.apiUrl) {
@@ -1157,9 +1237,12 @@ function app() {
       try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return false;
-        const {data, ts} = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        const {data, ts, sourceCounts, rawCount} = parsed;
         if (Date.now() - ts > CACHE_TTL) return false;
         this.customers = data.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
+        this.sourceCounts = sourceCounts || null;
+        this.rawCount = rawCount != null ? rawCount : data.length;
         this._frozenRows = null;
         const mins = Math.round((Date.now()-ts)/60000);
         this.lastFetch = 'cache · '+(mins < 1 ? 'เมื่อกี้' : mins+' นาทีที่แล้ว');
@@ -1174,10 +1257,16 @@ function app() {
         if (!json.success) throw new Error(json.error||'API error');
         const raw = dedupeCustomersByPhone(json.data || []);
         this.customers = raw.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
+        this.sourceCounts = json.sourceCounts || null;
+        this.sheetsFound = json.sheetsFound || null;
+        this.rawCount = json.rawCount != null ? json.rawCount : raw.length;
         this._frozenRows = null; this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
         const n = new Date();
-        this.lastFetch = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
-        localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now()}));
+        let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
+        if (this.rawCount != null && this.rawCount !== this.customers.length)
+          ts += ' · raw '+this.rawCount;
+        this.lastFetch = ts;
+        localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
       } catch(e) {
         this.loadErr = e.message;
       }
@@ -1260,6 +1349,15 @@ function app() {
     },
 
     get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>this.customerMatchesSource(c, sd.key)).length})); },
+    get sourceDebugLines() {
+      if (!this.sourceCounts) return [];
+      return this.sourceDefs.map(sd => ({
+        key: sd.key,
+        short: sd.short,
+        api: this.sourceCounts[sd.key] ?? 0,
+        found: !this.sheetsFound || this.sheetsFound[sd.key] !== false,
+      }));
+    },
 
     /* ── Filter methods ── */
     setSort(col) {
@@ -1300,8 +1398,8 @@ function app() {
       else if (id==='hl') this.filterHL=null;
       this.page=1;
     },
-    toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.activeQuickView=''; this.page=1; },
+    toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this._resetQuickView(); this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
     setFilterPayment(key)  { this._frozenRows=null; this._resetQuickView(); this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
     setFilterActivity(key) { this._frozenRows=null; this._resetQuickView(); this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
@@ -1345,6 +1443,20 @@ function app() {
     statusLabel(s) {
       return {'':'— ยังไม่ระบุ','Called':'Called','Follow up':'Follow up','Unqualified':'Unqualified',
               'Called buy denied':'Called but denied','No Credit Card':'No Credit Card','Purchased':'Purchased'}[s] ?? (s||'— ยังไม่ระบุ');
+    },
+    isMetaSource(src) {
+      const s = normalizeSource(src);
+      return s === 'Meta Densu July' || s === 'Meta Densu';
+    },
+    isMetaFilterActive() {
+      return this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu';
+    },
+    get metaLegendTitle() {
+      if (this.filterSource === 'Meta Densu') return 'โครงสร้างชีต Meta Densu (เก่า)';
+      return 'โครงสร้างชีต Meta Densu July';
+    },
+    get activeMetaColumnLegend() {
+      return this.filterSource === 'Meta Densu' ? this.metaLegacyColumnLegend : this.metaColumnLegend;
     },
     customerMatchesSource(c, key) {
       if (!c || !key) return false;
@@ -1568,7 +1680,7 @@ function app() {
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href = url; a.download = 'LGSubscribe_POND_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.href = url; a.download = 'LGSubscribe_WUTTICHAI_'+new Date().toISOString().slice(0,10)+'.csv';
       a.click(); URL.revokeObjectURL(url);
     },
   };

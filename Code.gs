@@ -22,15 +22,19 @@
 //  Meta Densu July:  N=Status O=PIC(Epromoter) P=Remark  (picCol=14)
 //  อ่านทุกแถวในชีต Meta Densu July (ไม่กรองวันที่ D — ชื่อชีตคือ July แล้ว)
 //  รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
-//  POP UP = Lead Subscribe POP UP Braner (มิ.ย. — ถูกต้องแล้ว)
+//
+//  [Hybrid ก.ค. 2569] ชีตใหม่กรกฎาคม + หลีดอื่น mapping เดียวกับมิถุนายน
+//  Meta → logic กรกฎาคม (Meta Densu/Credit July)
+//  หลีดอื่น (LG.com, LG Success, Consult, POP UP*) → column map เดิมมิ.ย. 2569
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
 var PROMOTER       = 'POND';
 
 var SHEET_NAMES = [
-  'Meta Densu July','Meta Credit July','Lead Subscribe Lg.com',
-  'Lead LG Success','Lead Consult','Lead Subscribe POP UP Braner'
+  'Meta Densu July','Meta Densu',
+  'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
+  'Lead Subscribe POP UP Braner'
 ];
 
 // ── ทดสอบก่อน Deploy ครั้งแรก ──────────────────────────
@@ -73,19 +77,22 @@ function doGet(e) {
 function getSheetConfig(name) {
   var cfg = {
 
+    // Meta Densu July: A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
+    // H=ชื่อ I=อายุ J=เบอร์ K=email N=สถานะ O=Epromoter P=หมายเหตุ
     'Meta Densu July': {
       picCol:14, statusCol:13, notesCol:15,
-      parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
+      parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
     },
 
-    'Meta Credit July': {
-      picCol:12, statusCol:11, notesCol:13,
-      parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
+    // Meta Densu (เก่า): โครงสร้างมิถุนายน — M=Status N=Epromoter O=Remark
+    'Meta Densu': {
+      picCol:13, statusCol:12, notesCol:14,
+      parse: function(row, disp) { return parseMetaDensuLegacyRow(row, disp); }
     },
 
-    // J=PIC(Epromoter)  I=Status  H=Remark — ไม่เลื่อนตาม Lead LG Success
+    // ── หลีดอื่น: mapping มิถุนายน 2569 (บนชีตกรกฎาคม) ──────────────
     'Lead Subscribe Lg.com': {
-      picCol:9, statusCol:8, notesCol:7,
+      picCol:8, statusCol:7, notesCol:9,
       parse: function(row) { return {
         name:           clean(row[1]),
         phone:          clean(row[6]),
@@ -98,9 +105,6 @@ function getSheetConfig(name) {
       };}
     },
 
-    // ── [แก้ไข] Status/PIC/Remark เลื่อนซ้าย 1 คอลัมน์ ──
-    // เดิม picCol:9 statusCol:8 notesCol:10 (J/I/K)
-    // ตอนนี้ตามภาพชีตจริง: Status=H(7) PIC=I(8) Remark=J(9)
     'Lead LG Success': {
       picCol:8, statusCol:7, notesCol:9,
       parse: function(row) { return {
@@ -153,14 +157,16 @@ function getSheetConfig(name) {
 function getCustomers(promoter) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheetNames = SHEET_NAMES;
-  var all = [], idNum = 1;
+  var all = [], idNum = 1, sourceCounts = {}, sheetsFound = {};
 
   for (var s = 0; s < sheetNames.length; s++) {
     var sName = sheetNames[s];
     var cfg   = getSheetConfig(sName);
     if (!cfg) continue;
     var sheet = ss.getSheetByName(sName);
-    if (!sheet) { Logger.log('Not found: '+sName); continue; }
+    if (!sheet) { Logger.log('Not found: '+sName); sheetsFound[sName] = false; continue; }
+    sheetsFound[sName] = true;
+    sourceCounts[sName] = 0;
 
     var range = sheet.getDataRange();
     var data  = range.getValues();
@@ -182,10 +188,12 @@ function getCustomers(promoter) {
                    status:clean(row[cfg.statusCol]), notes:notes };
       for (var k in fields) cust[k] = fields[k];
       all.push(cust);
+      sourceCounts[sName]++;
     }
   }
   var deduped = dedupeCustomers(all);
-  return { success:true, count:deduped.length, rawCount:all.length, data:deduped };
+  return { success:true, count:deduped.length, rawCount:all.length,
+           sourceCounts:sourceCounts, sheetsFound:sheetsFound, data:deduped };
 }
 
 // ── updateStatus ────────────────────────────────────────
@@ -333,8 +341,9 @@ function calcAge(val) {
   return clean(val);
 }
 
-// ── Meta July parse (A–O) ─────────────────────────────
-function parseMetaJulyRow(row, disp) {
+// ── Meta Densu เก่า (มิ.ย.) — อ่านรายชื่อ legacy ในชีตกรกฎาคม ──
+// A=จังหวัด B=สินค้า D=ชำระ F=ชื่อ G=เพศ H/I=เบอร์ J=email · M=Status N=Epromoter O=Remark
+function parseMetaDensuLegacyRow(row, disp) {
   var hDisp = cleanDisplay(row[7], disp&&disp[7]);
   var iVal  = clean(row[8]);
   var jVal  = clean(row[9]);
@@ -352,10 +361,31 @@ function parseMetaJulyRow(row, disp) {
     phone:          phone,
     email:          email,
     age:            age,
-    gender:         clean(row[6]),
-    paymentChannel: clean(row[2]),
+    contactTime:    '',
+    convenientDate: '',
+    paymentChannel: clean(row[3]),
     province:       clean(row[0]),
     productType:    clean(row[1]),
+    lineId:         ''
+  };
+}
+
+// ── Meta Densu July parse ─────────────────────────────
+// A=ช่องทางชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
+// H=ชื่อ I=อายุ J=เบอร์ K=email · N=สถานะ O=Epromoter P=หมายเหตุ
+function parseMetaDensuJulyRow(row, disp) {
+  var ageRaw = calcAge(row[8]);
+  var age = (String(ageRaw).replace(/\D/g,'').length >= 9) ? '' : ageRaw;
+  return {
+    name:           clean(row[7]),
+    phone:          cleanDisplay(row[9], disp&&disp[9]),
+    email:          clean(row[10]),
+    age:            age,
+    contactTime:    clean(row[6]),
+    convenientDate: cleanDisplay(row[5], disp&&disp[5]),
+    paymentChannel: clean(row[0]),
+    province:       clean(row[2]),
+    productType:    clean(row[4]),
     lineId:         ''
   };
 }
@@ -380,11 +410,11 @@ function isJuly2026Row(row, dateCol, dispRow) {
   return d.getFullYear() === 2026 && d.getMonth() === 6;
 }
 
-// ── Dedup เฉพาะ Meta Densu July + Meta Credit July ─────
-var META_PAIR = {'Meta Densu July':true, 'Meta Credit July':true};
+// ── Dedup Meta Densu July + Meta Densu เก่า (July ชนะถ้าเบอร์ซ้ำ) ──
+var META_PAIR = {'Meta Densu July':true, 'Meta Densu':true};
 var SOURCE_PRIORITY = {
   'Meta Densu July': 1,
-  'Meta Credit July': 2
+  'Meta Densu': 2
 };
 
 function phoneKey(phone) {
