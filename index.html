@@ -916,14 +916,15 @@
 </div>
 
 <script>
-const CRM_BUILD       = '5 ก.ค. 69 v9';
+const CRM_BUILD       = '6 ก.ค. 69 v10';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v9';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v10';
 const META_PAIR         = {'Meta Densu July':true,'Meta Credit July':true};
 const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Credit July':2};
-function normalizeSource(src) { return src || ''; }
+const SOURCE_ALIASES    = {'Meta Densu':'Meta Densu July','Meta Credit':'Meta Credit July'};
+function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
 function phoneKey(phone) {
   let d = String(phone||'').replace(/\D/g,'');
   if (d.length >= 11 && d.startsWith('66')) d = '0' + d.slice(2);
@@ -1103,7 +1104,7 @@ function app() {
       const verKey = 'lgCrmBuildVer';
       if (localStorage.getItem(verKey) !== CRM_BUILD) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8'].forEach(k => localStorage.removeItem(k));
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9'].forEach(k => localStorage.removeItem(k));
         localStorage.setItem(verKey, CRM_BUILD);
       }
       if (this.isLoggedIn && this.apiUrl) {
@@ -1347,9 +1348,10 @@ function app() {
     },
     customerMatchesSource(c, key) {
       if (!c || !key) return false;
-      if (c.source === key) return true;
-      if ((c.sourceMerged||'').includes(key)) return true;
-      return (c.altRows||[]).some(r => r.source === key);
+      const nk = normalizeSource(key);
+      if (normalizeSource(c.source) === nk) return true;
+      if ((c.sourceMerged||'').split(' · ').some(s => normalizeSource(s.trim()) === nk)) return true;
+      return (c.altRows||[]).some(r => normalizeSource(r.source) === nk);
     },
     displaySource(c) {
       if (!c) return '—';

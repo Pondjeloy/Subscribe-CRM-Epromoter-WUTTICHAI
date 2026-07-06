@@ -83,8 +83,9 @@ function getSheetConfig(name) {
       parse: function(row, disp) { return parseMetaJulyRow(row, disp); }
     },
 
+    // J=PIC(Epromoter)  I=Status  H=Remark — ไม่เลื่อนตาม Lead LG Success
     'Lead Subscribe Lg.com': {
-      picCol:8, statusCol:7, notesCol:9,
+      picCol:9, statusCol:8, notesCol:7,
       parse: function(row) { return {
         name:           clean(row[1]),
         phone:          clean(row[6]),
