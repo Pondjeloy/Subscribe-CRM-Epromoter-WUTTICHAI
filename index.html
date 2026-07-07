@@ -958,7 +958,8 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v13';
+const CRM_BUILD       = '7 ก.ค. 69 v14';
+const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
@@ -1265,7 +1266,7 @@ function app() {
     _parseNotes(s) {
       if (!s?.trim()) return [];
       return s.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(line => {
-        const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{2}:\d{2})\s*[—\-]\s*([\s\S]+)$/);
+        const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{4})(?:\s+\d{2}:\d{2})?\s*[—\-]\s*([\s\S]+)$/);
         return m ? {date:m[1], text:m[2].trim()} : {date:'', text:line};
       }).reverse();
     },
@@ -1589,10 +1590,10 @@ function app() {
     async addNote() {
       const text = this.newNote.trim(); if (!text) return;
       const now = new Date();
-      const date = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})+' '
-                  +String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      let stamp = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+      if (!NOTE_DATE_ONLY) stamp += ' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
       this.newNote = '';
-      await this._syncNote(date+' — '+text);
+      await this._syncNote(stamp+' — '+text);
     },
     async _syncNote(entry) {
       if (!this.apiUrl || !this.selectedCustomer) return;
