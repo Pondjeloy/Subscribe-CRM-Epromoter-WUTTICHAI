@@ -875,14 +875,6 @@
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300">(G)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.contactTime"></div>
             </div>
-            <div x-show="isMetaSource(selectedCustomer.source)" class="rounded-xl bg-violet-50 ring-1 ring-violet-100 px-3 py-2.5">
-              <div class="text-[10px] font-bold uppercase tracking-[.1em] text-violet-600 mb-1.5" x-text="normalizeSource(selectedCustomer.source)==='Meta Densu' ? 'คอลัมน์ชีต Meta Densu (เก่า)' : 'คอลัมน์ชีต Meta Densu July'"></div>
-              <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] text-violet-800">
-                <template x-for="item in (normalizeSource(selectedCustomer.source)==='Meta Densu' ? metaLegacyColumnLegend : metaColumnLegend)" :key="'d-'+item.col">
-                  <div><b x-text="item.col"></b> <span x-text="item.label"></span></div>
-                </template>
-              </div>
-            </div>
           </div>
 
           <!-- Status changer -->
@@ -966,7 +958,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v12';
+const CRM_BUILD       = '7 ก.ค. 69 v13';
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
@@ -1163,7 +1155,6 @@ function app() {
       {col:'H/I', label:'เบอร์โทร'},
       {col:'J', label:'Email'},
       {col:'M', label:'ดำเนินการ / สถานะ'},
-      {col:'N', label:'Epromoter'},
       {col:'O', label:'หมายเหตุ'},
     ],
 
@@ -1171,7 +1162,7 @@ function app() {
       {key:'Meta Densu July',             short:'Meta ก.ค.', label:'Meta Densu July', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
         columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
-        columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · N=Epromoter · F=ชื่อ · I=เบอร์'},
+        columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
