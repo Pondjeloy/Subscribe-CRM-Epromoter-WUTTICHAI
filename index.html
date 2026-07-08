@@ -1091,7 +1091,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v23';
+const CRM_BUILD       = '7 ก.ค. 69 v24';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1174,7 +1174,7 @@ function app() {
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
     activeQuickView: '',
-    sortCol: 'id', sortDir: 'desc', page: 1, pageSize: 25,
+    sortCol: 'lastNote', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
 
     /* ── Drawer ── */
@@ -1359,7 +1359,7 @@ function app() {
     /* ── Data ── */
     _persistCache() {
       try {
-        const data = this.customers.map(({parsedNotes, ...rest}) => rest);
+        const data = this.customers.map(({parsedNotes, _lastTouch, ...rest}) => rest);
         localStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now()}));
       } catch {}
     },
@@ -1404,7 +1404,7 @@ function app() {
         if (!json || !json.success) throw new Error((json && json.error) || 'API error');
         const raw = dedupeCustomersByPhone(json.data || []);
         this.sheetsFound = json.sheetsFound || null;
-        this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
+        this.sortCol = 'lastNote'; this.sortDir = 'desc'; this.page = 1;
         const n = new Date();
         let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
         if (json.rawCount != null && json.rawCount !== raw.length) ts += ' · raw ' + json.rawCount;
@@ -1524,13 +1524,26 @@ function app() {
       this.page = 1;
     },
     _noteTimestamp(c) {
+      if (c?._lastTouch) return c._lastTouch;
       const d = c.parsedNotes?.[0]?.date;
       if (!d) return 0;
-      const m = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      const mTime = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      const mDate = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      const m = mTime || mDate;
       if (!m) return 0;
       let y = parseInt(m[3], 10);
       if (y >= 2500) y -= 543;
-      return new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10), parseInt(m[4], 10), parseInt(m[5], 10)).getTime();
+      const hh = mTime ? parseInt(m[4], 10) : 23;
+      const mm = mTime ? parseInt(m[5], 10) : 59;
+      return new Date(y, parseInt(m[2], 10) - 1, parseInt(m[1], 10), hh, mm).getTime();
+    },
+    _bumpCustomerList(customerId) {
+      const idx = this.customers.findIndex(c => c.id === customerId);
+      if (idx >= 0) this.customers[idx]._lastTouch = Date.now();
+      this._frozenRows = null;
+      this.sortCol = 'lastNote';
+      this.sortDir = 'desc';
+      this.page = 1;
     },
     _resetQuickView()      { this.activeQuickView=''; this.filterStatusGroup=null; },
     applyQuickView(id) {
@@ -1747,6 +1760,7 @@ function app() {
         if (idx >= 0) this.customers[idx].status = ns;
         this._persistCache();
         this.refreshWorkSummary();
+        this._bumpCustomerList(this.selectedCustomer.id);
         this.saveMsg = '✅ บันทึก Status เรียบร้อย'; this.saveOk = true; this.pendingStatus = '';
       } catch(e) { this.saveMsg = '⚠️ '+e.message; this.saveOk = false; }
       this.savingStatus = false;
@@ -1769,13 +1783,14 @@ function app() {
       }
       this.notesLoading = false;
     },
-    _syncNotes(rawNotes) {
+    _syncNotes(rawNotes, bump) {
       const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
       if (idx < 0) return;
       this.customers[idx].notes = rawNotes;
       this.customers[idx].parsedNotes = this._parseNotes(rawNotes);
       this.selectedCustomer.parsedNotes = this.customers[idx].parsedNotes;
       this._persistCache();
+      if (bump) this._bumpCustomerList(this.selectedCustomer.id);
     },
 
     addActivity(a) {
@@ -1830,7 +1845,7 @@ function app() {
         if (r?.success) {
           this.sheetNotes = [entry, ...this.sheetNotes];
           const raw = [...this.sheetNotes].reverse().join('\n');
-          this._syncNotes(raw);
+          this._syncNotes(raw, true);
           this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'; this.syncOk = true;
         } else throw new Error((r?.error)||'API error');
       } catch(e) { this.syncMsg = '⚠️ บันทึกไม่ได้: '+e.message; this.syncOk = false; }
@@ -1841,7 +1856,7 @@ function app() {
       const raw = [...remaining].reverse().join('\n');
       try {
         const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, notes:raw, promoter:PROMOTER}, 12000);
-        if (r?.success) { this.sheetNotes = remaining; this._syncNotes(raw); }
+        if (r?.success) { this.sheetNotes = remaining; this._syncNotes(raw, true); }
         else throw new Error(r?.error||'ลบไม่ได้');
       } catch(e) { this.syncMsg='⚠️ ลบไม่ได้: '+e.message; this.syncOk=false; setTimeout(()=>this.syncMsg='',3000); }
     },
