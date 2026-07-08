@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8"/>
@@ -97,7 +97,24 @@
   .dots span:nth-child(2){animation-delay:.15s} .dots span:nth-child(3){animation-delay:.3s}
   @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 
+  /* ── Filter chips alignment ── */
+  .filter-row { display:flex; align-items:center; gap:.75rem; }
+  .filter-row-label { width:8.25rem; flex-shrink:0; font-size:11px; font-weight:700; letter-spacing:.04em; color:#94a3b8; line-height:1.25; }
+  .filter-chips { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; min-width:0; flex:1; }
+  .filter-slot { flex-shrink:0; }
+  .filter-slot-1 { width:7.25rem; }
+  .filter-slot-2 { width:10.75rem; }
+  .filter-slot .filter-chip { width:100%; justify-content:center; }
+  .filter-chip {
+    height:2.25rem; padding:0 .875rem; border-radius:9999px;
+    font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:.375rem;
+    transition:all .15s; white-space:nowrap;
+  }
+  .filter-chip-count { font-variant-numeric:tabular-nums; font-size:11.5px; font-weight:700; padding:0 .375rem; border-radius:9999px; }
 
+  /* ── Work summary ── */
+  .summary-rank-bar { height:6px; border-radius:9999px; background:#f1f5f9; overflow:hidden; }
+  .summary-rank-fill { height:100%; border-radius:9999px; background:var(--accent); transition:width .35s ease; }
 
   /* ── Source channel cards ── */
   .source-card {
@@ -347,17 +364,21 @@
       <div class="text-[14px] text-slate-400">กำลังดึงข้อมูลจาก Google Sheet...</div>
     </div>
 
-    <!-- Error -->
-    <div x-show="loadErr && !loading" class="rounded-2xl bg-white ring-1 ring-rose-200 p-5">
-      <div class="font-semibold text-rose-600 mb-1">⚠️ โหลดข้อมูลไม่ได้</div>
+    <!-- Error / warning -->
+    <div x-show="loadErr && !loading" class="rounded-2xl bg-white p-5 mb-4"
+         :class="customers.length ? 'ring-1 ring-amber-200' : 'ring-1 ring-rose-200'">
+      <div class="font-semibold mb-1" :class="customers.length ? 'text-amber-700' : 'text-rose-600'"
+           x-text="customers.length ? '⚠️ โหลด API ไม่ได้ — แสดงข้อมูล cache สำรอง' : '⚠️ โหลดข้อมูลไม่ได้'"></div>
       <div class="text-[13px] text-slate-500 whitespace-pre-line" x-text="loadErr"></div>
-      <div class="mt-3 text-[13px] text-slate-500 bg-slate-50 rounded-xl p-3 leading-relaxed">
+      <div x-show="!customers.length" class="mt-3 text-[13px] text-slate-500 bg-slate-50 rounded-xl p-3 leading-relaxed">
         <b>วิธีแก้:</b><br/>
-        1. Apps Script → Run → testConnection → Authorize<br/>
-        2. Deploy → Manage Deployments → Edit → New version → Deploy<br/>
-        3. ตรวจสอบ SPREADSHEET_ID = 1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
+        1. ต้องมีอินเทอร์เน็ต + เปิดผ่าน Chrome/Edge (ไม่ block script จาก Google)<br/>
+        2. Apps Script → Deploy → Who has access = <b>Anyone</b> → New version → Deploy<br/>
+        3. กด ⚙️ ตั้งค่า URL → ทดสอบการเชื่อมต่อ → บันทึก
       </div>
-      <button class="mt-3 h-9 px-4 rounded-full text-[13px] font-semibold ring-1 ring-rose-200 text-rose-700 hover:bg-rose-50 transition" @click="fetchData()">ลองใหม่</button>
+      <button class="mt-3 h-9 px-4 rounded-full text-[13px] font-semibold ring-1 transition"
+              :class="customers.length ? 'ring-amber-200 text-amber-800 hover:bg-amber-50' : 'ring-rose-200 text-rose-700 hover:bg-rose-50'"
+              @click="fetchData()">ลองโหลดใหม่</button>
     </div>
 
     <div x-show="!loading">
@@ -424,6 +445,81 @@
         </div>
       </section>
 
+      <!-- ── Work Summary ── -->
+      <section x-show="customers.length" class="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">สรุปการทำงาน</div>
+            <div class="text-[13px] text-slate-500 mt-0.5">
+              ปิดการขายรวม <span class="font-bold text-slate-700 tabular-nums" x-text="workSummary.totalClosed"></span> รายการ
+              <span class="text-slate-400">· นับจาก Status Purchased เท่านั้น</span>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Lead ranking -->
+          <div class="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/70 p-3.5">
+            <div class="text-[12px] font-bold text-slate-700 mb-3">🏆 ช่องทาง Lead ปิดได้มากสุด</div>
+            <div x-show="!workSummary.sources.length" class="text-[12px] text-slate-400 text-center py-6">ยังไม่มีข้อมูล</div>
+            <div class="space-y-2.5">
+              <template x-for="(row, idx) in workSummary.sources" :key="row.key">
+                <div class="flex items-start gap-2">
+                  <span class="w-5 text-[11px] font-bold text-slate-400 tabular-nums pt-0.5" x-text="idx+1"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                      <span class="text-[13px] font-semibold text-slate-700 truncate" x-text="row.label"></span>
+                      <span class="text-[12px] font-bold tabular-nums shrink-0" style="color:var(--accent)" x-text="row.count"></span>
+                    </div>
+                    <div class="summary-rank-bar"><div class="summary-rank-fill" :style="'width:' + row.barPct + '%'"></div></div>
+                    <div class="text-[10.5px] text-slate-400 mt-1 tabular-nums" x-text="row.rate+'% จากหลีด '+row.total+' รายการ'"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <!-- Product ranking -->
+          <div class="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/70 p-3.5">
+            <div class="text-[12px] font-bold text-slate-700 mb-3">📦 สินค้าขายดีสุด</div>
+            <div x-show="!workSummary.products.length" class="text-[12px] text-slate-400 text-center py-6">ยังไม่มีข้อมูล</div>
+            <div class="space-y-2.5">
+              <template x-for="(row, idx) in workSummary.products" :key="row.key">
+                <div class="flex items-start gap-2">
+                  <span class="w-5 text-[11px] font-bold text-slate-400 tabular-nums pt-0.5" x-text="idx+1"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                      <span class="text-[13px] font-semibold text-slate-700 truncate" x-text="row.label"></span>
+                      <span class="text-[12px] font-bold tabular-nums shrink-0" style="color:var(--accent)" x-text="row.count"></span>
+                    </div>
+                    <div class="summary-rank-bar"><div class="summary-rank-fill" :style="'width:' + row.barPct + '%'"></div></div>
+                    <div class="text-[10.5px] text-slate-400 mt-1 tabular-nums" x-text="row.pct+'% ของยอดปิดการขาย'"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <!-- Payment ranking -->
+          <div class="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/70 p-3.5">
+            <div class="text-[12px] font-bold text-slate-700 mb-3">💳 ชำระเงินได้มากสุด</div>
+            <div x-show="!workSummary.payments.length" class="text-[12px] text-slate-400 text-center py-6">ยังไม่มีข้อมูล</div>
+            <div class="space-y-2.5">
+              <template x-for="(row, idx) in workSummary.payments" :key="row.key">
+                <div class="flex items-start gap-2">
+                  <span class="w-5 text-[11px] font-bold text-slate-400 tabular-nums pt-0.5" x-text="idx+1"></span>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                      <span class="text-[13px] font-semibold text-slate-700 truncate" x-text="row.label"></span>
+                      <span class="text-[12px] font-bold tabular-nums shrink-0" style="color:var(--accent)" x-text="row.count"></span>
+                    </div>
+                    <div class="summary-rank-bar"><div class="summary-rank-fill" :style="'width:' + row.barPct + '%'"></div></div>
+                    <div class="text-[10.5px] text-slate-400 mt-1 tabular-nums" x-text="row.pct+'% ของยอดปิดการขาย'"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Quick Views -->
       <section class="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
         <div class="flex items-center gap-2 mb-3 flex-wrap">
@@ -450,23 +546,38 @@
 
         <!-- Status chips -->
         <section class="space-y-3">
-          <div class="flex items-center gap-3 chips-scroll">
-            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0">Status</span>
-            <div class="flex items-center gap-2 flex-wrap chips-scroll">
-              <button @click="setFilterStatus('')"
-                class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
-                :class="filterStatus==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
-                :style="filterStatus==='' ? 'background:var(--accent)' : ''">
-                ทั้งหมด
-                <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full" :class="filterStatus==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'" x-text="customers.length"></span>
-              </button>
-              <template x-for="s in statusDefs.filter(x=>x.value!=='')" :key="s.value">
+          <div class="filter-row chips-scroll">
+            <span class="filter-row-label">Status</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterStatus('')"
+                  class="filter-chip"
+                  :class="filterStatus==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterStatus==='' ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count" :class="filterStatus==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'" x-text="customers.length"></span>
+                </button>
+              </div>
+              <template x-for="s in statusDefs.filter(x=>x.value!=='').slice(0,1)" :key="s.value">
+                <div class="filter-slot filter-slot-2">
+                  <button @click="setFilterStatus(s.value)"
+                    class="filter-chip"
+                    :class="filterStatus===s.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                    :style="filterStatus===s.value ? 'background:var(--accent)' : ''">
+                    <span x-text="s.label"></span>
+                    <span class="filter-chip-count"
+                          :class="filterStatus===s.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                          x-text="countByStatus(s.value)"></span>
+                  </button>
+                </div>
+              </template>
+              <template x-for="s in statusDefs.filter(x=>x.value!=='').slice(1)" :key="s.value">
                 <button @click="setFilterStatus(s.value)"
-                  class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                  class="filter-chip"
                   :class="filterStatus===s.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
                   :style="filterStatus===s.value ? 'background:var(--accent)' : ''">
                   <span x-text="s.label"></span>
-                  <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
+                  <span class="filter-chip-count"
                         :class="filterStatus===s.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByStatus(s.value)"></span>
                 </button>
@@ -475,26 +586,42 @@
           </div>
 
           <!-- Payment chips -->
-          <div class="flex items-center gap-3 chips-scroll">
-            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0">ชำระเงิน</span>
-            <div class="flex items-center gap-2 flex-wrap chips-scroll">
-              <button @click="setFilterPayment('')"
-                class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
-                :class="filterPayment==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
-                :style="filterPayment==='' ? 'background:var(--accent)' : ''">
-                ทั้งหมด
-                <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
-                      :class="filterPayment==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
-                      x-text="customers.length"></span>
-              </button>
-              <template x-for="p in paymentFilterDefs" :key="p.key">
+          <div class="filter-row chips-scroll">
+            <span class="filter-row-label">ชำระเงิน</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterPayment('')"
+                  class="filter-chip"
+                  :class="filterPayment==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterPayment==='' ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count"
+                        :class="filterPayment==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="customers.length"></span>
+                </button>
+              </div>
+              <template x-for="p in paymentFilterDefs.slice(0,1)" :key="p.key">
+                <div class="filter-slot filter-slot-2">
+                  <button @click="setFilterPayment(p.key)"
+                    class="filter-chip"
+                    :class="filterPayment===p.key ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                    :style="filterPayment===p.key ? 'background:var(--accent)' : ''">
+                    <span class="h-2 w-2 rounded-full shrink-0" :style="filterPayment===p.key ? 'background:rgba(255,255,255,.85)' : p.dotStyle"></span>
+                    <span x-text="p.label"></span>
+                    <span class="filter-chip-count"
+                          :class="filterPayment===p.key ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                          x-text="countByPayment(p.key)"></span>
+                  </button>
+                </div>
+              </template>
+              <template x-for="p in paymentFilterDefs.slice(1)" :key="p.key">
                 <button @click="setFilterPayment(p.key)"
-                  class="h-9 px-3.5 rounded-full text-[13px] font-semibold inline-flex items-center gap-1.5 transition-all whitespace-nowrap"
+                  class="filter-chip"
                   :class="filterPayment===p.key ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
                   :style="filterPayment===p.key ? 'background:var(--accent)' : ''">
                   <span class="h-2 w-2 rounded-full shrink-0" :style="filterPayment===p.key ? 'background:rgba(255,255,255,.85)' : p.dotStyle"></span>
                   <span x-text="p.label"></span>
-                  <span class="tabular-nums text-[11.5px] font-bold px-1.5 rounded-full"
+                  <span class="filter-chip-count"
                         :class="filterPayment===p.key ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByPayment(p.key)"></span>
                 </button>
@@ -503,44 +630,45 @@
           </div>
 
           <!-- Highlight chips -->
-          <div class="flex items-start gap-3">
-            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0 mt-2">สี</span>
-            <div class="flex items-center gap-2 flex-wrap chips-scroll">
-              <button @click="setFilterHL(null)"
-                class="h-8 px-3 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
-                :class="filterHL===null ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
-                :style="filterHL===null ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
-                ทั้งหมด
-                <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                      :class="filterHL===null ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
-                      :style="filterHL===null ? 'color:var(--accent)' : ''"
-                      x-text="customers.length"></span>
-              </button>
-              <button @click="setFilterHL('ranked')"
-                class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
-                :class="filterHL==='ranked' ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
-                :style="filterHL==='ranked' ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
-                <span class="inline-flex items-center shrink-0">
-                  <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-white -ml-1"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-yellow-500 ring-2 ring-white -ml-1"></span>
-                </span>
-                <span>แสดงสีทั้งหมด</span>
-                <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                      :class="filterHL==='ranked' ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
-                      :style="filterHL==='ranked' ? 'color:var(--accent)' : ''"
-                      x-text="countByHLRanked()"></span>
-              </button>
+          <div class="filter-row chips-scroll">
+            <span class="filter-row-label">ไฮไลท์ รายชื่อ</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterHL(null)"
+                  class="filter-chip"
+                  :class="filterHL===null ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterHL===null ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count"
+                        :class="filterHL===null ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="customers.length"></span>
+                </button>
+              </div>
+              <div class="filter-slot filter-slot-2">
+                <button @click="setFilterHL('ranked')"
+                  class="filter-chip"
+                  :class="filterHL==='ranked' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterHL==='ranked' ? 'background:var(--accent)' : ''">
+                  <span class="inline-flex items-center shrink-0">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                    <span class="h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white -ml-1"></span>
+                    <span class="h-2 w-2 rounded-full bg-yellow-500 ring-2 ring-white -ml-1"></span>
+                  </span>
+                  <span>แสดงสีทั้งหมด</span>
+                  <span class="filter-chip-count"
+                        :class="filterHL==='ranked' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countByHLRanked()"></span>
+                </button>
+              </div>
               <template x-for="h in hlFilterDefs" :key="h.value">
                 <button @click="setFilterHL(h.value)"
-                  class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
-                  :class="filterHL===h.value ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
-                  :style="filterHL===h.value ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
+                  class="filter-chip"
+                  :class="filterHL===h.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterHL===h.value ? 'background:var(--accent)' : ''">
                   <span class="hl-flag shrink-0" :class="h.hlClass" :style="!h.hlClass ? 'border-color:#cbd5e1' : ''"></span>
                   <span x-text="h.short"></span>
-                  <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                        :class="filterHL===h.value ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
-                        :style="filterHL===h.value ? 'color:var(--accent)' : ''"
+                  <span class="filter-chip-count"
+                        :class="filterHL===h.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByHL(h.value)"></span>
                 </button>
               </template>
@@ -548,19 +676,18 @@
           </div>
 
           <!-- Activity chips -->
-          <div class="flex items-start gap-3">
-            <span class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400 shrink-0 mt-2">บันทึก</span>
-            <div class="flex items-center gap-2 flex-wrap chips-scroll">
+          <div class="filter-row chips-scroll">
+            <span class="filter-row-label">บันทึกหมายเหตุ</span>
+            <div class="filter-chips chips-scroll">
               <template x-for="a in activityFilters" :key="a.key">
                 <button @click="setFilterActivity(a.key)"
-                  class="h-8 pl-2.5 pr-2 rounded-lg text-[12.5px] font-medium inline-flex items-center gap-2 transition-all whitespace-nowrap border"
-                  :class="filterActivity===a.key ? 'border-transparent font-semibold' : 'border-slate-200/80 text-slate-500 bg-white hover:bg-slate-50'"
-                  :style="filterActivity===a.key ? 'color:var(--accent);background:var(--accent-tint);border-color:transparent' : ''">
-                  <span class="h-1.5 w-1.5 rounded-full" :class="filterActivity===a.key ? '' : 'bg-slate-300'" :style="filterActivity===a.key ? 'background:var(--accent)' : ''"></span>
+                  class="filter-chip"
+                  :class="filterActivity===a.key ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterActivity===a.key ? 'background:var(--accent)' : ''">
+                  <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="filterActivity===a.key ? 'bg-white/85' : 'bg-slate-300'"></span>
                   <span x-text="a.label.replace(/^[^\s]+\s/,'')"></span>
-                  <span class="tabular-nums text-[11px] font-semibold px-1.5 py-0.5 rounded"
-                        :class="filterActivity===a.key ? 'bg-white/70' : 'bg-slate-100 text-slate-400'"
-                        :style="filterActivity===a.key ? 'color:var(--accent)' : ''"
+                  <span class="filter-chip-count"
+                        :class="filterActivity===a.key ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByActivity(a.key)"></span>
                 </button>
               </template>
@@ -958,12 +1085,14 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v14';
+const CRM_BUILD       = '7 ก.ค. 69 v22';
+const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
 const CACHE_KEY         = 'lgCrmCache_wuttichai_v11';
+const CACHE_VER_KEY     = 'lgCrmCacheSchema';
 const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
 const SOURCE_ALIASES    = {};
@@ -1024,8 +1153,8 @@ function app() {
     loginPw: '', loginErr: '',
 
     /* ── Config ── */
-    apiUrl:    localStorage.getItem(API_URL_KEY) || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
-    configUrl: localStorage.getItem(API_URL_KEY) || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
+    apiUrl:    (localStorage.getItem(API_URL_KEY) || '').trim() || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
+    configUrl: (localStorage.getItem(API_URL_KEY) || '').trim() || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
     showConfig: false,
     testLoading: false, testMsg: '', testOk: false,
 
@@ -1033,6 +1162,7 @@ function app() {
     testMode: false,
     customers: [], loading: false, loadErr: null, lastFetch: '',
     sourceCounts: null, sheetsFound: null, rawCount: null,
+    workSummary: {totalClosed: 0, sources: [], products: [], payments: []},
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
@@ -1085,6 +1215,7 @@ function app() {
       {label:'⏩ ไม่สนใจผ่อนนาน'},
       {label:'🗂️ ไม่สะดวกยื่นเอกสาร'},
       {label:'✅ ทำรายการสำเร็จเรียบร้อย'},
+      {label:'🌐 ซื้อผ่านตัวแทนแล้ว ทำรายการสำเร็จ ผ่าน LG.COM'},
     ],
 
     activityFilters: [
@@ -1109,6 +1240,7 @@ function app() {
       {label:'⏩ ไม่สนใจผ่อนนาน',     key:'ไม่สนใจผ่อนนาน'},
       {label:'🗂️ ไม่สะดวกยื่นเอกสาร', key:'ไม่สะดวกยื่นเอกสาร'},
       {label:'✅ ปิดการขาย',           key:'ทำรายการสำเร็จ'},
+      {label:'🌐 ซื้อผ่านตัวแทน LG.COM', key:'ซื้อผ่านตัวแทนแล้ว ทำรายการสำเร็จ ผ่าน LG.COM'},
     ],
 
     statusDefs: [
@@ -1172,11 +1304,10 @@ function app() {
 
     /* ── Init ── */
     init() {
-      const verKey = 'lgCrmBuildVer';
-      if (localStorage.getItem(verKey) !== CRM_BUILD) {
+      if (localStorage.getItem(CACHE_VER_KEY) !== CACHE_SCHEMA) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11_test'].forEach(k => localStorage.removeItem(k));
-        localStorage.setItem(verKey, CRM_BUILD);
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
+        localStorage.setItem(CACHE_VER_KEY, CACHE_SCHEMA);
       }
       if (this.isLoggedIn && this.apiUrl) {
         if (!this._loadCache()) this.fetchData();
@@ -1196,6 +1327,7 @@ function app() {
     },
     logout() {
       this.isLoggedIn = false; this.showDrawer = false; this.customers = [];
+      this.workSummary = {totalClosed: 0, sources: [], products: [], payments: []};
       localStorage.removeItem(LOGIN_SESSION_KEY);
     },
 
@@ -1224,42 +1356,69 @@ function app() {
         localStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now()}));
       } catch {}
     },
-    _loadCache() {
+    _applyCustomerData(data, sourceCounts, rawCount, ts, label) {
+      this.customers = (data || []).map(c => ({...c, parsedNotes: this._parseNotes(c.notes || '')}));
+      this.sourceCounts = sourceCounts || null;
+      this.rawCount = rawCount != null ? rawCount : this.customers.length;
+      this._frozenRows = null;
+      this.lastFetch = label;
+      this.refreshWorkSummary();
+    },
+    _readCache(ignoreTtl) {
       try {
         const raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) return false;
+        if (!raw) return null;
         const parsed = JSON.parse(raw);
         const {data, ts, sourceCounts, rawCount} = parsed;
-        if (Date.now() - ts > CACHE_TTL) return false;
-        this.customers = data.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
-        this.sourceCounts = sourceCounts || null;
-        this.rawCount = rawCount != null ? rawCount : data.length;
-        this._frozenRows = null;
-        const mins = Math.round((Date.now()-ts)/60000);
-        this.lastFetch = 'cache · '+(mins < 1 ? 'เมื่อกี้' : mins+' นาทีที่แล้ว');
-        return true;
-      } catch { return false; }
+        if (!Array.isArray(data) || !data.length) return null;
+        if (!ignoreTtl && Date.now() - ts > CACHE_TTL) return null;
+        return {data, ts, sourceCounts, rawCount};
+      } catch { return null; }
+    },
+    _loadCache() {
+      const cached = this._readCache(false);
+      if (!cached) return false;
+      const mins = Math.round((Date.now() - cached.ts) / 60000);
+      this._applyCustomerData(
+        cached.data,
+        cached.sourceCounts,
+        cached.rawCount,
+        cached.ts,
+        'cache · ' + (mins < 1 ? 'เมื่อกี้' : mins + ' นาทีที่แล้ว')
+      );
+      return true;
     },
     async fetchData() {
-      if (!this.apiUrl) { this.showConfig = true; return; }
+      const apiUrl = String(this.apiUrl || '').trim();
+      if (!apiUrl) { this.showConfig = true; return; }
       this.loading = true; this.loadErr = null;
       try {
-        const json = await jsonpCall(this.apiUrl, {action:'getCustomers', promoter:PROMOTER});
-        if (!json.success) throw new Error(json.error||'API error');
+        const json = await jsonpCall(apiUrl, {action:'getCustomers', promoter:PROMOTER}, 30000);
+        if (!json || !json.success) throw new Error((json && json.error) || 'API error');
         const raw = dedupeCustomersByPhone(json.data || []);
-        this.customers = raw.map(c => ({...c, parsedNotes: this._parseNotes(c.notes||'')}));
-        this.sourceCounts = json.sourceCounts || null;
         this.sheetsFound = json.sheetsFound || null;
-        this.rawCount = json.rawCount != null ? json.rawCount : raw.length;
-        this._frozenRows = null; this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
+        this.sortCol = 'id'; this.sortDir = 'desc'; this.page = 1;
         const n = new Date();
         let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
-        if (this.rawCount != null && this.rawCount !== this.customers.length)
-          ts += ' · raw '+this.rawCount;
-        this.lastFetch = ts;
+        if (json.rawCount != null && json.rawCount !== raw.length) ts += ' · raw ' + json.rawCount;
+        this._applyCustomerData(raw, json.sourceCounts || null, json.rawCount != null ? json.rawCount : raw.length, Date.now(), ts);
         localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
       } catch(e) {
-        this.loadErr = e.message;
+        const stale = this._readCache(true);
+        if (stale) {
+          const mins = Math.round((Date.now() - stale.ts) / 60000);
+          const age = mins < 60 ? (mins < 1 ? 'เมื่อกี้' : mins + ' นาทีที่แล้ว') : Math.round(mins / 60) + ' ชม.ที่แล้ว';
+          this._applyCustomerData(
+            stale.data,
+            stale.sourceCounts,
+            stale.rawCount,
+            stale.ts,
+            'cache สำรอง · ' + age
+          );
+          this.loadErr = 'โหลด API ไม่ได้ — ใช้ข้อมูล cache สำรอง (' + age + ')\n' + e.message;
+        } else {
+          this.loadErr = e.message;
+        }
       }
       this.loading = false;
     },
@@ -1329,12 +1488,12 @@ function app() {
       if (this.filterActivity) {
         const a = this.activityFilters.find(x => x.key === this.filterActivity);
         const lbl = (a?.label || this.filterActivity).replace(/^[^\s]+\s/, '');
-        tags.push({ id:'activity', label:'บันทึก: ' + lbl });
+        tags.push({ id:'activity', label:'บันทึกหมายเหตุ: ' + lbl });
       }
-      if (this.filterHL === 'ranked') tags.push({ id:'hl', label:'สี: มีสีทั้งหมด' });
+      if (this.filterHL === 'ranked') tags.push({ id:'hl', label:'ไฮไลท์: มีสีทั้งหมด' });
       else if (this.filterHL !== null) {
         const h = this.hlFilterDefs.find(x => x.value === this.filterHL);
-        tags.push({ id:'hl', label:'สี: ' + (h?.short || this.filterHL) });
+        tags.push({ id:'hl', label:'ไฮไลท์: ' + (h?.short || this.filterHL) });
       }
       return tags;
     },
@@ -1411,6 +1570,66 @@ function app() {
     countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
     countByHL(val)         { return this.customers.filter(c => this.getHL(c) === val).length; },
     countByHLRanked()      { return this.customers.filter(c => this.getHL(c) > 0).length; },
+    _isClosedSale(c)       { return !!c && c.status === 'Purchased'; },
+    _buildRankRows(rows, total, limit) {
+      limit = limit || 5;
+      if (!rows.length) return [];
+      const top = Math.max(...rows.map(r => r.count), 1);
+      return rows.slice(0, limit).map(r => ({
+        ...r,
+        barPct: Math.round(r.count / top * 100),
+        pct: total ? Math.round(r.count / total * 100) : 0,
+      }));
+    },
+    refreshWorkSummary() {
+      const empty = {totalClosed: 0, sources: [], products: [], payments: []};
+      try {
+        const closed = this.customers.filter(c => this._isClosedSale(c));
+        const totalClosed = closed.length;
+
+        const srcMap = new Map();
+        for (const c of this.customers) {
+          const key = normalizeSource(c.source);
+          if (!key) continue;
+          if (!srcMap.has(key)) srcMap.set(key, {key, label: this.srcLabel(key), total: 0, count: 0});
+          const row = srcMap.get(key);
+          row.total++;
+          if (this._isClosedSale(c)) row.count++;
+        }
+        const sources = this._buildRankRows(
+          [...srcMap.values()].filter(r => r.count > 0).sort((a, b) => b.count - a.count || b.total - a.total)
+            .map(r => ({...r, rate: r.total ? Math.round(r.count / r.total * 100) : 0})),
+          totalClosed
+        );
+
+        const prodMap = new Map();
+        for (const c of closed) {
+          const key = String(c.productType || '').trim() || 'อื่นๆ';
+          prodMap.set(key, (prodMap.get(key) || 0) + 1);
+        }
+        const products = this._buildRankRows(
+          [...prodMap.entries()].map(([key, count]) => ({key, label: key, count})).sort((a, b) => b.count - a.count),
+          totalClosed
+        );
+
+        const payMap = new Map();
+        for (const c of closed) {
+          const raw = String(c.paymentChannel || '').trim();
+          const key = raw || '__unset__';
+          const label = raw || 'ไม่ระบุ';
+          if (!payMap.has(key)) payMap.set(key, {key, label, count: 0});
+          payMap.get(key).count++;
+        }
+        const payments = this._buildRankRows(
+          [...payMap.values()].sort((a, b) => b.count - a.count),
+          totalClosed
+        );
+
+        this.workSummary = {totalClosed, sources, products, payments};
+      } catch (e) {
+        this.workSummary = empty;
+      }
+    },
     _paymentType(channel) {
       const v = String(channel || '').toLowerCase().trim();
       if (!v) return '';
@@ -1520,6 +1739,7 @@ function app() {
         const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
         if (idx >= 0) this.customers[idx].status = ns;
         this._persistCache();
+        this.refreshWorkSummary();
         this.saveMsg = '✅ บันทึก Status เรียบร้อย'; this.saveOk = true; this.pendingStatus = '';
       } catch(e) { this.saveMsg = '⚠️ '+e.message; this.saveOk = false; }
       this.savingStatus = false;
