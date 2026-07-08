@@ -445,17 +445,22 @@
         </div>
       </section>
 
-      <!-- ── Work Summary ── -->
-      <section x-show="customers.length" class="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
-        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-          <div>
+      <!-- ── Work Summary (collapsed by default) ── -->
+      <section x-show="customers.length" class="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+        <button type="button" @click="showWorkSummary = !showWorkSummary"
+          class="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-slate-50/80 transition">
+          <div class="min-w-0">
             <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">สรุปการทำงาน</div>
-            <div class="text-[13px] text-slate-500 mt-0.5">
-              ปิดการขายรวม <span class="font-bold text-slate-700 tabular-nums" x-text="workSummary.totalClosed"></span> รายการ
-              <span class="text-slate-400">· นับจาก Status Purchased เท่านั้น</span>
+            <div class="text-[13px] text-slate-500 mt-0.5 truncate">
+              ปิดการขาย <span class="font-bold text-slate-700 tabular-nums" x-text="workSummary.totalClosed"></span> รายการ
+              <span class="text-slate-400">· กดเพื่อ<span x-text="showWorkSummary ? 'ซ่อน' : 'ดูรายละเอียด'"></span></span>
             </div>
           </div>
-        </div>
+          <span class="shrink-0 h-8 w-8 grid place-items-center rounded-full bg-slate-100 text-slate-500 text-sm font-bold transition"
+                :class="showWorkSummary ? 'rotate-180' : ''">▼</span>
+        </button>
+        <div x-show="showWorkSummary" x-transition.opacity.duration.200ms class="px-4 pb-4 border-t border-slate-100">
+        <div class="text-[12px] text-slate-400 pt-3 mb-3">นับจาก Status Purchased เท่านั้น</div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Lead ranking -->
           <div class="rounded-xl bg-slate-50/80 ring-1 ring-slate-200/70 p-3.5">
@@ -517,6 +522,7 @@
               </template>
             </div>
           </div>
+        </div>
         </div>
       </section>
 
@@ -1085,7 +1091,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v22';
+const CRM_BUILD       = '7 ก.ค. 69 v23';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1163,6 +1169,7 @@ function app() {
     customers: [], loading: false, loadErr: null, lastFetch: '',
     sourceCounts: null, sheetsFound: null, rawCount: null,
     workSummary: {totalClosed: 0, sources: [], products: [], payments: []},
+    showWorkSummary: false,
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
