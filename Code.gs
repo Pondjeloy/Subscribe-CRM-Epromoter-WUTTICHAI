@@ -227,9 +227,11 @@ function appendNote(sheetName, rowNum, note) {
   if (!sheet) return { success:false, error:'Sheet not found' };
   var cell = sheet.getRange(rowNum, cfg.notesCol+1);
   var cur  = clean(cell.getValue());
-  cell.setValue(cur ? cur+'\n'+note : note);
+  var next = cur ? cur+'\n'+note : note;
+  cell.setValue(next);
   SpreadsheetApp.flush();
-  return { success:true };
+  // คืน notes เต็มหลัง append — ฝั่ง CRM ใช้ sync UI โดยไม่ทับข้อความเดิม
+  return { success:true, notes: next };
 }
 
 // ── updateNotes (overwrite — used for delete) ───────────

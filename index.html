@@ -1723,6 +1723,20 @@ function app() {
     _hlNoteText(level) {
       return ['⚪ ยกเลิกไฮไลท์','🟡 สนใจ','🟠 มีโอกาสสูง','🟢 ใกล้ปิดแล้ว!'][level] || '';
     },
+    _applyNotesFromSheet(c, raw) {
+      const notes = String(raw || '');
+      const idx = this.customers.findIndex(x => x.id === c.id);
+      if (idx >= 0) {
+        this.customers[idx].notes = notes;
+        this.customers[idx].parsedNotes = this._parseNotes(notes);
+        if (this.selectedCustomer?.id === c.id) {
+          this.selectedCustomer.notes = notes;
+          this.selectedCustomer.parsedNotes = this.customers[idx].parsedNotes;
+          this.sheetNotes = notes.split(/\r?\n/).map(l => l.trim()).filter(Boolean).reverse();
+        }
+        this._persistCache();
+      }
+    },
     async cycleHL(c) {
       if (!c) return;
       const key = this._hlKey(c), next = ((this.highlights[key]||0)+1)%4;
@@ -1730,7 +1744,8 @@ function app() {
       if (next===0) delete h[key]; else h[key]=next;
       this.highlights = h;
       localStorage.setItem(HL_KEY, JSON.stringify(h));
-      // เขียนขึ้น Remark (notesCol) ของแถวนั้นใน Sheet
+      // เขียนขึ้น Remark (notesCol) ของแถวนั้น — แล้วดึง notes จริงจาก Sheet กลับมา
+      // (ห้าม merge จาก cache อย่างเดียว เพราะ cache อาจว่าง/เก่า แล้วทับข้อความเดิมใน UI)
       if (!this.apiUrl || !c.source || !c.row) return;
       const now = new Date();
       let stamp = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -1739,18 +1754,25 @@ function app() {
       try {
         const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:c.source, row:c.row, note:entry, promoter:PROMOTER}, 12000);
         if (!r?.success) throw new Error(r?.error || 'API error');
-        const idx = this.customers.findIndex(x => x.id === c.id);
-        if (idx >= 0) {
-          const prev = String(this.customers[idx].notes || '').trim();
-          const raw = prev ? prev+'\n'+entry : entry;
-          this.customers[idx].notes = raw;
-          this.customers[idx].parsedNotes = this._parseNotes(raw);
-          if (this.selectedCustomer?.id === c.id) {
-            this.selectedCustomer.parsedNotes = this.customers[idx].parsedNotes;
-            this.sheetNotes = [entry, ...this.sheetNotes];
+        // ใช้ notes จาก appendNote (ถ้า GAS deploy แล้ว) หรือ getNotes — ห้ามทับด้วย cache ว่าง
+        if (r.notes != null && String(r.notes).length) {
+          this._applyNotesFromSheet(c, r.notes);
+        } else {
+          const g = await jsonpCall(this.apiUrl, {action:'getNotes', sheet:c.source, row:c.row, promoter:PROMOTER}, 12000);
+          if (g?.success) {
+            this._applyNotesFromSheet(c, g.notes || '');
+          } else {
+            const idx = this.customers.findIndex(x => x.id === c.id);
+            if (idx >= 0) {
+              const prev = String(this.customers[idx].notes || '').trim();
+              this._applyNotesFromSheet(c, prev ? prev+'\n'+entry : entry);
+            }
           }
-          this._persistCache();
-          this._bumpCustomerList(c.id);
+        }
+        if (this.selectedCustomer?.id === c.id) {
+          this.syncMsg = '✅ ไฮไลท์ขึ้น Sheet แล้ว';
+          this.syncOk = true;
+          setTimeout(()=>{ if (String(this.syncMsg||'').includes('ไฮไลท์ขึ้น Sheet')) { this.syncMsg=''; this.syncOk=null; } }, 2500);
         }
       } catch(e) {
         this.syncMsg = '⚠️ ไฮไลท์ขึ้น Sheet ไม่ได้: '+e.message;
