@@ -61,6 +61,7 @@ function doGet(e) {
       case 'getNotes':      result = getNotes(p.sheet, parseInt(p.row,10)); break;
       case 'appendNote':    result = appendNote(p.sheet, parseInt(p.row,10), p.note||''); break;
       case 'updateNotes':   result = updateNotes(p.sheet, parseInt(p.row,10), p.notes||''); break;
+      case 'setNoteHighlight': result = setNoteHighlight(p.sheet, parseInt(p.row,10), parseInt(p.level||'0',10)); break;
       default:              result = { success:false, error:'Unknown action: '+action };
     }
   } catch(err) {
@@ -227,11 +228,30 @@ function appendNote(sheetName, rowNum, note) {
   if (!sheet) return { success:false, error:'Sheet not found' };
   var cell = sheet.getRange(rowNum, cfg.notesCol+1);
   var cur  = clean(cell.getValue());
-  var next = cur ? cur+'\n'+note : note;
-  cell.setValue(next);
+  cell.setValue(cur ? cur+'\n'+note : note);
   SpreadsheetApp.flush();
-  // คืน notes เต็มหลัง append — ฝั่ง CRM ใช้ sync UI โดยไม่ทับข้อความเดิม
-  return { success:true, notes: next };
+  return { success:true };
+}
+
+// ── setNoteHighlight — ใส่สีพื้นหลังช่อง Remark (ไม่แตะข้อความ) ──
+// level: 0=ล้างสี, 1=เหลือง(สนใจ), 2=ส้ม(โอกาสสูง), 3=เขียว(ใกล้ปิด)
+function setNoteHighlight(sheetName, rowNum, level) {
+  if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
+  var cfg = getSheetConfig(sheetName);
+  if (!cfg || cfg.notesCol===undefined) return { success:false, error:'No config/notesCol' };
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
+  if (!sheet) return { success:false, error:'Sheet not found' };
+  var colors = {
+    0: null,        // ล้างสี
+    1: '#FEF08A',   // เหลือง — สนใจ
+    2: '#FDBA74',   // ส้ม — มีโอกาสสูง
+    3: '#86EFAC'    // เขียว — ใกล้ปิด
+  };
+  var lv = (level === 1 || level === 2 || level === 3) ? level : 0;
+  var cell = sheet.getRange(rowNum, cfg.notesCol+1);
+  cell.setBackground(colors[lv]);
+  SpreadsheetApp.flush();
+  return { success:true, sheet:sheetName, row:rowNum, level:lv, color:colors[lv] };
 }
 
 // ── updateNotes (overwrite — used for delete) ───────────
