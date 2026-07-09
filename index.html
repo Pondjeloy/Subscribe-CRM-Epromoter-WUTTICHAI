@@ -1720,12 +1720,43 @@ function app() {
     /* ── Highlights ── */
     _hlKey(c)    { return c.phone || ('id:'+c.id); },
     getHL(c)     { return this.highlights[this._hlKey(c)] || 0; },
-    cycleHL(c) {
+    _hlNoteText(level) {
+      return ['⚪ ยกเลิกไฮไลท์','🟡 สนใจ','🟠 มีโอกาสสูง','🟢 ใกล้ปิดแล้ว!'][level] || '';
+    },
+    async cycleHL(c) {
+      if (!c) return;
       const key = this._hlKey(c), next = ((this.highlights[key]||0)+1)%4;
       const h = {...this.highlights};
       if (next===0) delete h[key]; else h[key]=next;
       this.highlights = h;
       localStorage.setItem(HL_KEY, JSON.stringify(h));
+      // เขียนขึ้น Remark (notesCol) ของแถวนั้นใน Sheet
+      if (!this.apiUrl || !c.source || !c.row) return;
+      const now = new Date();
+      let stamp = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+      if (!NOTE_DATE_ONLY) stamp += ' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      const entry = stamp+' — '+this._hlNoteText(next);
+      try {
+        const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:c.source, row:c.row, note:entry, promoter:PROMOTER}, 12000);
+        if (!r?.success) throw new Error(r?.error || 'API error');
+        const idx = this.customers.findIndex(x => x.id === c.id);
+        if (idx >= 0) {
+          const prev = String(this.customers[idx].notes || '').trim();
+          const raw = prev ? prev+'\n'+entry : entry;
+          this.customers[idx].notes = raw;
+          this.customers[idx].parsedNotes = this._parseNotes(raw);
+          if (this.selectedCustomer?.id === c.id) {
+            this.selectedCustomer.parsedNotes = this.customers[idx].parsedNotes;
+            this.sheetNotes = [entry, ...this.sheetNotes];
+          }
+          this._persistCache();
+          this._bumpCustomerList(c.id);
+        }
+      } catch(e) {
+        this.syncMsg = '⚠️ ไฮไลท์ขึ้น Sheet ไม่ได้: '+e.message;
+        this.syncOk = false;
+        setTimeout(()=>{ if (String(this.syncMsg||'').includes('ไฮไลท์ขึ้น Sheet')) { this.syncMsg=''; this.syncOk=null; } }, 4000);
+      }
     },
     hlClass(c)    { const v=this.getHL(c); return v?'hl-'+v:''; },
     hlTrClass(c)  { const v=this.getHL(c); return v?'tr-hl-'+v:''; },
