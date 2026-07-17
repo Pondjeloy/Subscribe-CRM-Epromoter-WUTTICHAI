@@ -877,20 +877,25 @@
                     <td class="px-3">
                       <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                     </td>
-                    <td class="px-3 max-w-[300px]">
-                      <div class="flex items-center gap-2 min-w-0">
-                        <button class="hl-flag" :class="hlClass(c)" :title="hlLabel(c)" @click.stop="cycleHL(c)"></button>
-                        <span class="font-semibold text-slate-800 truncate text-[13.5px]" x-text="c.name||'—'"></span>
-                        <span class="flex items-center gap-1 text-[11.5px] shrink-0">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--accent);opacity:.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                          <span class="text-slate-400" x-show="c.province" x-text="c.province"></span>
-                          <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="c.age+'ปี'"></span>
-                        </span>
-                        <span x-show="c.convenientDate || c.contactTime" class="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">
-                          <span x-show="c.convenientDate" x-text="fmtFilterDate(c.convenientDate)"></span>
-                          <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
-                          <span x-show="c.contactTime" x-text="c.contactTime"></span>
-                        </span>
+                    <td class="px-3 min-w-[200px] max-w-[340px]">
+                      <div class="flex items-start gap-2 min-w-0">
+                        <button class="hl-flag shrink-0 mt-0.5" :class="hlClass(c)" :title="hlLabel(c)" @click.stop="cycleHL(c)"></button>
+                        <div class="min-w-0 flex-1">
+                          <div class="font-semibold text-slate-800 truncate text-[13.5px] leading-snug" x-text="c.name||'—'"></div>
+                          <div class="flex items-center gap-1.5 flex-wrap text-[11px] text-slate-400 mt-0.5 leading-snug">
+                            <span class="inline-flex items-center gap-0.5 min-w-0" x-show="c.province || c.age">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="shrink-0" style="color:var(--accent);opacity:.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                              <span x-show="c.province" x-text="c.province"></span>
+                              <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="(c.province?' · ':'')+c.age+'ปี'"></span>
+                            </span>
+                            <span x-show="(c.province || c.age) && (c.convenientDate || c.contactTime)" class="text-slate-300">·</span>
+                            <span x-show="c.convenientDate || c.contactTime" class="whitespace-nowrap">
+                              <span x-show="c.convenientDate" x-text="fmtFilterDate(c.convenientDate)"></span>
+                              <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
+                              <span x-show="c.contactTime" x-text="c.contactTime"></span>
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td class="px-3 whitespace-nowrap">
@@ -1178,7 +1183,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '17 ก.ค. 69 v27';
+const CRM_BUILD       = '17 ก.ค. 69 v28';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
