@@ -122,6 +122,7 @@
     overflow: hidden;
     border-radius: 18px;
     background: #fff;
+    padding-bottom: 6px;
     transition: transform .2s ease, box-shadow .2s ease, ring-color .2s ease;
   }
   .source-card:hover { transform: translateY(-2px); }
@@ -182,6 +183,23 @@
     color: #fff;
     background: linear-gradient(135deg, #c8102e, #e23a54);
     box-shadow: 0 8px 20px rgba(200,16,46,.35);
+  }
+  .source-card-label {
+    display: block;
+    margin-top: 8px;
+    padding: 0 4px 2px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: #334155;
+    line-height: 1.25;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .source-card.is-active .source-card-label {
+    color: var(--accent);
   }
   /* ── Quick View + Active filters ── */
   .qv-btn-active { background:linear-gradient(135deg,var(--accent),#e23a54); border-color:transparent!important; box-shadow:0 8px 20px rgba(200,16,46,.22); }
@@ -421,9 +439,10 @@
                 class="source-card text-left ring-1 ring-slate-200/80 hover:ring-slate-300 hover:shadow-md"
                 :class="filterSource===sd.key ? 'is-active ring-2 ring-[var(--accent)]' : ''">
                 <div class="source-card-media">
-                  <img :src="sd.img" :alt="sd.label" loading="lazy" decoding="async"/>
+                  <img :src="sd.img" :alt="sd.short + ' — ' + sd.label" loading="lazy" decoding="async"/>
                   <span class="source-card-count tabular-nums" x-text="sd.count"></span>
                 </div>
+                <span class="source-card-label" x-text="sd.short"></span>
                 <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
               </button>
             </template>
@@ -1159,7 +1178,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '17 ก.ค. 69 v26';
+const CRM_BUILD       = '17 ก.ค. 69 v27';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
