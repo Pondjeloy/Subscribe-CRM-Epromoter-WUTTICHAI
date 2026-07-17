@@ -699,6 +699,64 @@
               </template>
             </div>
           </div>
+
+          <!-- วันที่สะดวก (Meta Densu July · F) -->
+          <div class="filter-row chips-scroll" x-show="convenientDateOptions.length" x-cloak>
+            <span class="filter-row-label">วันที่สะดวก</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterConvenientDate('')"
+                  class="filter-chip"
+                  :class="filterConvenientDate==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterConvenientDate==='' ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count"
+                        :class="filterConvenientDate==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countWithConvenientDate()"></span>
+                </button>
+              </div>
+              <template x-for="opt in convenientDateOptions" :key="'cd-'+opt.value">
+                <button @click="setFilterConvenientDate(opt.value)"
+                  class="filter-chip"
+                  :class="filterConvenientDate===opt.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterConvenientDate===opt.value ? 'background:var(--accent)' : ''">
+                  <span x-text="fmtFilterDate(opt.value)"></span>
+                  <span class="filter-chip-count"
+                        :class="filterConvenientDate===opt.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="opt.count"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- ช่วงเวลาติดต่อ (Meta Densu July · G) -->
+          <div class="filter-row chips-scroll" x-show="contactTimeOptions.length" x-cloak>
+            <span class="filter-row-label">ช่วงเวลา</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterContactTime('')"
+                  class="filter-chip"
+                  :class="filterContactTime==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterContactTime==='' ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count"
+                        :class="filterContactTime==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countWithContactTime()"></span>
+                </button>
+              </div>
+              <template x-for="opt in contactTimeOptions" :key="'ct-'+opt.value">
+                <button @click="setFilterContactTime(opt.value)"
+                  class="filter-chip"
+                  :class="filterContactTime===opt.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterContactTime===opt.value ? 'background:var(--accent)' : ''">
+                  <span x-text="opt.value"></span>
+                  <span class="filter-chip-count"
+                        :class="filterContactTime===opt.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="opt.count"></span>
+                </button>
+              </template>
+            </div>
+          </div>
         </section>
 
         <!-- Search row -->
@@ -809,6 +867,11 @@
                           <span class="text-slate-400" x-show="c.province" x-text="c.province"></span>
                           <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="c.age+'ปี'"></span>
                         </span>
+                        <span x-show="c.convenientDate || c.contactTime" class="text-[11px] text-slate-400 shrink-0 whitespace-nowrap">
+                          <span x-show="c.convenientDate" x-text="fmtFilterDate(c.convenientDate)"></span>
+                          <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
+                          <span x-show="c.contactTime" x-text="c.contactTime"></span>
+                        </span>
                       </div>
                     </td>
                     <td class="px-3 whitespace-nowrap">
@@ -866,6 +929,11 @@
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                 <span class="text-[12px] font-semibold text-slate-700 tabular-nums" x-text="fmtPhone(c.phone)"></span>
                 <span x-show="c.province" class="text-[11.5px] text-slate-400" x-text="'📍'+c.province"></span>
+              </div>
+              <div x-show="c.convenientDate || c.contactTime" class="text-[11px] text-slate-400 mb-1">
+                <span x-show="c.convenientDate" x-text="'📅 '+fmtFilterDate(c.convenientDate)"></span>
+                <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
+                <span x-show="c.contactTime" x-text="'🕐 '+c.contactTime"></span>
               </div>
               <div x-show="c.parsedNotes.length>0" class="flex items-baseline gap-2 pt-1.5 border-t border-slate-100 mt-1.5">
                 <span class="text-[10px] tabular-nums text-slate-400 shrink-0" x-text="fmtNoteDate(c.parsedNotes[0].date)"></span>
@@ -1091,7 +1159,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '7 ก.ค. 69 v24';
+const CRM_BUILD       = '17 ก.ค. 69 v25';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1173,6 +1241,7 @@ function app() {
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
+    filterConvenientDate: '', filterContactTime: '',
     activeQuickView: '',
     sortCol: 'lastNote', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
@@ -1454,6 +1523,8 @@ function app() {
       else if (this.filterStatus) list = list.filter(c => c.status === this.filterStatus);
       if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
+      if (this.filterConvenientDate) list = list.filter(c => this._normField(c.convenientDate) === this.filterConvenientDate);
+      if (this.filterContactTime) list = list.filter(c => this._normField(c.contactTime) === this.filterContactTime);
       if (this.filterHL === 'ranked') list = list.filter(c => this.getHL(c) > 0);
       else if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
       const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
@@ -1481,7 +1552,27 @@ function app() {
       for (let p=Math.max(1,cur-d); p<=Math.min(total,cur+d); p++) pages.push(p);
       return pages;
     },
-    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterStatusGroup?.length||this.filterPayment||this.filterActivity||this.filterHL!==null); },
+    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterStatusGroup?.length||this.filterPayment||this.filterActivity||this.filterHL!==null||this.filterConvenientDate||this.filterContactTime); },
+    get convenientDateOptions() {
+      const counts = {};
+      for (const c of this.customers) {
+        const v = this._normField(c.convenientDate);
+        if (v) counts[v] = (counts[v] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => this._dateSortKey(a.value) - this._dateSortKey(b.value) || a.value.localeCompare(b.value, 'th'));
+    },
+    get contactTimeOptions() {
+      const counts = {};
+      for (const c of this.customers) {
+        const v = this._normField(c.contactTime);
+        if (v) counts[v] = (counts[v] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => this._timeSortKey(a.value) - this._timeSortKey(b.value) || a.value.localeCompare(b.value, 'th'));
+    },
     get activeFilterTags() {
       const tags = [];
       const q = this.search.trim();
@@ -1499,6 +1590,8 @@ function app() {
         const lbl = (a?.label || this.filterActivity).replace(/^[^\s]+\s/, '');
         tags.push({ id:'activity', label:'บันทึกหมายเหตุ: ' + lbl });
       }
+      if (this.filterConvenientDate) tags.push({ id:'convenientDate', label:'วันที่สะดวก: ' + this.fmtFilterDate(this.filterConvenientDate) });
+      if (this.filterContactTime) tags.push({ id:'contactTime', label:'ช่วงเวลา: ' + this.filterContactTime });
       if (this.filterHL === 'ranked') tags.push({ id:'hl', label:'ไฮไลท์: มีสีทั้งหมด' });
       else if (this.filterHL !== null) {
         const h = this.hlFilterDefs.find(x => x.value === this.filterHL);
@@ -1553,6 +1646,7 @@ function app() {
       if (this.activeQuickView===id) { this.clearFilters(); return; }
       this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null;
       this.filterPayment=''; this.filterActivity=''; this.filterHL=null;
+      this.filterConvenientDate=''; this.filterContactTime='';
       this.activeQuickView=id;
       if (id==='unset') this.filterStatus='__unset__';
       else if (id==='followup') { this.filterStatusGroup=['Called','Follow up']; this.sortCol='lastNote'; this.sortDir='desc'; }
@@ -1567,16 +1661,63 @@ function app() {
       else if (id==='status' || id==='statusGroup') { this.filterStatus=''; this.filterStatusGroup=null; }
       else if (id==='payment') this.filterPayment='';
       else if (id==='activity') this.filterActivity='';
+      else if (id==='convenientDate') this.filterConvenientDate='';
+      else if (id==='contactTime') this.filterContactTime='';
       else if (id==='hl') this.filterHL=null;
       this.page=1;
     },
     toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this._resetQuickView(); this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
     setFilterPayment(key)  { this._frozenRows=null; this._resetQuickView(); this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
     setFilterActivity(key) { this._frozenRows=null; this._resetQuickView(); this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
     setFilterHL(val)       { this._frozenRows=null; this._resetQuickView(); this.filterHL = this.filterHL===val ? null : val; this.page=1; },
+    setFilterConvenientDate(val) { this._frozenRows=null; this._resetQuickView(); this.filterConvenientDate = this.filterConvenientDate===val ? '' : val; this.page=1; },
+    setFilterContactTime(val)    { this._frozenRows=null; this._resetQuickView(); this.filterContactTime = this.filterContactTime===val ? '' : val; this.page=1; },
     setSearch(val)         { this._frozenRows=null; this._resetQuickView(); this.search=val; this.page=1; },
+    _normField(v) {
+      return String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    },
+    _dateSortKey(s) {
+      const t = this._normField(s);
+      if (!t) return 9e15;
+      let m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (m) {
+        let y = parseInt(m[3], 10), mo = parseInt(m[2], 10), d = parseInt(m[1], 10);
+        if (y >= 2500) y -= 543;
+        // ถ้า mo > 12 แปลว่าเป็น MM/DD/YYYY
+        if (mo > 12 && d <= 12) { const tmp = mo; mo = d; d = tmp; }
+        return new Date(y, mo - 1, d).getTime() || 9e15;
+      }
+      m = t.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (m) return new Date(parseInt(m[1],10), parseInt(m[2],10)-1, parseInt(m[3],10)).getTime() || 9e15;
+      const dt = Date.parse(t);
+      return Number.isFinite(dt) ? dt : 9e15;
+    },
+    _timeSortKey(s) {
+      const t = this._normField(s).toLowerCase();
+      if (!t) return 9999;
+      if (/เช้า|morning|09|9:00|09:00|10:00|11:00/.test(t) && !/บ่าย|เย็น|afternoon|evening|13|14|15|16|17|18|19|20/.test(t)) return 1;
+      if (/เที่ยง|noon|12:/.test(t)) return 2;
+      if (/บ่าย|afternoon|13|14|15|16/.test(t) && !/เย็น|evening|17|18|19|20/.test(t)) return 3;
+      if (/เย็น|ค่ำ|evening|night|17|18|19|20|21/.test(t)) return 4;
+      const hm = t.match(/(\d{1,2})[:.](\d{2})/);
+      if (hm) return parseInt(hm[1], 10) * 60 + parseInt(hm[2], 10);
+      return 500;
+    },
+    fmtFilterDate(s) {
+      const t = this._normField(s);
+      if (!t) return '—';
+      const m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (!m) return t;
+      let d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+      if (mo > 12 && d <= 12) { const tmp = mo; mo = d; d = tmp; }
+      if (y >= 2500) y -= 543;
+      const be = y + 543;
+      return d + '/' + mo + '/' + String(be).slice(-2);
+    },
+    countWithConvenientDate() { return this.customers.filter(c => this._normField(c.convenientDate)).length; },
+    countWithContactTime()    { return this.customers.filter(c => this._normField(c.contactTime)).length; },
     countByStatus(val) {
       if (val === '__unset__') return this.customers.filter(c => !c.status).length;
       return this.customers.filter(c => c.status === val).length;
@@ -1925,10 +2066,11 @@ function app() {
 
     /* ── Export ── */
     exportCSV() {
-      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','อายุ','สินค้า','ชำระเงิน','Status','ที่มา'];
+      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','อายุ','สินค้า','ชำระเงิน','วันที่สะดวก','ช่วงเวลา','Status','ที่มา'];
       const rows = this.filtered.map(c => [c.id, c.name||'', this.rawPhone(c.phone)||'', c.email||'',
                                             c.lineId||'', c.province||'', c.age||'', c.productType||'',
-                                            c.paymentChannel||'', c.status||'', c.source||'']);
+                                            c.paymentChannel||'', c.convenientDate||'', c.contactTime||'',
+                                            c.status||'', c.source||'']);
       const csv  = [cols,...rows].map(r => r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
       const url  = URL.createObjectURL(blob);

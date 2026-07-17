@@ -233,8 +233,9 @@ function appendNote(sheetName, rowNum, note) {
   return { success:true };
 }
 
-// ── setNoteHighlight — ใส่สีพื้นหลังช่อง Remark (ไม่แตะข้อความ) ──
-// level: 0=ล้างสี, 1=เหลือง(สนใจ), 2=ส้ม(โอกาสสูง), 3=เขียว(ใกล้ปิด)
+// ── setNoteHighlight — ใส่สีพื้นหลัง + ตัวหนา + ตัวอักษรแดง ช่อง Remark ──
+// ไม่แก้ข้อความในเซลล์ — แค่จัดรูปแบบ
+// level: 0=ล้างสไตล์, 1=เหลือง, 2=ส้ม, 3=เขียว
 function setNoteHighlight(sheetName, rowNum, level) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var cfg = getSheetConfig(sheetName);
@@ -242,14 +243,23 @@ function setNoteHighlight(sheetName, rowNum, level) {
   var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
   if (!sheet) return { success:false, error:'Sheet not found' };
   var colors = {
-    0: null,        // ล้างสี
-    1: '#FEF08A',   // เหลือง — สนใจ
-    2: '#FDBA74',   // ส้ม — มีโอกาสสูง
-    3: '#86EFAC'    // เขียว — ใกล้ปิด
+    0: null,        // ล้างสีพื้น
+    1: '#FEF08A',   // เหลือง
+    2: '#FDBA74',   // ส้ม
+    3: '#86EFAC'    // เขียว
   };
   var lv = (level === 1 || level === 2 || level === 3) ? level : 0;
   var cell = sheet.getRange(rowNum, cfg.notesCol+1);
   cell.setBackground(colors[lv]);
+  if (lv === 0) {
+    // คืนค่าตัวอักษรปกติ
+    cell.setFontWeight('normal');
+    cell.setFontColor(null);
+  } else {
+    // ตัวหนา + สีแดง (ทุกระดับไฮไลท์)
+    cell.setFontWeight('bold');
+    cell.setFontColor('#C8102E');
+  }
   SpreadsheetApp.flush();
   return { success:true, sheet:sheetName, row:rowNum, level:lv, color:colors[lv] };
 }
