@@ -1159,7 +1159,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '17 ก.ค. 69 v25';
+const CRM_BUILD       = '17 ก.ค. 69 v26';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1271,8 +1271,10 @@ function app() {
     ],
     activityOpts: [
       {label:'📵 ไม่รับสาย'},
-      {label:'📵 ไม่รับสายมากกว่า 2 ครั้ง'},
-      {label:'📵 ไม่รับสาย โทรมากกว่า 5 สาย'},
+      {label:'📵 ไม่รับสาย 2 ครั้ง'},
+      {label:'📵 ไม่รับสาย 3 ครั้ง'},
+      {label:'📵 ไม่รับสาย 4 ครั้ง'},
+      {label:'📵 ไม่รับสาย 5 ครั้ง'},
       {label:'📴 ตัดสาย'},
       {label:'☎️ เบอร์ผิด'},
       {label:'❌ ติดต่อไม่ได้'},
@@ -1297,8 +1299,10 @@ function app() {
 
     activityFilters: [
       {label:'📵 ไม่รับสาย',            key:'ไม่รับสาย'},
-      {label:'📵 ไม่รับสาย >2',         key:'ไม่รับสายมากกว่า 2 ครั้ง'},
-      {label:'📵 ไม่รับสาย >5',         key:'ไม่รับสาย โทรมากกว่า 5 สาย'},
+      {label:'📵 ไม่รับสาย 2',         key:'ไม่รับสาย 2 ครั้ง'},
+      {label:'📵 ไม่รับสาย 3',         key:'ไม่รับสาย 3 ครั้ง'},
+      {label:'📵 ไม่รับสาย 4',         key:'ไม่รับสาย 4 ครั้ง'},
+      {label:'📵 ไม่รับสาย 5',         key:'ไม่รับสาย 5 ครั้ง'},
       {label:'📴 ตัดสาย',              key:'ตัดสาย'},
       {label:'☎️ เบอร์ผิด',             key:'เบอร์ผิด'},
       {label:'❌ ติดต่อไม่ได้',         key:'ติดต่อไม่ได้'},
@@ -1724,10 +1728,20 @@ function app() {
     },
     _activityAliases: {
       'ไม่สนใจแล้ว': ['ไม่สนใจแล้ว', 'ยังไม่สนใจ'],
+      // รองรับบันทึกเก่า + ใหม่
+      'ไม่รับสาย 2 ครั้ง': ['ไม่รับสาย 2 ครั้ง', 'ไม่รับสายมากกว่า 2 ครั้ง'],
+      'ไม่รับสาย 5 ครั้ง': ['ไม่รับสาย 5 ครั้ง', 'ไม่รับสาย โทรมากกว่า 5 สาย', 'โทรมากกว่า 5 สาย'],
     },
     _activityKeys(key)     { return this._activityAliases[key] || [key]; },
     _matchActivity(text, filterKey) {
       const t = String(text || '');
+      // "ไม่รับสาย" อย่างเดียว — ไม่รวม 2/3/4/5 ครั้ง และข้อความเก่า "มากกว่า…"
+      if (filterKey === 'ไม่รับสาย') {
+        if (!t.includes('ไม่รับสาย')) return false;
+        if (/ไม่รับสาย\s*[2-5]\s*ครั้ง/.test(t)) return false;
+        if (/ไม่รับสายมากกว่า|โทรมากกว่า\s*5/.test(t)) return false;
+        return true;
+      }
       return this._activityKeys(filterKey).some(k => t.includes(k));
     },
     countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
