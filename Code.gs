@@ -26,13 +26,17 @@
 //  [Hybrid ก.ค. 2569] ชีตใหม่กรกฎาคม + หลีดอื่น mapping เดียวกับมิถุนายน
 //  Meta → logic กรกฎาคม (Meta Densu/Credit July)
 //  หลีดอื่น (LG.com, LG Success, Consult, POP UP*) → column map เดิมมิ.ย. 2569
+//
+//  [Meta ITAX] โครงสร้างคอลัมน์เดียวกับ Meta Densu July
+//  A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
+//  H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter (P=หมายเหตุ ถ้ามี)
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
 var PROMOTER       = 'POND';
 
 var SHEET_NAMES = [
-  'Meta Densu July','Meta Densu',
+  'Meta Densu July','Meta Densu','Meta ITAX',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
   'Lead Subscribe POP UP Braner'
 ];
@@ -89,6 +93,14 @@ function getSheetConfig(name) {
     'Meta Densu': {
       picCol:13, statusCol:12, notesCol:14,
       parse: function(row, disp) { return parseMetaDensuLegacyRow(row, disp); }
+    },
+
+    // Meta ITAX: คอลัมน์เดียวกับ Meta Densu July
+    // A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
+    // H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter P=หมายเหตุ
+    'Meta ITAX': {
+      picCol:14, statusCol:13, notesCol:15,
+      parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
     },
 
     // ── หลีดอื่น: mapping มิถุนายน 2569 (บนชีตกรกฎาคม) ──────────────
@@ -402,7 +414,7 @@ function parseMetaDensuLegacyRow(row, disp) {
   };
 }
 
-// ── Meta Densu July parse ─────────────────────────────
+// ── Meta Densu July / Meta ITAX parse ─────────────────
 // A=ช่องทางชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
 // H=ชื่อ I=อายุ J=เบอร์ K=email · N=สถานะ O=Epromoter P=หมายเหตุ
 function parseMetaDensuJulyRow(row, disp) {

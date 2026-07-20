@@ -136,9 +136,12 @@
     aspect-ratio: 420 / 401;
     overflow: hidden;
     border-radius: 18px;
+    background: #f1f5f9;
   }
   .source-card img {
     display: block;
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -359,7 +362,7 @@
 
     <!-- Test mode banner -->
     <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
-      <b>🧪 โหมดทดสอบ v11</b> — ชีตกรกฎาคม · Meta ก.ค. + Meta เก่า · หลีดอื่น = mapping มิ.ย.
+      <b>🧪 โหมดทดสอบ v11</b> — ชีตกรกฎาคม · Meta ก.ค. + Meta เก่า + Meta ITAX · หลีดอื่น = mapping มิ.ย.
       <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
         รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
         <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
@@ -433,13 +436,14 @@
             <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">ช่องทาง Lead</div>
             <div class="text-[11px] text-slate-400">กดเพื่อกรอง · กดซ้ำเพื่อยกเลิก</div>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             <template x-for="sd in sourceSummary" :key="sd.key">
               <button @click="toggleSource(sd.key)"
                 class="source-card text-left ring-1 ring-slate-200/80 hover:ring-slate-300 hover:shadow-md"
                 :class="filterSource===sd.key ? 'is-active ring-2 ring-[var(--accent)]' : ''">
                 <div class="source-card-media">
-                  <img :src="sd.img" :alt="sd.short + ' — ' + sd.label" loading="lazy" decoding="async"/>
+                  <img :src="sd.img" :alt="sd.short + ' — ' + sd.label" loading="eager" decoding="async"
+                    @error="$el.style.opacity='0'"/>
                   <span class="source-card-count tabular-nums" x-text="sd.count"></span>
                 </div>
                 <span class="source-card-label" x-text="sd.short"></span>
@@ -1183,7 +1187,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '17 ก.ค. 69 v29';
+const CRM_BUILD       = '20 ก.ค. 69 v31';
 const CACHE_SCHEMA    = 'v11';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1193,6 +1197,7 @@ const CACHE_KEY         = 'lgCrmCache_wuttichai_v11';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema';
 const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
+// Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu July
 const SOURCE_ALIASES    = {};
 function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
 function phoneKey(phone) {
@@ -1404,6 +1409,8 @@ function app() {
         columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
+      {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', img:'assets/channels/meta-itax.png',
+        columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
@@ -1859,13 +1866,14 @@ function app() {
     },
     isMetaSource(src) {
       const s = normalizeSource(src);
-      return s === 'Meta Densu July' || s === 'Meta Densu';
+      return s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
     },
     isMetaFilterActive() {
-      return this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu';
+      return this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
     },
     get metaLegendTitle() {
       if (this.filterSource === 'Meta Densu') return 'โครงสร้างชีต Meta Densu (เก่า)';
+      if (this.filterSource === 'Meta ITAX') return 'โครงสร้างชีต Meta ITAX';
       return 'โครงสร้างชีต Meta Densu July';
     },
     get activeMetaColumnLegend() {
