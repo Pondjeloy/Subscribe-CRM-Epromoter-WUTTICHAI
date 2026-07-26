@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v12</title>
+<title>LG Subscribe CRM · WUTTICHAI · v13</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -1187,23 +1187,35 @@
 </div>
 
 <script>
-const CRM_BUILD       = '26 ก.ค. 69 v32';
-const CACHE_SCHEMA    = 'v12';
+const CRM_BUILD       = '26 ก.ค. 69 v33';
+const CACHE_SCHEMA    = 'v13';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'pond1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v12';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
 const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
 // Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu July
-// POP UP Bannar (ก.ค. โครงสร้างใหม่) แสดงรวมกับการ์ด POP UP Braner
+// ทุกแท็บ POP UP (ชื่อสะกดต่างกัน) แสดงรวมการ์ด POP UP เดียว
 const SOURCE_ALIASES    = {
   'POP UP Bannar': 'Lead Subscribe POP UP Braner',
   'POP UP Banner': 'Lead Subscribe POP UP Braner',
+  'POP UP Braner': 'Lead Subscribe POP UP Braner',
+  'Lead Subscribe POP UP Banner': 'Lead Subscribe POP UP Braner',
+  'Lead POP UP Braner': 'Lead Subscribe POP UP Braner',
+  'Lead POP UP Banner': 'Lead Subscribe POP UP Braner',
+  'POP UP': 'Lead Subscribe POP UP Braner',
+  'Lead Subscribe POP UP': 'Lead Subscribe POP UP Braner',
 };
-function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
+function normalizeSource(src) {
+  if (!src) return '';
+  if (SOURCE_ALIASES[src]) return SOURCE_ALIASES[src];
+  // fuzzy: ชื่อแท็บที่มี POP UP / Braner / Bannar
+  if (/pop\s*up|braner|bannar|banner/i.test(src)) return 'Lead Subscribe POP UP Braner';
+  return src;
+}
 function phoneKey(phone) {
   let d = String(phone||'').replace(/\D/g,'');
   if (d.length >= 11 && d.startsWith('66')) d = '0' + d.slice(2);
@@ -1426,7 +1438,7 @@ function app() {
     init() {
       if (localStorage.getItem(CACHE_VER_KEY) !== CACHE_SCHEMA) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11','lgCrmCache_v12','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
         localStorage.setItem(CACHE_VER_KEY, CACHE_SCHEMA);
       }
       if (this.isLoggedIn && this.apiUrl) {
