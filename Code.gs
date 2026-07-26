@@ -25,7 +25,11 @@
 //
 //  [Hybrid ก.ค. 2569] ชีตใหม่กรกฎาคม + หลีดอื่น mapping เดียวกับมิถุนายน
 //  Meta → logic กรกฎาคม (Meta Densu/Credit July)
-//  หลีดอื่น (LG.com, LG Success, Consult, POP UP*) → column map เดิมมิ.ย. 2569
+//  หลีดอื่น (LG.com, LG Success, Consult, POP UP Braner) → column map เดิมมิ.ย. 2569
+//
+//  [POP UP Bannar ก.ค. 2569] แท็บใหม่โครงสร้าง 8 คอลัมน์ (ไม่ใช่ Braner เก่า)
+//  A=วันที่ B=ชื่อ-นามสกุล C=เบอร์ D=ประเภท E=สินค้า F=Sale Consultant G=สถานะ H=หมายเหตุ
+//  CRM UI รวมแสดงภายใต้การ์ด POP UP (alias ฝั่ง frontend)
 //
 //  [Meta ITAX] โครงสร้างคอลัมน์เดียวกับ Meta Densu July
 //  A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
@@ -38,7 +42,7 @@ var PROMOTER       = 'POND';
 var SHEET_NAMES = [
   'Meta Densu July','Meta Densu','Meta ITAX',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
-  'Lead Subscribe POP UP Braner'
+  'Lead Subscribe POP UP Braner','POP UP Bannar'
 ];
 
 // ── ทดสอบก่อน Deploy ครั้งแรก ──────────────────────────
@@ -146,6 +150,7 @@ function getSheetConfig(name) {
       };}
     },
 
+    // โครงสร้างเก่า (มิ.ย.): First+Last แยกคอลัมน์ · pic=L status=K notes=M
     'Lead Subscribe POP UP Braner': {
       picCol:11, statusCol:10, notesCol:12,
       parse: function(row) {
@@ -159,6 +164,25 @@ function getSheetConfig(name) {
           province:       clean(row[7]),
           productType:    clean(row[8]),
           lineId:         clean(row[6])
+        };
+      }
+    },
+
+    // โครงสร้างใหม่ (ก.ค.): ชื่อเต็ม B · เบอร์ C · Sale Consultant F · สถานะ G · หมายเหตุ H
+    'POP UP Bannar': {
+      picCol:5, statusCol:6, notesCol:7,
+      parse: function(row) {
+        var type = clean(row[3]), prod = clean(row[4]);
+        var productType = type && prod ? (type + ' · ' + prod) : (type || prod);
+        return {
+          name:           clean(row[1]),
+          phone:          clean(row[2]),
+          email:          '',
+          age:            '',
+          paymentChannel: '',
+          province:       '',
+          productType:    productType,
+          lineId:         ''
         };
       }
     }
@@ -342,7 +366,7 @@ function checkRows(sheetName, n, promoter) {
     else if (!isPromoter(picVal, promoter)) skip = colLetter(cfg.picCol)+'="'+picVal+'" ไม่ใช่ '+(promoter||PROMOTER);
     else if (!fields.name && !fields.phone) skip = 'ชื่อ+เบอร์ว่าง';
     rows.push({ sheetRow:i+1, passed:skip==='', skipReason:skip||'-',
-                picVal:picVal, name:String(row[1]||''), phone:String(row[2]||'') });
+                picVal:picVal, name:fields.name||'', phone:fields.phone||'' });
   }
   return { success:true, sheet:sheetName, totalRows:data.length-1, checkedLast:n, rows:rows };
 }

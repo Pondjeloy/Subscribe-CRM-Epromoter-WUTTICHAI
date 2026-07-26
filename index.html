@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v11</title>
+<title>LG Subscribe CRM · WUTTICHAI · v12</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -1187,18 +1187,22 @@
 </div>
 
 <script>
-const CRM_BUILD       = '20 ก.ค. 69 v31';
-const CACHE_SCHEMA    = 'v11';
-const NOTE_DATE_ONLY  = true;
-const LOGIN_PASSWORD    = 'wuttichai1234';
+const CRM_BUILD       = '26 ก.ค. 69 v32';
+const CACHE_SCHEMA    = 'v12';
+const NOTE_DATE_ONLY  = false;
+const LOGIN_PASSWORD    = 'pond1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v11';
-const CACHE_VER_KEY     = 'lgCrmCacheSchema';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v12';
+const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
 const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
 // Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu July
-const SOURCE_ALIASES    = {};
+// POP UP Bannar (ก.ค. โครงสร้างใหม่) แสดงรวมกับการ์ด POP UP Braner
+const SOURCE_ALIASES    = {
+  'POP UP Bannar': 'Lead Subscribe POP UP Braner',
+  'POP UP Banner': 'Lead Subscribe POP UP Braner',
+};
 function normalizeSource(src) { return SOURCE_ALIASES[src] || src || ''; }
 function phoneKey(phone) {
   let d = String(phone||'').replace(/\D/g,'');
@@ -1244,7 +1248,7 @@ function dedupeCustomersByPhone(list) {
   let id = 1;
   return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
-const HL_KEY            = 'lgDashHL_wuttichai';
+const HL_KEY            = 'lgCrmHL_wuttichai';
 const PROMOTER          = 'WUTTICHAI';
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
@@ -1414,14 +1418,15 @@ function app() {
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
-      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP Braner', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png'},
+      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png',
+        columnHelp:'Bannar(ก.ค.): B=ชื่อ C=เบอร์ F=Sale Consultant · Braner(เก่า): C+D=ชื่อ F=เบอร์ L=PIC'},
     ],
 
     /* ── Init ── */
     init() {
       if (localStorage.getItem(CACHE_VER_KEY) !== CACHE_SCHEMA) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
         localStorage.setItem(CACHE_VER_KEY, CACHE_SCHEMA);
       }
       if (this.isLoggedIn && this.apiUrl) {
@@ -1638,14 +1643,19 @@ function app() {
     },
 
     get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>this.customerMatchesSource(c, sd.key)).length})); },
+    _sourceKeysFor(sdKey) {
+      const nk = normalizeSource(sdKey);
+      const aliases = Object.keys(SOURCE_ALIASES).filter(k => SOURCE_ALIASES[k] === nk);
+      return [nk, ...aliases];
+    },
     get sourceDebugLines() {
       if (!this.sourceCounts) return [];
-      return this.sourceDefs.map(sd => ({
-        key: sd.key,
-        short: sd.short,
-        api: this.sourceCounts[sd.key] ?? 0,
-        found: !this.sheetsFound || this.sheetsFound[sd.key] !== false,
-      }));
+      return this.sourceDefs.map(sd => {
+        const keys = this._sourceKeysFor(sd.key);
+        const api = keys.reduce((n, k) => n + (this.sourceCounts[k] ?? 0), 0);
+        const found = !this.sheetsFound || keys.some(k => this.sheetsFound[k] === true);
+        return { key: sd.key, short: sd.short, api, found };
+      });
     },
 
     /* ── Filter methods ── */
