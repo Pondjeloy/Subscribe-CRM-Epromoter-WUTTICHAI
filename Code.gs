@@ -14,18 +14,17 @@
 //  หมายเหตุ: 'Lead Subscribe Lg.com' คืนกลับเป็นค่าเดิมแล้ว
 //  (รอบที่แล้วแก้ผิดชีตเพราะเข้าใจผิดว่าภาพที่ส่งมาคือชีตนี้)
 //
-//  [Sync ก.ค. 2569] Spreadsheet ใหม่
-//  https://docs.google.com/spreadsheets/d/1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI
+//  [Sync ส.ค. 2569] Spreadsheet ใหม่ (Aug 2026)
+//  https://docs.google.com/spreadsheets/d/1aiyNPYJHy3TA0NRj7vNUBgZs_htLiPJ3VALGeL_nLA0
+//  (เดิม ก.ค.: 1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI)
 //
-//  [July ก.ค. 2569] Meta Densu July — เลื่อนคอลัมน์ท้าย +1 จาก Meta Densu เดิม
-//  Meta Densu เดิม: M=Status N=PIC(Epromoter) O=Remark
-//  Meta Densu July:  N=Status O=PIC(Epromoter) P=Remark  (picCol=14)
-//  อ่านทุกแถวในชีต Meta Densu July (ไม่กรองวันที่ D — ชื่อชีตคือ July แล้ว)
-//  รวมเบอร์ซ้ำเฉพาะ Meta Densu July + Meta Credit July
+//  [Aug ส.ค. 2569] Meta Densu Aug — ชื่อชีตเปลี่ยนจาก Meta Densu July
+//  โครงคอลัมน์เดียวกับ July: N=Status O=PIC(Epromoter) P=Remark  (picCol=14)
+//  อ่านทุกแถวในชีต Meta Densu Aug (alias: Meta Densu July ยัง resolve ได้)
 //
-//  [Hybrid ก.ค. 2569] ชีตใหม่กรกฎาคม + หลีดอื่น mapping เดียวกับมิถุนายน
-//  Meta → logic กรกฎาคม (Meta Densu/Credit July)
-//  หลีดอื่น (LG.com, LG Success, Consult, POP UP Braner) → column map เดิมมิ.ย. 2569
+//  [Hybrid] ชีตรายเดือน + หลีดอื่น mapping เดียวกับมิถุนายน
+//  Meta → logic Meta Densu Aug / Meta Densu / Meta ITAX
+//  หลีดอื่น (LG.com, LG Success, Consult, POP UP Braner) → column map เดิม
 //
 //  [POP UP ก.ค. 2569 — ดึง 0 รายชื่อ]
 //  โครง Braner (ยืนยันจากชีตจริง):
@@ -34,23 +33,30 @@
 //  หาแท็บแบบ alias/fuzzy + อ่านหัวตาราง PIC/Status/Remark อัตโนมัติ
 //  ถ้า picCol เดิม match 0 แถว → สแกนหาคอลัมน์ที่มีชื่อ promoter มากสุด
 //
-//  [Meta ITAX] โครงสร้างคอลัมน์เดียวกับ Meta Densu July
+//  [Meta ITAX] โครงสร้างคอลัมน์เดียวกับ Meta Densu Aug
 //  A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
 //  H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter (P=หมายเหตุ ถ้ามี)
 // ════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = '1wEiFHLZKq9ZKEEeuiNEvap-dCzzgrQl0t0nFtt7ZfOI';
+var SPREADSHEET_ID = '1aiyNPYJHy3TA0NRj7vNUBgZs_htLiPJ3VALGeL_nLA0'; // ส.ค. 2569
 var PROMOTER       = 'POND';
 
 // ชื่อ canonical ใน CRM (1 การ์ด POP UP) — resolveSheet หาแท็บจริงให้
 var SHEET_NAMES = [
-  'Meta Densu July','Meta Densu','Meta ITAX',
+  'Meta Densu Aug','Meta Densu','Meta ITAX',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
   'Lead Subscribe POP UP Braner'
 ];
 
 // ชื่อแท็บทางเลือก (สะกดผิด / เปลี่ยนชื่อ)
 var SHEET_ALIASES = {
+  'Meta Densu Aug': [
+    'Meta Densu Aug',
+    'Meta Densu August',
+    'Meta Densu Aug 2026',
+    'Meta Densu ส.ค.',
+    'Meta Densu July' // fallback ชีตเก่า
+  ],
   'Lead Subscribe POP UP Braner': [
     'Lead Subscribe POP UP Braner',
     'Lead Subscribe POP UP Banner',
@@ -105,8 +111,13 @@ function doGet(e) {
 function getSheetConfig(name) {
   var cfg = {
 
-    // Meta Densu July: A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
+    // Meta Densu Aug: A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
     // H=ชื่อ I=อายุ J=เบอร์ K=email N=สถานะ O=Epromoter P=หมายเหตุ
+    'Meta Densu Aug': {
+      picCol:14, statusCol:13, notesCol:15,
+      parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
+    },
+    // alias ชื่อเก่า (ชีต July ยังอยู่) — โครงคอลัมน์เดียวกัน
     'Meta Densu July': {
       picCol:14, statusCol:13, notesCol:15,
       parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
@@ -118,7 +129,7 @@ function getSheetConfig(name) {
       parse: function(row, disp) { return parseMetaDensuLegacyRow(row, disp); }
     },
 
-    // Meta ITAX: คอลัมน์เดียวกับ Meta Densu July
+    // Meta ITAX: คอลัมน์เดียวกับ Meta Densu Aug
     // A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
     // H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter P=หมายเหตุ
     'Meta ITAX': {
@@ -655,11 +666,12 @@ function isJuly2026Row(row, dateCol, dispRow) {
   return d.getFullYear() === 2026 && d.getMonth() === 6;
 }
 
-// ── Dedup Meta Densu July + Meta Densu เก่า (July ชนะถ้าเบอร์ซ้ำ) ──
-var META_PAIR = {'Meta Densu July':true, 'Meta Densu':true};
+// ── Dedup Meta Densu Aug + Meta Densu เก่า (Aug ชนะถ้าเบอร์ซ้ำ) ──
+var META_PAIR = {'Meta Densu Aug':true, 'Meta Densu July':true, 'Meta Densu':true};
 var SOURCE_PRIORITY = {
-  'Meta Densu July': 1,
-  'Meta Densu': 2
+  'Meta Densu Aug': 1,
+  'Meta Densu July': 2,
+  'Meta Densu': 3
 };
 
 function phoneKey(phone) {

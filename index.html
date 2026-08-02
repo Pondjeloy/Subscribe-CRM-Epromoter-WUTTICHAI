@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v13</title>
+<title>LG Subscribe CRM · POND · v13</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -256,7 +256,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต <span x-text="crmBuild"></span></div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต <span x-text="crmBuild"></span></div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -323,7 +323,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -337,7 +337,7 @@
     <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
-    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Jul2026/" target="_blank" class="btn-text">
+    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Aug2026/" target="_blank" class="btn-text">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 15h.01M12 15h.01M15.5 15h.01"/></svg>
       คำนวณ
     </a>
@@ -362,7 +362,7 @@
 
     <!-- Test mode banner -->
     <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
-      <b>🧪 โหมดทดสอบ v11</b> — ชีตกรกฎาคม · Meta ก.ค. + Meta เก่า + Meta ITAX · หลีดอื่น = mapping มิ.ย.
+      <b>🧪 CRM v34</b> — ชีตสิงหาคม · Meta Densu Aug + Meta เก่า + Meta ITAX
       <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
         รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
         <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
@@ -411,7 +411,7 @@
           <div class="flex items-start justify-between mb-3">
             <div>
               <div class="text-[11px] font-bold uppercase tracking-[.15em] text-slate-400">ทั้งหมด</div>
-              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ WUTTICHAI</div>
+              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ POND</div>
             </div>
             <button @click="clearFilters()"
               class="text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
@@ -1187,17 +1187,17 @@
 </div>
 
 <script>
-const CRM_BUILD       = '26 ก.ค. 69 v33';
-const CACHE_SCHEMA    = 'v13';
+const CRM_BUILD       = '2 ส.ค. 69 v34 · Meta Densu Aug';
+const CACHE_SCHEMA    = 'v14';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'pond1234';
-const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
-const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
-const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
-const META_PAIR         = {'Meta Densu July':true,'Meta Densu':true};
-const SOURCE_PRIORITY   = {'Meta Densu July':1,'Meta Densu':2};
-// Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu July
+const LOGIN_SESSION_KEY = 'lgCrmLoggedIn';
+const API_URL_KEY       = 'lgCrmApiUrl';
+const CACHE_KEY         = 'lgCrmCache_v13';
+const CACHE_VER_KEY     = 'lgCrmCacheSchema';
+const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
+const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
+// Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Aug
 // ทุกแท็บ POP UP (ชื่อสะกดต่างกัน) แสดงรวมการ์ด POP UP เดียว
 const SOURCE_ALIASES    = {
   'POP UP Bannar': 'Lead Subscribe POP UP Braner',
@@ -1260,8 +1260,8 @@ function dedupeCustomersByPhone(list) {
   let id = 1;
   return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
-const HL_KEY            = 'lgCrmHL_wuttichai';
-const PROMOTER          = 'WUTTICHAI';
+const HL_KEY            = 'lgDashHL';
+const PROMOTER          = 'POND';
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
 function app() {
@@ -1421,7 +1421,7 @@ function app() {
     ],
 
     sourceDefs: [
-      {key:'Meta Densu July',             short:'Meta ก.ค.', label:'Meta Densu July', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
+      {key:'Meta Densu Aug',              short:'Meta ส.ค.', label:'Meta Densu Aug', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
         columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
@@ -1888,15 +1888,16 @@ function app() {
     },
     isMetaSource(src) {
       const s = normalizeSource(src);
-      return s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
+      return s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
     },
     isMetaFilterActive() {
-      return this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
+      return this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
     },
     get metaLegendTitle() {
       if (this.filterSource === 'Meta Densu') return 'โครงสร้างชีต Meta Densu (เก่า)';
       if (this.filterSource === 'Meta ITAX') return 'โครงสร้างชีต Meta ITAX';
-      return 'โครงสร้างชีต Meta Densu July';
+      if (this.filterSource === 'Meta Densu July') return 'โครงสร้างชีต Meta Densu July';
+      return 'โครงสร้างชีต Meta Densu Aug';
     },
     get activeMetaColumnLegend() {
       return this.filterSource === 'Meta Densu' ? this.metaLegacyColumnLegend : this.metaColumnLegend;
@@ -2145,7 +2146,7 @@ function app() {
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href = url; a.download = 'LGSubscribe_WUTTICHAI_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.href = url; a.download = 'LGSubscribe_POND_'+new Date().toISOString().slice(0,10)+'.csv';
       a.click(); URL.revokeObjectURL(url);
     },
   };
