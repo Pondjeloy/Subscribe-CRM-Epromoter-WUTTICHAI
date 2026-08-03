@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · POND · v13</title>
+<title>LG Subscribe CRM · WUTTICHAI · v13</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -256,7 +256,7 @@
       <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-extrabold text-[18px]" style="background:var(--accent);box-shadow:0 16px 28px rgba(200,16,46,.22)">LG</div>
       <div>
         <div class="font-display text-[22px] font-extrabold text-slate-900 tracking-tight">Subscribe CRM</div>
-        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ POND · อัปเดต <span x-text="crmBuild"></span></div>
+        <div class="text-[13px] text-slate-500">เข้าสู่ระบบสำหรับ WUTTICHAI · อัปเดต <span x-text="crmBuild"></span></div>
       </div>
     </div>
     <label class="block text-[12px] font-bold uppercase tracking-[.12em] text-slate-400 mb-2">รหัสผ่าน</label>
@@ -323,7 +323,7 @@
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
       <div class="nav-title">Subscribe CRM</div>
-      <div class="nav-sub">Epromoter <b>POND</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
+      <div class="nav-sub">Epromoter <b>WUTTICHAI</b> · <span class="text-[var(--accent)] font-semibold" x-text="crmBuild"></span><span x-show="lastFetch"> · <span x-text="lastFetch"></span></span></div>
     </div>
     <div class="nav-spacer flex-1"></div>
     <div class="tab-group">
@@ -411,7 +411,7 @@
           <div class="flex items-start justify-between mb-3">
             <div>
               <div class="text-[11px] font-bold uppercase tracking-[.15em] text-slate-400">ทั้งหมด</div>
-              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ POND</div>
+              <div class="text-[12px] text-slate-400 mt-0.5">รายชื่อ WUTTICHAI</div>
             </div>
             <button @click="clearFilters()"
               class="text-[11px] font-semibold px-2.5 py-1 rounded-full transition"
@@ -1189,11 +1189,11 @@
 <script>
 const CRM_BUILD       = '2 ส.ค. 69 v34 · Meta Densu Aug';
 const CACHE_SCHEMA    = 'v14';
-const NOTE_DATE_ONLY  = false;
-const LOGIN_PASSWORD    = 'pond1234';
-const LOGIN_SESSION_KEY = 'lgCrmLoggedIn';
-const API_URL_KEY       = 'lgCrmApiUrl';
-const CACHE_KEY         = 'lgCrmCache_v13';
+const NOTE_DATE_ONLY  = true;
+const LOGIN_PASSWORD    = 'wuttichai1234';
+const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
+const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v14';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema';
 const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
@@ -1260,8 +1260,8 @@ function dedupeCustomersByPhone(list) {
   let id = 1;
   return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
-const HL_KEY            = 'lgDashHL';
-const PROMOTER          = 'POND';
+const HL_KEY            = 'lgDashHL_wuttichai';
+const PROMOTER          = 'WUTTICHAI';
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
 function app() {
@@ -2146,7 +2146,7 @@ function app() {
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
-      a.href = url; a.download = 'LGSubscribe_POND_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.href = url; a.download = 'LGSubscribe_WUTTICHAI_'+new Date().toISOString().slice(0,10)+'.csv';
       a.click(); URL.revokeObjectURL(url);
     },
   };
