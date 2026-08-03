@@ -425,6 +425,7 @@ function getCustomers(promoter) {
 }
 
 // เปิดชีต + config รันไทม์ (รองรับ alias / หัวตาราง POP UP)
+// เร็วขึ้น: ชีตที่ไม่ใช่ POP UP ใช้ config คงที่ — ไม่ต้อง getDataRange ทั้งชีต
 function openSheetWithConfig(sheetName, promoter) {
   if (!sheetName) return null;
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -436,10 +437,18 @@ function openSheetWithConfig(sheetName, promoter) {
     sheet = resolved.sheet;
     actual = resolved.actualName;
   }
-  var data = sheet.getDataRange().getValues();
-  var cfg = getRuntimeConfig(actual, sheet, data, promoter || PROMOTER)
-         || getSheetConfig(actual)
-         || getSheetConfig(sheetName);
+  var cfg = getSheetConfig(actual) || getSheetConfig(sheetName);
+  // POP UP ต้องอ่านหัวตารางเพื่อ refine map — ชีตอื่นใช้ config ตายตัวพอ
+  if (!cfg || cfg.isPopup || isPopupSheetName(actual) || isPopupSheetName(sheetName)) {
+    var lastCol = Math.min(sheet.getLastColumn() || 1, 30);
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    // ใช้เฉพาะ header + แถวตัวอย่างไม่เกิน 80 แถวสำหรับ auto PIC (ไม่ดึงทั้งชีต)
+    var sampleRows = Math.min(sheet.getLastRow() || 1, 80);
+    var data = sheet.getRange(1, 1, sampleRows, lastCol).getValues();
+    cfg = getRuntimeConfig(actual, sheet, data, promoter || PROMOTER)
+       || getSheetConfig(actual)
+       || getSheetConfig(sheetName);
+  }
   if (!cfg) return null;
   return { sheet: sheet, cfg: cfg, name: actual };
 }

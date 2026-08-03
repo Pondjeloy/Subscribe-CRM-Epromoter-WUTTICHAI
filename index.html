@@ -1193,7 +1193,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '3 ส.ค. 69 v35 · load faster';
+const CRM_BUILD       = '3 ส.ค. 69 v36 · notes timeout fix';
 const CACHE_SCHEMA    = 'v14';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1981,7 +1981,7 @@ function app() {
       try {
         const r = await jsonpCall(this.apiUrl, {
           action:'setNoteHighlight', sheet:c.source, row:c.row, level:next, promoter:PROMOTER
-        }, 12000);
+        }, 45000);
         if (!r?.success) throw new Error(r?.error || 'API error');
         if (this.selectedCustomer?.id === c.id) {
           this.syncMsg = next ? '✅ ใส่สี Remark ใน Sheet แล้ว' : '✅ ล้างสี Remark ใน Sheet แล้ว';
@@ -2020,7 +2020,7 @@ function app() {
       try {
         const targets = [{source:this.selectedCustomer.source, row:this.selectedCustomer.row}, ...(this.selectedCustomer.altRows||[])];
         for (const t of targets) {
-          const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER});
+          const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER}, 45000);
           if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
         }
         const ns = this.pendingStatus;
@@ -2037,20 +2037,45 @@ function app() {
 
     async loadSheetNotes() {
       if (!this.apiUrl || !this.selectedCustomer) return;
+      // เปิดการ์ดแล้วมี notes จากรายชื่ออยู่แล้ว — ซิงก์ Sheet เป็น optional refresh
       this.notesLoading = true;
+      let lastErr = null;
       try {
-        const r = await jsonpCall(this.apiUrl, {action:'getNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, promoter:PROMOTER}, 12000);
-        if (r?.success) {
-          const raw = r.notes || '';
-          this.sheetNotes = raw.split(/\r?\n/).filter(l=>l.trim()).reverse();
-          this._syncNotes(raw);
-        } else {
-          this.syncMsg = '⚠️ โหลดบันทึกไม่ได้: '+(r?.error||'API error'); this.syncOk = false;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            const tmo = attempt === 1 ? 45000 : 60000;
+            const r = await jsonpCall(this.apiUrl, {
+              action:'getNotes',
+              sheet:this.selectedCustomer.source,
+              row:this.selectedCustomer.row,
+              promoter:PROMOTER
+            }, tmo);
+            if (r?.success) {
+              const raw = r.notes || '';
+              this.sheetNotes = raw.split(/\r?\n/).filter(l=>l.trim()).reverse();
+              this._syncNotes(raw);
+              lastErr = null;
+              break;
+            }
+            throw new Error(r?.error || 'API error');
+          } catch (e) {
+            lastErr = e;
+            if (attempt < 2) await new Promise(r => setTimeout(r, 1000));
+          }
         }
-      } catch(e) {
-        this.syncMsg = '⚠️ โหลดบันทึกไม่ได้: '+e.message; this.syncOk = false;
+        if (lastErr) {
+          // ไม่ต้องตกใจ — ยังมีบันทึกจากรายชื่อ (โหลดตอน getCustomers)
+          if (this.sheetNotes.length) {
+            this.syncMsg = 'ℹ️ ซิงก์บันทึกล่าสุดจาก Sheet ไม่ทัน — แสดงจากรายชื่อ (อาจไม่ใช่ฉบับล่าสุด)';
+            this.syncOk = null;
+          } else {
+            this.syncMsg = '⚠️ โหลดบันทึกไม่ได้: ' + lastErr.message;
+            this.syncOk = false;
+          }
+        }
+      } finally {
+        this.notesLoading = false;
       }
-      this.notesLoading = false;
     },
     _syncNotes(rawNotes, bump) {
       const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
@@ -2110,7 +2135,7 @@ function app() {
       if (!this.apiUrl || !this.selectedCustomer) return;
       this.syncMsg = '💾 กำลังบันทึก...'; this.syncOk = null;
       try {
-        const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, note:entry, promoter:PROMOTER}, 12000);
+        const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, note:entry, promoter:PROMOTER}, 45000);
         if (r?.success) {
           this.sheetNotes = [entry, ...this.sheetNotes];
           const raw = [...this.sheetNotes].reverse().join('\n');
@@ -2124,7 +2149,7 @@ function app() {
       const remaining = this.sheetNotes.filter((_,i) => i!==idx);
       const raw = [...remaining].reverse().join('\n');
       try {
-        const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, notes:raw, promoter:PROMOTER}, 12000);
+        const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, notes:raw, promoter:PROMOTER}, 45000);
         if (r?.success) { this.sheetNotes = remaining; this._syncNotes(raw, true); }
         else throw new Error(r?.error||'ลบไม่ได้');
       } catch(e) { this.syncMsg='⚠️ ลบไม่ได้: '+e.message; this.syncOk=false; setTimeout(()=>this.syncMsg='',3000); }
@@ -2189,7 +2214,7 @@ function app() {
   };
 }
 
-function jsonpCall(baseUrl, params={}, timeout=15000) {
+function jsonpCall(baseUrl, params={}, timeout=30000) {
   return new Promise((resolve, reject) => {
     const cbName = '__lgCb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
     const timer  = setTimeout(() => {
