@@ -351,7 +351,10 @@ function getRuntimeConfig(canonicalName, sheet, data, promoter) {
 }
 
 // ── getCustomers ────────────────────────────────────────
+// ปรับความเร็ว: อ่านเฉพาะคอลัมน์ที่ใช้ · getDisplayValues เฉพาะชีต Meta
+// · ข้าม auto PIC scan ถ้า picCol match แล้ว · จำกัด lastCol
 function getCustomers(promoter) {
+  var t0 = Date.now();
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheetNames = SHEET_NAMES;
   var all = [], idNum = 1, sourceCounts = {}, sheetsFound = {};
@@ -377,10 +380,17 @@ function getCustomers(promoter) {
     if (actualName !== sName) sheetsFound[actualName] = true;
     sourceCounts[sName] = 0;
 
-    var range = sheet.getDataRange();
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    if (lastRow < 2 || lastCol < 1) continue;
+    // จำกัดคอลัมน์: Consult ใช้ถึง ~X(23) · Meta ถึง P(15) · กันชีตกว้างเกินจำเป็น
+    var maxCol = Math.min(lastCol, 30);
+    var range = sheet.getRange(1, 1, lastRow, maxCol);
     var data  = range.getValues();
-    var disp  = range.getDisplayValues();
-    var cfg   = getRuntimeConfig(sName, sheet, data, promoter);
+    // Meta ใช้ display สำหรับวันที่/เบอร์ — ชีตอื่น parse จาก values พอ (เร็วขึ้น ~2x)
+    var needsDisp = !!(META_PAIR[sName] || sName === 'Meta ITAX' || sName.indexOf('Meta') === 0);
+    var disp = needsDisp ? range.getDisplayValues() : null;
+    var cfg  = getRuntimeConfig(sName, sheet, data, promoter);
     if (!cfg) continue;
 
     for (var i = 1; i < data.length; i++) {
@@ -388,7 +398,7 @@ function getCustomers(promoter) {
       if (row.length <= cfg.picCol) continue;
       if (!isPromoter(row[cfg.picCol], promoter)) continue;
 
-      var fields = cfg.parse(row, disp[i]);
+      var fields = cfg.parse(row, disp ? disp[i] : row);
       if (!fields.name && !fields.phone) continue;
 
       var notes = '';
@@ -407,8 +417,11 @@ function getCustomers(promoter) {
     }
   }
   var deduped = dedupeCustomers(all);
-  return { success:true, count:deduped.length, rawCount:all.length,
-           sourceCounts:sourceCounts, sheetsFound:sheetsFound, data:deduped };
+  return {
+    success:true, count:deduped.length, rawCount:all.length,
+    sourceCounts:sourceCounts, sheetsFound:sheetsFound, data:deduped,
+    ms: Date.now() - t0
+  };
 }
 
 // เปิดชีต + config รันไทม์ (รองรับ alias / หัวตาราง POP UP)

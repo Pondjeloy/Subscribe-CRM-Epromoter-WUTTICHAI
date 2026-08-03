@@ -379,10 +379,16 @@
       </div>
     </div>
 
-    <!-- Loading -->
-    <div x-show="loading" class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-20 text-center">
+    <!-- Loading (เต็มจอเฉพาะตอนยังไม่มีข้อมูล) -->
+    <div x-show="loading && !customers.length" class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-20 text-center">
       <div class="dots mb-3"><span></span><span></span><span></span></div>
       <div class="text-[14px] text-slate-400">กำลังดึงข้อมูลจาก Google Sheet...</div>
+      <div class="text-[12px] text-slate-400 mt-2">Sheet ใหญ่ / cold start อาจใช้เวลา 30–90 วินาที — อย่ารีเฟรชซ้ำ</div>
+    </div>
+    <!-- Soft loading แถบบางๆ ตอนรีเฟรชพื้นหลัง (มี cache แล้ว) -->
+    <div x-show="softLoading || (loading && customers.length)" class="mb-3 rounded-xl bg-sky-50 ring-1 ring-sky-100 px-3 py-2 text-[12px] text-sky-800 flex items-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+      กำลังอัปเดตข้อมูลล่าสุดจาก Sheet…
     </div>
 
     <!-- Error / warning -->
@@ -402,7 +408,7 @@
               @click="fetchData()">ลองโหลดใหม่</button>
     </div>
 
-    <div x-show="!loading">
+    <div x-show="!loading || customers.length">
 
       <!-- ── Metrics ── -->
       <section class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
@@ -1187,7 +1193,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '2 ส.ค. 69 v34 · Meta Densu Aug';
+const CRM_BUILD       = '3 ส.ค. 69 v35 · load faster';
 const CACHE_SCHEMA    = 'v14';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1279,7 +1285,7 @@ function app() {
 
     /* ── Data ── */
     testMode: false,
-    customers: [], loading: false, loadErr: null, lastFetch: '',
+    customers: [], loading: false, softLoading: false, loadErr: null, lastFetch: '',
     sourceCounts: null, sheetsFound: null, rawCount: null,
     workSummary: {totalClosed: 0, sources: [], products: [], payments: []},
     showWorkSummary: false,
@@ -1442,7 +1448,9 @@ function app() {
         localStorage.setItem(CACHE_VER_KEY, CACHE_SCHEMA);
       }
       if (this.isLoggedIn && this.apiUrl) {
-        if (!this._loadCache()) this.fetchData();
+        const had = this._loadCache();
+        // มี cache → โชว์ทันที แล้วรีเฟรชพื้นหลัง (ไม่บล็อกจอ)
+        this.fetchData({ soft: had });
       }
       document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeDrawer(); });
     },
@@ -1452,7 +1460,10 @@ function app() {
       if (this.loginPw === LOGIN_PASSWORD) {
         this.isLoggedIn = true; this.loginPw = ''; this.loginErr = '';
         localStorage.setItem(LOGIN_SESSION_KEY, 'yes');
-        if (this.apiUrl) this.fetchData();
+        if (this.apiUrl) {
+          const had = this._loadCache();
+          this.fetchData({ soft: had });
+        }
       } else {
         this.loginErr = 'รหัสผ่านไม่ถูกต้อง'; this.loginPw = '';
       }
@@ -1520,24 +1531,47 @@ function app() {
       );
       return true;
     },
-    async fetchData() {
+    async fetchData(opts = {}) {
       const apiUrl = String(this.apiUrl || '').trim();
       if (!apiUrl) { this.showConfig = true; return; }
-      this.loading = true; this.loadErr = null;
+      // มีรายชื่ออยู่แล้ว → รีเฟรชพื้นหลังเสมอ (ไม่กระพริบจอขาว) ยกเว้น opts.force
+      const soft = this.customers.length > 0 && !opts.force;
+      this.loadErr = null;
+      if (soft) { this.softLoading = true; this.loading = false; }
+      else { this.loading = true; this.softLoading = false; }
+
+      const attempts = 3;
+      let lastErr = null;
       try {
-        const json = await jsonpCall(apiUrl, {action:'getCustomers', promoter:PROMOTER}, 30000);
-        if (!json || !json.success) throw new Error((json && json.error) || 'API error');
-        const raw = dedupeCustomersByPhone(json.data || []);
-        this.sheetsFound = json.sheetsFound || null;
-        this.sortCol = 'lastNote'; this.sortDir = 'desc'; this.page = 1;
-        const n = new Date();
-        let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
-        if (json.rawCount != null && json.rawCount !== raw.length) ts += ' · raw ' + json.rawCount;
-        this._applyCustomerData(raw, json.sourceCounts || null, json.rawCount != null ? json.rawCount : raw.length, Date.now(), ts);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+          try {
+            // รอบแรก 60s · รอบถัดไป 90s (Apps Script cold start + Sheet ใหญ่)
+            const tmo = attempt === 1 ? 60000 : 90000;
+            const json = await jsonpCall(apiUrl, {action:'getCustomers', promoter:PROMOTER}, tmo);
+            if (!json || !json.success) throw new Error((json && json.error) || 'API error');
+            const raw = dedupeCustomersByPhone(json.data || []);
+            this.sheetsFound = json.sheetsFound || null;
+            this.sortCol = 'lastNote'; this.sortDir = 'desc'; this.page = 1;
+            const n = new Date();
+            let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
+            if (json.rawCount != null && json.rawCount !== raw.length) ts += ' · raw ' + json.rawCount;
+            if (json.ms != null) ts += ' · ' + Math.round(json.ms/1000) + 's';
+            if (attempt > 1) ts += ' · retry ' + attempt;
+            this._applyCustomerData(raw, json.sourceCounts || null, json.rawCount != null ? json.rawCount : raw.length, Date.now(), ts);
+            localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+            const msg = String(e && e.message || e || '');
+            const retriable = /timeout|หมดเวลา|โหลด Script|Failed|Network|network/i.test(msg);
+            if (!retriable || attempt === attempts) throw e;
+            await new Promise(r => setTimeout(r, 1200 * attempt));
+          }
+        }
       } catch(e) {
         const stale = this._readCache(true);
-        if (stale) {
+        if (stale && !this.customers.length) {
           const mins = Math.round((Date.now() - stale.ts) / 60000);
           const age = mins < 60 ? (mins < 1 ? 'เมื่อกี้' : mins + ' นาทีที่แล้ว') : Math.round(mins / 60) + ' ชม.ที่แล้ว';
           this._applyCustomerData(
@@ -1548,11 +1582,14 @@ function app() {
             'cache สำรอง · ' + age
           );
           this.loadErr = 'โหลด API ไม่ได้ — ใช้ข้อมูล cache สำรอง (' + age + ')\n' + e.message;
+        } else if (this.customers.length) {
+          this.loadErr = 'อัปเดตล่าสุดไม่สำเร็จ — ยังแสดงข้อมูลเดิม\n' + e.message;
         } else {
           this.loadErr = e.message;
         }
       }
       this.loading = false;
+      this.softLoading = false;
     },
     _parseNotes(s) {
       if (!s?.trim()) return [];
@@ -2155,16 +2192,34 @@ function app() {
 function jsonpCall(baseUrl, params={}, timeout=15000) {
   return new Promise((resolve, reject) => {
     const cbName = '__lgCb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
-    const timer  = setTimeout(() => { cleanup(); reject(new Error('หมดเวลา (timeout) — ตรวจสอบว่า Deploy แล้วและ Authorize แล้ว')); }, timeout);
-    function cleanup() { clearTimeout(timer); delete window[cbName]; document.getElementById(cbName)?.remove(); }
+    const timer  = setTimeout(() => {
+      cleanup();
+      reject(new Error('หมดเวลา (timeout '+Math.round(timeout/1000)+'s) — Sheet ช้า/cold start หรือ Deploy/Authorize ยังไม่ครบ\nลองรอแล้วกดโหลดใหม่ 1 ครั้ง (ระบบ retry ให้อัตโนมัติ)'));
+    }, timeout);
+    function cleanup() {
+      clearTimeout(timer);
+      try { delete window[cbName]; } catch {}
+      const el = document.getElementById(cbName);
+      if (el) el.remove();
+    }
     window[cbName] = data => { cleanup(); resolve(data); };
-    const url = new URL(baseUrl);
+    let url;
+    try {
+      url = new URL(baseUrl);
+    } catch {
+      cleanup();
+      reject(new Error('URL API ไม่ถูกต้อง'));
+      return;
+    }
     Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
     url.searchParams.set('callback', cbName);
+    // cache-bust กัน CDN/browser ค้าง response เก่า
+    url.searchParams.set('_t', String(Date.now()));
     const script = document.createElement('script');
     script.id  = cbName;
+    script.async = true;
     script.src = url.toString();
-    script.onerror = () => { cleanup(); reject(new Error('โหลด Script ไม่ได้ — URL ผิด หรือยังไม่ได้ Deploy')); };
+    script.onerror = () => { cleanup(); reject(new Error('โหลด Script ไม่ได้ — URL ผิด / เน็ตหลุด / ยังไม่ได้ Deploy Anyone')); };
     document.head.appendChild(script);
   });
 }
