@@ -558,13 +558,16 @@ function openSheetWithConfig(sheetName, promoter) {
   return { ok: true, sheet: sheet, cfg: cfg, name: actual };
 }
 
+// ไม่เรียก SpreadsheetApp.flush() หลัง setValue — flush บังคับรอ commit
+// จนช้า 30–60 วิ บน cold start ทำให้ CRM timeout ทั้งที่ Sheet เขียนแล้ว
+// Apps Script จะ commit ตอนสคริปต์จบเอง
+
 // ── updateStatus ────────────────────────────────────────
 function updateStatus(sheetName, rowNum, newStatus) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
   if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
   opened.sheet.getRange(rowNum, opened.cfg.statusCol+1).setValue(newStatus);
-  SpreadsheetApp.flush();
   return { success:true, sheet:opened.name, row:rowNum, status:newStatus };
 }
 
@@ -586,7 +589,6 @@ function appendNote(sheetName, rowNum, note) {
   var cell = opened.sheet.getRange(rowNum, opened.cfg.notesCol+1);
   var cur  = clean(cell.getValue());
   cell.setValue(cur ? cur+'\n'+note : note);
-  SpreadsheetApp.flush();
   return { success:true, sheet:opened.name };
 }
 
@@ -614,7 +616,6 @@ function setNoteHighlight(sheetName, rowNum, level) {
     cell.setFontWeight('bold');
     cell.setFontColor('#C8102E');
   }
-  SpreadsheetApp.flush();
   return { success:true, sheet:opened.name, row:rowNum, level:lv, color:colors[lv] };
 }
 
@@ -625,8 +626,7 @@ function updateNotes(sheetName, rowNum, notes) {
   if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
   if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   opened.sheet.getRange(rowNum, opened.cfg.notesCol+1).setValue(notes);
-  SpreadsheetApp.flush();
-  return { success:true };
+  return { success:true, sheet:opened.name };
 }
 
 // ── debugSheets ─────────────────────────────────────────

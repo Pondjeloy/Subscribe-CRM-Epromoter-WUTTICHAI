@@ -1193,14 +1193,17 @@
 </div>
 
 <script>
-const CRM_BUILD       = '6 ส.ค. 69 v37 · sheet resolve Meta densu';
-const CACHE_SCHEMA    = 'v15';
+const CRM_BUILD       = '6 ส.ค. 69 v38 · write timeout soft-ok';
+const CACHE_SCHEMA    = 'v16';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
 const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
+// เขียน Sheet มักเสร็จก่อน CRM ได้คำตอบ (cold start) — รอยาวขึ้น + soft-ok เมื่อ timeout
+const WRITE_TIMEOUT_MS  = 90000;
+const isTimeoutErr = (e) => /timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
 const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
 // Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Aug
@@ -1981,7 +1984,7 @@ function app() {
       try {
         const r = await jsonpCall(this.apiUrl, {
           action:'setNoteHighlight', sheet:c.source, row:c.row, level:next, promoter:PROMOTER
-        }, 45000);
+        }, WRITE_TIMEOUT_MS);
         if (!r?.success) throw new Error(r?.error || 'API error');
         if (this.selectedCustomer?.id === c.id) {
           this.syncMsg = next ? '✅ ใส่สี Remark ใน Sheet แล้ว' : '✅ ล้างสี Remark ใน Sheet แล้ว';
@@ -2017,33 +2020,43 @@ function app() {
       if (!this.pendingStatus || !this.selectedCustomer) return;
       this._frozenRows = [...this.paginated];
       this.savingStatus = true; this.saveMsg = '';
+      const ns = this.pendingStatus;
       try {
         // หลักก่อน แล้วตามด้วย altRows (เบอร์ซ้ำใน Meta อีกชีต)
-        // ถ้าชีตรองไม่มีในไฟล์ส.ค. — ไม่ให้ล้มทั้งก้อนหลังหลักสำเร็จแล้ว
+        // timeout / sheet not found ชีตรอง = ไม่ล้มทั้งก้อน
+        // timeout ชีตหลัก = soft-ok (Sheet มักเขียนแล้ว แค่คำตอบกลับช้า)
         const targets = [{source:this.selectedCustomer.source, row:this.selectedCustomer.row, primary:true},
           ...(this.selectedCustomer.altRows||[]).map(a => ({source:a.source, row:a.row, primary:false}))];
         const okSheets = [], failSheets = [];
+        let primarySoftTimeout = false;
         for (const t of targets) {
           try {
-            const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER}, 45000);
+            const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:ns, promoter:PROMOTER}, WRITE_TIMEOUT_MS);
             if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
             okSheets.push(j.sheet || t.source);
           } catch (e) {
             const msg = e?.message || String(e);
             failSheets.push({source:t.source, err:msg, primary:!!t.primary});
-            // ชีตหลักพัง = fail จริง · ชีตรอง Sheet not found = ข้ามได้
+            if (t.primary && isTimeoutErr(e)) {
+              // เขียน Sheet เสร็จก่อน CRM ได้ JSON บ่อยมากหลัง cold start
+              primarySoftTimeout = true;
+              okSheets.push(t.source + ' (timeout≈saved)');
+              continue;
+            }
             if (t.primary) throw e;
-            if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
+            // ชีตรอง: ข้าม not found / timeout / no config
+            if (!/sheet not found|ไม่พบ sheet|no config|timeout|หมดเวลา/i.test(msg)) throw e;
           }
         }
-        const ns = this.pendingStatus;
         this.selectedCustomer.status = ns;
         const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
         if (idx >= 0) this.customers[idx].status = ns;
         this._persistCache();
         this.refreshWorkSummary();
         this._bumpCustomerList(this.selectedCustomer.id);
-        if (failSheets.length) {
+        if (primarySoftTimeout) {
+          this.saveMsg = '✅ อัปเดต Status บนจอแล้ว · รอคำตอบช้า (Sheet มักบันทึกแล้ว — เช็คชีตได้)';
+        } else if (failSheets.length) {
           this.saveMsg = '✅ บันทึก Status แล้ว · ชีตรองข้าม: '+failSheets.map(f=>f.source).join(', ');
         } else {
           this.saveMsg = '✅ บันทึก Status เรียบร้อย';
@@ -2158,17 +2171,21 @@ function app() {
       if (!this.apiUrl || !this.selectedCustomer) return;
       this.syncMsg = '💾 กำลังบันทึก...'; this.syncOk = null;
       try {
-        // ลองชีตหลักก่อน · ถ้า Sheet not found (แท็บถูกลบ/เปลี่ยนชื่อ) ลอง altRows
+        // ลองชีตหลักก่อน · not found / timeout → ลอง alt หรือ soft-ok
         const targets = this._sheetTargets();
-        let lastErr = null, wrote = false, wroteSheet = '';
+        let lastErr = null, wrote = false, wroteSheet = '', softTimeout = false;
         for (const t of targets) {
           try {
-            const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:t.source, row:t.row, note:entry, promoter:PROMOTER}, 45000);
+            const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:t.source, row:t.row, note:entry, promoter:PROMOTER}, WRITE_TIMEOUT_MS);
             if (!r?.success) throw new Error(r?.error || 'API error');
             wrote = true; wroteSheet = r.sheet || t.source; lastErr = null; break;
           } catch (e) {
             lastErr = e;
             const msg = e?.message || String(e);
+            if (isTimeoutErr(e)) {
+              // หมดเวลารอคำตอบ แต่ Sheet มัก append แล้ว — โชว์ใน CRM เลย
+              wrote = true; softTimeout = true; wroteSheet = t.source; lastErr = null; break;
+            }
             if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
           }
         }
@@ -2176,30 +2193,40 @@ function app() {
         this.sheetNotes = [entry, ...this.sheetNotes];
         const raw = [...this.sheetNotes].reverse().join('\n');
         this._syncNotes(raw, true);
-        this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'+(wroteSheet ? ' · '+wroteSheet : '');
+        if (softTimeout) {
+          this.syncMsg = '✅ บันทึกบนจอแล้ว · รอคำตอบช้า (Sheet มักขึ้นแล้ว)';
+        } else {
+          this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'+(wroteSheet ? ' · '+wroteSheet : '');
+        }
         this.syncOk = true;
       } catch(e) { this.syncMsg = '⚠️ บันทึกไม่ได้: '+e.message; this.syncOk = false; }
-      setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 4000);
+      setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 5000);
     },
     async deleteNote(idx) {
       const remaining = this.sheetNotes.filter((_,i) => i!==idx);
       const raw = [...remaining].reverse().join('\n');
       try {
         const targets = this._sheetTargets();
-        let lastErr = null, ok = false;
+        let lastErr = null, ok = false, softTimeout = false;
         for (const t of targets) {
           try {
-            const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:t.source, row:t.row, notes:raw, promoter:PROMOTER}, 45000);
+            const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:t.source, row:t.row, notes:raw, promoter:PROMOTER}, WRITE_TIMEOUT_MS);
             if (!r?.success) throw new Error(r?.error||'ลบไม่ได้');
             ok = true; lastErr = null; break;
           } catch (e) {
             lastErr = e;
             const msg = e?.message || String(e);
+            if (isTimeoutErr(e)) { ok = true; softTimeout = true; lastErr = null; break; }
             if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
           }
         }
         if (!ok) throw lastErr || new Error('ลบไม่ได้');
         this.sheetNotes = remaining; this._syncNotes(raw, true);
+        if (softTimeout) {
+          this.syncMsg = '✅ ลบบนจอแล้ว · รอคำตอบช้า (Sheet มักอัปเดตแล้ว)';
+          this.syncOk = true;
+          setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 4000);
+        }
       } catch(e) { this.syncMsg='⚠️ ลบไม่ได้: '+e.message; this.syncOk=false; setTimeout(()=>this.syncMsg='',3000); }
     },
 
