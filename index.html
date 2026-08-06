@@ -54,9 +54,12 @@
   .tab { width:116px; text-align:center; border-radius:999px; border:none; background:transparent; font-size:13px; font-weight:500; color:#aaa; cursor:pointer; white-space:nowrap; transition:color .15s; text-decoration:none; font-family:inherit; line-height:1; padding:5px 0; }
   .tab.active { color:#111; }
   .tab:hover:not(.active) { color:#555; }
-  .btn-reload { display:flex; align-items:center; gap:5px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; font-family:inherit; white-space:nowrap; }
-  .btn-reload:disabled { opacity:.6; cursor:wait; }
+  .btn-reload { display:flex; align-items:center; gap:5px; background:var(--accent); color:#fff; border:none; border-radius:999px; padding:6px 16px; font-size:13px; cursor:pointer; font-family:inherit; white-space:nowrap; position:relative; z-index:50; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .btn-reload:disabled { opacity:.55; cursor:wait; }
+  .btn-reload.is-busy:not(:disabled) { opacity:.9; }
   .btn-reload svg { width:14px; height:14px; flex-shrink:0; }
+  .btn-reload.spinning svg { animation:spinReload .8s linear infinite; }
+  @keyframes spinReload { to { transform:rotate(360deg); } }
   .btn-icon { width:32px; height:32px; border-radius:999px; border:0.5px solid #ddd; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#888; }
   .btn-icon:hover { background:#f5f5f5; color:#333; }
   .btn-icon svg { width:15px; height:15px; flex-shrink:0; }
@@ -318,7 +321,7 @@
 </div>
 
 <!-- ═══ HEADER ═══ -->
-<header x-show="isLoggedIn" x-cloak class="sticky top-0 z-30" style="backdrop-filter:blur(10px)">
+<header x-show="isLoggedIn" x-cloak class="sticky top-0 z-50" style="backdrop-filter:blur(10px)">
   <nav class="navbar">
     <div class="logo-box font-display">LG</div>
     <div class="nav-copy min-w-0">
@@ -330,9 +333,14 @@
       <span class="tab active">รายชื่อลูกค้า</span>
     </div>
     <div class="nav-spacer flex-1"></div>
-    <button class="btn-reload" @click="fetchData()" :disabled="loading">
+    <button type="button" class="btn-reload"
+      :class="{ 'spinning is-busy': loading || softLoading }"
+      @click.prevent.stop="reloadCustomers()"
+      :disabled="loading && !customers.length"
+      :title="(loading || softLoading) ? 'กำลังโหลดจาก Sheet…' : 'โหลดข้อมูลใหม่จาก Sheet'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-14.6 7.1"/><path d="M3 12A9 9 0 0 1 17.6 4.9"/><path d="M7 19H3v4"/><path d="M17 5h4V1"/></svg>
-      <span x-show="!loading">โหลด</span><span x-show="loading">กำลังโหลด...</span>
+      <span x-show="!loading && !softLoading">โหลด</span>
+      <span x-show="loading || softLoading" x-cloak>กำลังโหลด...</span>
     </button>
     <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
@@ -405,7 +413,7 @@
       </div>
       <button class="mt-3 h-9 px-4 rounded-full text-[13px] font-semibold ring-1 transition"
               :class="customers.length ? 'ring-amber-200 text-amber-800 hover:bg-amber-50' : 'ring-rose-200 text-rose-700 hover:bg-rose-50'"
-              @click="fetchData()">ลองโหลดใหม่</button>
+              @click="reloadCustomers()">ลองโหลดใหม่</button>
     </div>
 
     <div x-show="!loading || customers.length">
@@ -1016,9 +1024,11 @@
 </main>
 
 <!-- ═══ DRAWER ═══ -->
-<div class="fixed inset-0 z-40" :class="showDrawer ? '' : 'pointer-events-none'">
-  <div class="drawer-bd absolute inset-0" :class="showDrawer ? 'opacity-100' : 'opacity-0 pointer-events-none'" @click="closeDrawer()"></div>
-  <aside class="drawer-panel" :class="showDrawer ? 'translate-x-0' : 'translate-x-full'">
+<!-- ต้อง x-show ปิดทั้งก้อน — อย่าใช้แค่ pointer-events-none บน parent
+     (ลูกที่มี pointer-events:auto ยังบังคลิกได้ → ปุ่มโหลด/header กดไม่ได้) -->
+<div x-show="showDrawer" x-cloak class="fixed inset-0 z-40" style="display:none">
+  <div class="drawer-bd absolute inset-0 opacity-100" @click="closeDrawer()"></div>
+  <aside class="drawer-panel translate-x-0">
     <template x-if="selectedCustomer">
       <div style="display:contents">
         <!-- Drawer header -->
@@ -1193,8 +1203,8 @@
 </div>
 
 <script>
-const CRM_BUILD       = '6 ส.ค. 69 v39 · fix dual-write + notes race';
-const CACHE_SCHEMA    = 'v17';
+const CRM_BUILD       = '6 ส.ค. 69 v40 · fix load button click';
+const CACHE_SCHEMA    = 'v18';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
@@ -1536,23 +1546,41 @@ function app() {
       );
       return true;
     },
+    // ปุ่ม "โหลด" ใน header — force เสมอ + กันกดค้างซ้อน
+    reloadCustomers() {
+      if (this.loading && !this.customers.length) return; // hard load ครั้งแรกยังไม่เสร็จ
+      return this.fetchData({ force: true });
+    },
     async fetchData(opts = {}) {
       const apiUrl = String(this.apiUrl || '').trim();
-      if (!apiUrl) { this.showConfig = true; return; }
-      // มีรายชื่ออยู่แล้ว → รีเฟรชพื้นหลังเสมอ (ไม่กระพริบจอขาว) ยกเว้น opts.force
+      if (!apiUrl) { this.showConfig = true; this.loading = false; this.softLoading = false; return; }
+
+      // ยกเลิกผลลัพธ์รอบเก่า (กดโหลดซ้ำระหว่างรอ)
+      this._fetchGen = (this._fetchGen || 0) + 1;
+      const myGen = this._fetchGen;
+
+      // มีรายชื่ออยู่แล้ว → รีเฟรชพื้นหลัง (ไม่กระพริบจอขาว) ยกเว้น opts.force
       const soft = this.customers.length > 0 && !opts.force;
       this.loadErr = null;
       if (soft) { this.softLoading = true; this.loading = false; }
       else { this.loading = true; this.softLoading = false; }
 
+      // กัน loading ค้างถาวร (ปุ่มกดไม่ได้)
+      const safety = setTimeout(() => {
+        if (myGen !== this._fetchGen) return;
+        this.loading = false;
+        this.softLoading = false;
+      }, 200000);
+
       const attempts = 3;
-      let lastErr = null;
       try {
         for (let attempt = 1; attempt <= attempts; attempt++) {
+          if (myGen !== this._fetchGen) return; // ถูกแทนที่ด้วยรอบใหม่
           try {
             // รอบแรก 60s · รอบถัดไป 90s (Apps Script cold start + Sheet ใหญ่)
             const tmo = attempt === 1 ? 60000 : 90000;
             const json = await jsonpCall(apiUrl, {action:'getCustomers', promoter:PROMOTER}, tmo);
+            if (myGen !== this._fetchGen) return;
             if (!json || !json.success) throw new Error((json && json.error) || 'API error');
             const raw = dedupeCustomersByPhone(json.data || []);
             this.sheetsFound = json.sheetsFound || null;
@@ -1564,10 +1592,9 @@ function app() {
             if (attempt > 1) ts += ' · retry ' + attempt;
             this._applyCustomerData(raw, json.sourceCounts || null, json.rawCount != null ? json.rawCount : raw.length, Date.now(), ts);
             localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
-            lastErr = null;
             break;
           } catch (e) {
-            lastErr = e;
+            if (myGen !== this._fetchGen) return;
             const msg = String(e && e.message || e || '');
             const retriable = /timeout|หมดเวลา|โหลด Script|Failed|Network|network/i.test(msg);
             if (!retriable || attempt === attempts) throw e;
@@ -1575,6 +1602,7 @@ function app() {
           }
         }
       } catch(e) {
+        if (myGen !== this._fetchGen) return;
         const stale = this._readCache(true);
         if (stale && !this.customers.length) {
           const mins = Math.round((Date.now() - stale.ts) / 60000);
@@ -1592,9 +1620,13 @@ function app() {
         } else {
           this.loadErr = e.message;
         }
+      } finally {
+        clearTimeout(safety);
+        if (myGen === this._fetchGen) {
+          this.loading = false;
+          this.softLoading = false;
+        }
       }
-      this.loading = false;
-      this.softLoading = false;
     },
     _parseNotes(s) {
       if (!s?.trim()) return [];
