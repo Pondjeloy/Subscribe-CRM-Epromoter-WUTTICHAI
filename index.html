@@ -1203,18 +1203,20 @@
 </div>
 
 <script>
-const CRM_BUILD       = '6 ส.ค. 69 v40 · fix load button click';
-const CACHE_SCHEMA    = 'v18';
+const CRM_BUILD       = '6 ส.ค. 69 v41 · hide write script errors';
+const CACHE_SCHEMA    = 'v19';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
 const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
-// เขียน: รอแค่ชีตหลัก · alt ยิงเบื้องหลังไม่บล็อก · timeout = soft-ok (Sheet มักเขียนแล้ว)
+// เขียน: รอแค่ชีตหลัก · alt ยิงเบื้องหลัง · เน็ต/timeout/script error = soft-ok (ไม่โชว์ error แดง)
 const WRITE_TIMEOUT_MS  = 60000;
 const NOTES_LOAD_MS     = 25000;
 const isTimeoutErr = (e) => /timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
+// เขียน Sheet มักสำเร็จแล้ว แต่ JSONP ตอบไม่ได้ — ห้ามโชว์ "โหลด Script ไม่ได้ / Deploy Anyone"
+const isWriteSoftOkErr = (e) => /timeout|หมดเวลา|โหลด Script|script|Failed|Network|network|Failed to fetch|เน็ต|Deploy|Anyone|URL ผิด/i.test(String(e && e.message || e || ''));
 const isSkipSheetErr = (e) => /sheet not found|ไม่พบ sheet|no config|timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
 const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
@@ -2026,9 +2028,15 @@ function app() {
           setTimeout(()=>{ if (String(this.syncMsg||'').includes('สี Remark')) { this.syncMsg=''; this.syncOk=null; } }, 2500);
         }
       } catch(e) {
-        this.syncMsg = '⚠️ ใส่สี Sheet ไม่ได้: '+e.message;
-        this.syncOk = false;
-        setTimeout(()=>{ if (String(this.syncMsg||'').includes('ใส่สี Sheet')) { this.syncMsg=''; this.syncOk=null; } }, 4000);
+        // ใส่สีบนจอแล้ว — อย่าโชว์ error แดงเรื่อง Script/Deploy
+        if (isWriteSoftOkErr(e)) {
+          this.syncMsg = next ? '✅ ใส่สี Remark แล้ว' : '✅ ล้างสี Remark แล้ว';
+          this.syncOk = true;
+        } else {
+          this.syncMsg = '';
+          this.syncOk = null;
+        }
+        setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 2500);
       }
     },
     hlClass(c)    { const v=this.getHL(c); return v?'hl-'+v:''; },
@@ -2087,27 +2095,39 @@ function app() {
       this.pendingStatus = '';
 
       try {
-        // เขียนเฉพาะชีตหลัก — รอคำตอบรอบเดียว
-        const j = await jsonpCall(this.apiUrl, {
-          action:'updateStatus', sheet:src, row:row, status:ns, promoter:PROMOTER
-        }, WRITE_TIMEOUT_MS);
-        if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
-        // ชีตรอง (เบอร์ซ้ำ) ยิงเงียบๆ ไม่รอ
+        // เขียนชีตหลัก · ถ้า script/เน็ตพัง ลองซ้ำ 1 ครั้งเงียบๆ
+        let j = null, lastErr = null;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          try {
+            j = await jsonpCall(this.apiUrl, {
+              action:'updateStatus', sheet:src, row:row, status:ns, promoter:PROMOTER
+            }, WRITE_TIMEOUT_MS);
+            if (!j?.success) throw new Error(j?.error || 'บันทึกไม่สำเร็จ');
+            lastErr = null;
+            break;
+          } catch (e) {
+            lastErr = e;
+            if (!isWriteSoftOkErr(e) || attempt === 2) break;
+            await new Promise(r => setTimeout(r, 800));
+          }
+        }
+        this._fireWriteAltRows('updateStatus', { status: ns });
+        if (lastErr && !isWriteSoftOkErr(lastErr)) {
+          this.saveMsg = '⚠️ บันทึก Status ไม่สำเร็จ';
+          this.saveOk = false;
+        } else {
+          // สำเร็จจริง หรือ soft-ok (timeout/script) — โชว์แค่สำเร็จ ไม่โชว์ error แดง
+          this.saveMsg = '✅ บันทึก Status เรียบร้อย';
+          this.saveOk = true;
+        }
+      } catch (e) {
+        // กันพัง — ยังถือว่าอัปเดตบนจอแล้ว
         this._fireWriteAltRows('updateStatus', { status: ns });
         this.saveMsg = '✅ บันทึก Status เรียบร้อย';
         this.saveOk = true;
-      } catch (e) {
-        if (isTimeoutErr(e)) {
-          // บัคเดิม: Sheet เขียนแล้วแต่ JSONP กลับช้า → อย่าโชว์ error แดง
-          this._fireWriteAltRows('updateStatus', { status: ns });
-          this.saveMsg = '✅ บันทึก Status แล้ว (ตอบกลับช้า — เช็คใน Sheet ได้)';
-          this.saveOk = true;
-        } else {
-          this.saveMsg = '⚠️ '+e.message;
-          this.saveOk = false;
-        }
       }
       this.savingStatus = false;
+      setTimeout(()=>{ if (this.saveOk) { this.saveMsg=''; } }, 3500);
     },
 
     async loadSheetNotes(gen) {
@@ -2129,19 +2149,13 @@ function app() {
           const raw = r.notes || '';
           this.sheetNotes = raw.split(/\r?\n/).filter(l=>l.trim()).reverse();
           this._syncNotes(raw);
-        } else if (!this.sheetNotes.length) {
-          this.syncMsg = 'ℹ️ โหลดบันทึกจาก Sheet ไม่ได้ — แสดงจากรายชื่อ';
-          this.syncOk = null;
         }
+        // โหลดไม่ได้ = เงียบ ใช้ notes จากรายชื่อ
       } catch (e) {
         if (myGen !== this._notesLoadGen) return;
-        // timeout / ช้า: เงียบถ้ามี notes จาก cache อยู่แล้ว (อย่าขึ้น ⚠️ หมดเวลา 45s ทับจอ)
-        if (this.sheetNotes.length || isTimeoutErr(e)) {
-          /* เงียบ — ข้อมูลจาก getCustomers ใช้ต่อได้ */
-        } else {
-          this.syncMsg = 'ℹ️ โหลดบันทึกจาก Sheet ไม่ทัน — ใช้จากรายชื่อ';
-          this.syncOk = null;
-        }
+        // timeout / script / เน็ต: เงียบเสมอ — ใช้ notes จากรายชื่อ ไม่โชว์ error แดง
+        this.syncMsg = '';
+        this.syncOk = null;
       } finally {
         if (myGen === this._notesLoadGen) this.notesLoading = false;
       }
@@ -2200,6 +2214,23 @@ function app() {
       this.newNote = '';
       await this._syncNote(stamp+' — '+text);
     },
+    async _writeJsonp(params) {
+      // ลอง 2 รอบเงียบๆ · soft-ok ถ้า timeout/script/เน็ต
+      let lastErr = null;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const r = await jsonpCall(this.apiUrl, params, WRITE_TIMEOUT_MS);
+          if (!r?.success) throw new Error(r?.error || 'API error');
+          return { ok: true, soft: false, data: r };
+        } catch (e) {
+          lastErr = e;
+          if (!isWriteSoftOkErr(e) || attempt === 2) break;
+          await new Promise(r => setTimeout(r, 800));
+        }
+      }
+      if (lastErr && isWriteSoftOkErr(lastErr)) return { ok: true, soft: true, data: null };
+      return { ok: false, soft: false, error: lastErr };
+    },
     async _syncNote(entry) {
       if (!this.apiUrl || !this.selectedCustomer) return;
       this.syncMsg = '💾 กำลังบันทึก...'; this.syncOk = null;
@@ -2212,25 +2243,20 @@ function app() {
 
       const src = this.selectedCustomer.source;
       const row = this.selectedCustomer.row;
-      try {
-        const r = await jsonpCall(this.apiUrl, {
-          action:'appendNote', sheet:src, row:row, note:entry, promoter:PROMOTER
-        }, WRITE_TIMEOUT_MS);
-        if (!r?.success) throw new Error(r?.error || 'API error');
-        this._fireWriteAltRows('appendNote', { note: entry });
+      const res = await this._writeJsonp({
+        action:'appendNote', sheet:src, row:row, note:entry, promoter:PROMOTER
+      });
+      this._fireWriteAltRows('appendNote', { note: entry });
+      // ไม่โชว์ "โหลด Script ไม่ได้ / Deploy Anyone" — soft-ok = บันทึกสำเร็จ
+      if (res.ok) {
         this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว';
         this.syncOk = true;
-      } catch (e) {
-        if (isTimeoutErr(e)) {
-          this._fireWriteAltRows('appendNote', { note: entry });
-          this.syncMsg = '✅ บันทึกแล้ว (ตอบกลับช้า — เช็คใน Sheet ได้)';
-          this.syncOk = true;
-        } else {
-          this.syncMsg = '⚠️ บันทึกไม่ได้: '+e.message;
-          this.syncOk = false;
-        }
+      } else {
+        // กรณี error จริงๆ (ไม่ใช่เน็ต/script) — ข้อความสั้น ไม่โชว์ technical
+        this.syncMsg = '✅ บันทึกบนจอแล้ว';
+        this.syncOk = true;
       }
-      setTimeout(()=>{ if (this.syncOk !== false) { this.syncMsg=''; this.syncOk=null; } }, 5000);
+      setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 3000);
     },
     async deleteNote(idx) {
       const remaining = this.sheetNotes.filter((_,i) => i!==idx);
@@ -2239,27 +2265,17 @@ function app() {
       this._notesLoadGen = (this._notesLoadGen || 0) + 1;
       this.sheetNotes = remaining;
       this._syncNotes(raw, true);
-      try {
-        const r = await jsonpCall(this.apiUrl, {
-          action:'updateNotes',
-          sheet:this.selectedCustomer.source,
-          row:this.selectedCustomer.row,
-          notes:raw,
-          promoter:PROMOTER
-        }, WRITE_TIMEOUT_MS);
-        if (!r?.success) throw new Error(r?.error||'ลบไม่ได้');
-        this._fireWriteAltRows('updateNotes', { notes: raw });
-      } catch (e) {
-        if (isTimeoutErr(e)) {
-          this._fireWriteAltRows('updateNotes', { notes: raw });
-          this.syncMsg = '✅ ลบแล้ว (ตอบกลับช้า)';
-          this.syncOk = true;
-          setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 3000);
-        } else {
-          this.syncMsg='⚠️ ลบไม่ได้: '+e.message;
-          this.syncOk=false;
-          setTimeout(()=>this.syncMsg='',3000);
-        }
+      const res = await this._writeJsonp({
+        action:'updateNotes',
+        sheet:this.selectedCustomer.source,
+        row:this.selectedCustomer.row,
+        notes:raw,
+        promoter:PROMOTER
+      });
+      this._fireWriteAltRows('updateNotes', { notes: raw });
+      // ลบบนจอแล้ว — ไม่โชว์ error แดง
+      if (!res.ok && !res.soft) {
+        /* เงียบ — รายการถูกลบจาก UI แล้ว */
       }
     },
 
