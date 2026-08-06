@@ -48,7 +48,7 @@ var SHEET_NAMES = [
   'Lead Subscribe POP UP Braner'
 ];
 
-// ชื่อแท็บทางเลือก (สะกดผิด / เปลี่ยนชื่อ)
+// ชื่อแท็บทางเลือก (สะกดผิด / เปลี่ยนชื่อ / ตัวพิมพ์เล็กใหญ่)
 var SHEET_ALIASES = {
   'Meta Densu Aug': [
     'Meta Densu Aug',
@@ -56,6 +56,22 @@ var SHEET_ALIASES = {
     'Meta Densu Aug 2026',
     'Meta Densu ส.ค.',
     'Meta Densu July' // fallback ชีตเก่า
+  ],
+  'Meta Densu': [
+    'Meta Densu',
+    'Meta densu',
+    'meta densu',
+    'META DENSU',
+    'Meta Densu June',
+    'Meta Densu เก่า',
+    'Meta Densu (เก่า)'
+  ],
+  'Meta ITAX': [
+    'Meta ITAX',
+    'Meta Itax',
+    'Meta iTax',
+    'META ITAX',
+    'Meta I-TAX'
   ],
   'Lead Subscribe POP UP Braner': [
     'Lead Subscribe POP UP Braner',
@@ -227,9 +243,18 @@ function getSheetConfig(name) {
   return cfg[name] || null;
 }
 
-// ── หาชีตจริง (alias + fuzzy POP UP) ────────────────────
+// ── หาชีตจริง (alias + case-insensitive + fuzzy POP UP) ─
 function isPopupSheetName(name) {
   return /pop\s*up|braner|bannar|banner/i.test(String(name || ''));
+}
+
+// เทียบชื่อแท็บแบบทนทาน: trim · ยุบช่องว่าง · ตัวพิมพ์เล็กใหญ่
+function normalizeSheetKey(name) {
+  return String(name || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // zero-width
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
 }
 
 function resolveSheet(ss, preferredName) {
@@ -238,20 +263,86 @@ function resolveSheet(ss, preferredName) {
     if (!n || tried[n]) return null;
     tried[n] = true;
     var sh = ss.getSheetByName(n);
-    return sh ? { sheet: sh, actualName: n } : null;
+    // actualName = ชื่อแท็บจริงในชีต (กันตัวพิมพ์/ช่องว่างคนละแบบกับที่ค้น)
+    return sh ? { sheet: sh, actualName: sh.getName() } : null;
   }
   var hit = tryName(preferredName);
   if (hit) return hit;
+
+  // alias ของ preferred + reverse alias (ชื่อที่ส่งมาอาจเป็นแท็บจริง)
   var aliases = SHEET_ALIASES[preferredName] || [];
   for (var i = 0; i < aliases.length; i++) {
     hit = tryName(aliases[i]);
     if (hit) return hit;
   }
+  for (var canon in SHEET_ALIASES) {
+    if (!SHEET_ALIASES.hasOwnProperty(canon)) continue;
+    var list = SHEET_ALIASES[canon];
+    for (var a = 0; a < list.length; a++) {
+      if (normalizeSheetKey(list[a]) === normalizeSheetKey(preferredName) ||
+          normalizeSheetKey(canon) === normalizeSheetKey(preferredName)) {
+        hit = tryName(canon);
+        if (hit) return hit;
+        for (var b = 0; b < list.length; b++) {
+          hit = tryName(list[b]);
+          if (hit) return hit;
+        }
+      }
+    }
+  }
+
+  // case-insensitive / trim เทียบทุกแท็บในสเปรดชีต (exact หลัง normalize เท่านั้น)
+  // ห้าม partial เช่น "Meta Densu" → "Meta Densu Aug" (คอลัมน์ Status/PIC คนละชุด)
+  var want = normalizeSheetKey(preferredName);
+  if (want) {
+    var allTabs = ss.getSheets();
+    for (var t = 0; t < allTabs.length; t++) {
+      var tabName = allTabs[t].getName();
+      if (normalizeSheetKey(tabName) === want) {
+        return { sheet: allTabs[t], actualName: tabName };
+      }
+    }
+  }
+
   if (isPopupSheetName(preferredName)) {
     var all = ss.getSheets();
     for (var j = 0; j < all.length; j++) {
       var n = all[j].getName();
       if (isPopupSheetName(n)) return { sheet: all[j], actualName: n };
+    }
+  }
+  return null;
+}
+
+// หา config จากชื่อแท็บ (exact → case-insensitive → alias canon)
+function lookupSheetConfig(name) {
+  var direct = getSheetConfig(name);
+  if (direct) return direct;
+  // getSheetConfig ข้างในมี exact keys — สแกน case-insensitive ผ่าน resolve ชื่อ canon
+  var want = normalizeSheetKey(name);
+  var keys = [
+    'Meta Densu Aug', 'Meta Densu July', 'Meta Densu', 'Meta ITAX',
+    'Lead Subscribe Lg.com', 'Lead LG Success', 'Lead Consult',
+    'Lead Subscribe POP UP Braner', 'POP UP Bannar'
+  ];
+  for (var i = 0; i < keys.length; i++) {
+    if (normalizeSheetKey(keys[i]) === want) {
+      var c = getSheetConfig(keys[i]);
+      if (c) return c;
+    }
+  }
+  for (var canon in SHEET_ALIASES) {
+    if (!SHEET_ALIASES.hasOwnProperty(canon)) continue;
+    if (normalizeSheetKey(canon) === want) {
+      var c2 = getSheetConfig(canon);
+      if (c2) return c2;
+    }
+    var al = SHEET_ALIASES[canon];
+    for (var j = 0; j < al.length; j++) {
+      if (normalizeSheetKey(al[j]) === want) {
+        var c3 = getSheetConfig(canon);
+        if (c3) return c3;
+      }
     }
   }
   return null;
@@ -341,7 +432,8 @@ function refinePopupConfig(baseCfg, headers, data, promoter) {
 }
 
 function getRuntimeConfig(canonicalName, sheet, data, promoter) {
-  var cfg = getSheetConfig(canonicalName) || getSheetConfig(sheet.getName());
+  var cfg = lookupSheetConfig(canonicalName) || lookupSheetConfig(sheet.getName())
+         || getSheetConfig(canonicalName) || getSheetConfig(sheet.getName());
   if (!cfg) return null;
   if (!cfg.isPopup && !isPopupSheetName(canonicalName) && !isPopupSheetName(sheet.getName())) {
     return cfg;
@@ -427,17 +519,22 @@ function getCustomers(promoter) {
 // เปิดชีต + config รันไทม์ (รองรับ alias / หัวตาราง POP UP)
 // เร็วขึ้น: ชีตที่ไม่ใช่ POP UP ใช้ config คงที่ — ไม่ต้อง getDataRange ทั้งชีต
 function openSheetWithConfig(sheetName, promoter) {
-  if (!sheetName) return null;
+  if (!sheetName) return { ok:false, error:'Missing sheet name' };
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName(sheetName);
-  var actual = sheetName;
-  if (!sheet) {
-    var resolved = resolveSheet(ss, sheetName);
-    if (!resolved) return null;
-    sheet = resolved.sheet;
-    actual = resolved.actualName;
+  var resolved = resolveSheet(ss, sheetName);
+  if (!resolved) {
+    // แจ้งชื่อแท็บที่มีจริง (ช่วย debug ชื่อไม่ตรง)
+    var tabNames = ss.getSheets().map(function(s){ return s.getName(); });
+    return {
+      ok: false,
+      error: 'Sheet not found: ' + sheetName +
+        ' (แท็บในไฟล์: ' + tabNames.slice(0, 12).join(', ') +
+        (tabNames.length > 12 ? '…' : '') + ')'
+    };
   }
-  var cfg = getSheetConfig(actual) || getSheetConfig(sheetName);
+  var sheet = resolved.sheet;
+  var actual = resolved.actualName; // ชื่อแท็บจริง
+  var cfg = lookupSheetConfig(actual) || lookupSheetConfig(sheetName) || getSheetConfig(actual) || getSheetConfig(sheetName);
   // POP UP ต้องอ่านหัวตารางเพื่อ refine map — ชีตอื่นใช้ config ตายตัวพอ
   if (!cfg || cfg.isPopup || isPopupSheetName(actual) || isPopupSheetName(sheetName)) {
     var lastCol = Math.min(sheet.getLastColumn() || 1, 30);
@@ -446,18 +543,26 @@ function openSheetWithConfig(sheetName, promoter) {
     var sampleRows = Math.min(sheet.getLastRow() || 1, 80);
     var data = sheet.getRange(1, 1, sampleRows, lastCol).getValues();
     cfg = getRuntimeConfig(actual, sheet, data, promoter || PROMOTER)
+       || lookupSheetConfig(actual)
+       || lookupSheetConfig(sheetName)
        || getSheetConfig(actual)
        || getSheetConfig(sheetName);
   }
-  if (!cfg) return null;
-  return { sheet: sheet, cfg: cfg, name: actual };
+  if (!cfg) {
+    return {
+      ok: false,
+      error: 'No config for sheet: ' + actual +
+        ' (ส่งมาเป็น "' + sheetName + '") — ตรวจ mapping ใน Code.gs'
+    };
+  }
+  return { ok: true, sheet: sheet, cfg: cfg, name: actual };
 }
 
 // ── updateStatus ────────────────────────────────────────
 function updateStatus(sheetName, rowNum, newStatus) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
-  if (!opened) return { success:false, error:'Sheet not found: '+sheetName };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
   opened.sheet.getRange(rowNum, opened.cfg.statusCol+1).setValue(newStatus);
   SpreadsheetApp.flush();
   return { success:true, sheet:opened.name, row:rowNum, status:newStatus };
@@ -467,20 +572,22 @@ function updateStatus(sheetName, rowNum, newStatus) {
 function getNotes(sheetName, rowNum) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
-  if (!opened || opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol' };
-  return { success:true, notes:clean(opened.sheet.getRange(rowNum, opened.cfg.notesCol+1).getValue()) };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
+  if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
+  return { success:true, notes:clean(opened.sheet.getRange(rowNum, opened.cfg.notesCol+1).getValue()), sheet:opened.name };
 }
 
 // ── appendNote ──────────────────────────────────────────
 function appendNote(sheetName, rowNum, note) {
   if (!sheetName || !rowNum || !note) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
-  if (!opened || opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol' };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
+  if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   var cell = opened.sheet.getRange(rowNum, opened.cfg.notesCol+1);
   var cur  = clean(cell.getValue());
   cell.setValue(cur ? cur+'\n'+note : note);
   SpreadsheetApp.flush();
-  return { success:true };
+  return { success:true, sheet:opened.name };
 }
 
 // ── setNoteHighlight — ใส่สีพื้นหลัง + ตัวหนา + ตัวอักษรแดง ช่อง Remark ──
@@ -489,7 +596,8 @@ function appendNote(sheetName, rowNum, note) {
 function setNoteHighlight(sheetName, rowNum, level) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
-  if (!opened || opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol' };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
+  if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   var colors = {
     0: null,        // ล้างสีพื้น
     1: '#FEF08A',   // เหลือง
@@ -514,7 +622,8 @@ function setNoteHighlight(sheetName, rowNum, level) {
 function updateNotes(sheetName, rowNum, notes) {
   if (!sheetName || !rowNum) return { success:false, error:'Missing params' };
   var opened = openSheetWithConfig(sheetName);
-  if (!opened || opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol' };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
+  if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   opened.sheet.getRange(rowNum, opened.cfg.notesCol+1).setValue(notes);
   SpreadsheetApp.flush();
   return { success:true };
@@ -563,7 +672,7 @@ function getHeaders() {
 // ── checkRows ───────────────────────────────────────────
 function checkRows(sheetName, n, promoter) {
   var opened = openSheetWithConfig(sheetName, promoter);
-  if (!opened) return { success:false, error:'ไม่พบ Sheet: '+sheetName };
+  if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('ไม่พบ Sheet: '+sheetName) };
   var cfg = opened.cfg, data = opened.sheet.getDataRange().getValues();
   var start = Math.max(1, data.length-n), rows = [];
   for (var i = start; i < data.length; i++) {

@@ -1193,14 +1193,14 @@
 </div>
 
 <script>
-const CRM_BUILD       = '3 ส.ค. 69 v36 · notes timeout fix';
-const CACHE_SCHEMA    = 'v14';
-const NOTE_DATE_ONLY  = true;
+const CRM_BUILD       = '6 ส.ค. 69 v37 · sheet resolve Meta densu';
+const CACHE_SCHEMA    = 'v15';
+const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v14';
-const CACHE_VER_KEY     = 'lgCrmCacheSchema';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
+const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
 const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
 const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
 // Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Aug
@@ -1266,7 +1266,7 @@ function dedupeCustomersByPhone(list) {
   let id = 1;
   return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
-const HL_KEY            = 'lgDashHL_wuttichai';
+const HL_KEY            = 'lgCrmHL_wuttichai';
 const PROMOTER          = 'WUTTICHAI';
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
@@ -2018,10 +2018,23 @@ function app() {
       this._frozenRows = [...this.paginated];
       this.savingStatus = true; this.saveMsg = '';
       try {
-        const targets = [{source:this.selectedCustomer.source, row:this.selectedCustomer.row}, ...(this.selectedCustomer.altRows||[])];
+        // หลักก่อน แล้วตามด้วย altRows (เบอร์ซ้ำใน Meta อีกชีต)
+        // ถ้าชีตรองไม่มีในไฟล์ส.ค. — ไม่ให้ล้มทั้งก้อนหลังหลักสำเร็จแล้ว
+        const targets = [{source:this.selectedCustomer.source, row:this.selectedCustomer.row, primary:true},
+          ...(this.selectedCustomer.altRows||[]).map(a => ({source:a.source, row:a.row, primary:false}))];
+        const okSheets = [], failSheets = [];
         for (const t of targets) {
-          const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER}, 45000);
-          if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
+          try {
+            const j = await jsonpCall(this.apiUrl, {action:'updateStatus', sheet:t.source, row:t.row, status:this.pendingStatus, promoter:PROMOTER}, 45000);
+            if (!j.success) throw new Error(j.error||'บันทึกไม่สำเร็จ');
+            okSheets.push(j.sheet || t.source);
+          } catch (e) {
+            const msg = e?.message || String(e);
+            failSheets.push({source:t.source, err:msg, primary:!!t.primary});
+            // ชีตหลักพัง = fail จริง · ชีตรอง Sheet not found = ข้ามได้
+            if (t.primary) throw e;
+            if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
+          }
         }
         const ns = this.pendingStatus;
         this.selectedCustomer.status = ns;
@@ -2030,7 +2043,12 @@ function app() {
         this._persistCache();
         this.refreshWorkSummary();
         this._bumpCustomerList(this.selectedCustomer.id);
-        this.saveMsg = '✅ บันทึก Status เรียบร้อย'; this.saveOk = true; this.pendingStatus = '';
+        if (failSheets.length) {
+          this.saveMsg = '✅ บันทึก Status แล้ว · ชีตรองข้าม: '+failSheets.map(f=>f.source).join(', ');
+        } else {
+          this.saveMsg = '✅ บันทึก Status เรียบร้อย';
+        }
+        this.saveOk = true; this.pendingStatus = '';
       } catch(e) { this.saveMsg = '⚠️ '+e.message; this.saveOk = false; }
       this.savingStatus = false;
     },
@@ -2131,17 +2149,35 @@ function app() {
       this.newNote = '';
       await this._syncNote(stamp+' — '+text);
     },
+    _sheetTargets() {
+      const c = this.selectedCustomer;
+      if (!c) return [];
+      return [{source:c.source, row:c.row}, ...(c.altRows||[]).map(a => ({source:a.source, row:a.row}))];
+    },
     async _syncNote(entry) {
       if (!this.apiUrl || !this.selectedCustomer) return;
       this.syncMsg = '💾 กำลังบันทึก...'; this.syncOk = null;
       try {
-        const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, note:entry, promoter:PROMOTER}, 45000);
-        if (r?.success) {
-          this.sheetNotes = [entry, ...this.sheetNotes];
-          const raw = [...this.sheetNotes].reverse().join('\n');
-          this._syncNotes(raw, true);
-          this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'; this.syncOk = true;
-        } else throw new Error((r?.error)||'API error');
+        // ลองชีตหลักก่อน · ถ้า Sheet not found (แท็บถูกลบ/เปลี่ยนชื่อ) ลอง altRows
+        const targets = this._sheetTargets();
+        let lastErr = null, wrote = false, wroteSheet = '';
+        for (const t of targets) {
+          try {
+            const r = await jsonpCall(this.apiUrl, {action:'appendNote', sheet:t.source, row:t.row, note:entry, promoter:PROMOTER}, 45000);
+            if (!r?.success) throw new Error(r?.error || 'API error');
+            wrote = true; wroteSheet = r.sheet || t.source; lastErr = null; break;
+          } catch (e) {
+            lastErr = e;
+            const msg = e?.message || String(e);
+            if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
+          }
+        }
+        if (!wrote) throw lastErr || new Error('บันทึกไม่ได้');
+        this.sheetNotes = [entry, ...this.sheetNotes];
+        const raw = [...this.sheetNotes].reverse().join('\n');
+        this._syncNotes(raw, true);
+        this.syncMsg = '✅ บันทึกขึ้น Sheet แล้ว'+(wroteSheet ? ' · '+wroteSheet : '');
+        this.syncOk = true;
       } catch(e) { this.syncMsg = '⚠️ บันทึกไม่ได้: '+e.message; this.syncOk = false; }
       setTimeout(()=>{ this.syncMsg=''; this.syncOk=null; }, 4000);
     },
@@ -2149,9 +2185,21 @@ function app() {
       const remaining = this.sheetNotes.filter((_,i) => i!==idx);
       const raw = [...remaining].reverse().join('\n');
       try {
-        const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:this.selectedCustomer.source, row:this.selectedCustomer.row, notes:raw, promoter:PROMOTER}, 45000);
-        if (r?.success) { this.sheetNotes = remaining; this._syncNotes(raw, true); }
-        else throw new Error(r?.error||'ลบไม่ได้');
+        const targets = this._sheetTargets();
+        let lastErr = null, ok = false;
+        for (const t of targets) {
+          try {
+            const r = await jsonpCall(this.apiUrl, {action:'updateNotes', sheet:t.source, row:t.row, notes:raw, promoter:PROMOTER}, 45000);
+            if (!r?.success) throw new Error(r?.error||'ลบไม่ได้');
+            ok = true; lastErr = null; break;
+          } catch (e) {
+            lastErr = e;
+            const msg = e?.message || String(e);
+            if (!/sheet not found|ไม่พบ sheet|no config/i.test(msg)) throw e;
+          }
+        }
+        if (!ok) throw lastErr || new Error('ลบไม่ได้');
+        this.sheetNotes = remaining; this._syncNotes(raw, true);
       } catch(e) { this.syncMsg='⚠️ ลบไม่ได้: '+e.message; this.syncOk=false; setTimeout(()=>this.syncMsg='',3000); }
     },
 
