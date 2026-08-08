@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v13</title>
+<title>LG Subscribe CRM · WUTTICHAI · v44</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -225,7 +225,7 @@
   .login-btn:hover { transform:translateY(-1px); box-shadow:0 18px 32px rgba(200,16,46,.28); }
 
   /* ── Modal overlay ── */
-  .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:60; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+  .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); backdrop-filter:blur(4px); box-sizing:border-box; }
 
   /* ── Drawer ── */
   .drawer-bd    { position:fixed; inset:0; background:rgba(15,23,42,.2); backdrop-filter:blur(2px); transition:opacity .3s; }
@@ -1026,7 +1026,7 @@
 <!-- ═══ DRAWER ═══ -->
 <!-- ต้อง x-show ปิดทั้งก้อน — อย่าใช้แค่ pointer-events-none บน parent
      (ลูกที่มี pointer-events:auto ยังบังคลิกได้ → ปุ่มโหลด/header กดไม่ได้) -->
-<div x-show="showDrawer" x-cloak class="fixed inset-0 z-40" style="display:none">
+<div x-show="showDrawer" x-cloak class="fixed inset-0" :class="(fuModal || showConfig) ? 'z-[40]' : 'z-[80]'" style="display:none">
   <div class="drawer-bd absolute inset-0 opacity-100" @click="closeDrawer()"></div>
   <aside class="drawer-panel translate-x-0">
     <template x-if="selectedCustomer">
@@ -1203,7 +1203,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '6 ส.ค. 69 v41 · hide write script errors';
+const CRM_BUILD       = '8 ส.ค. 69 v44 · modal above drawer (fix stack)';
 const CACHE_SCHEMA    = 'v19';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
