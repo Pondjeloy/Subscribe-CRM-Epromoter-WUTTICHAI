@@ -463,7 +463,7 @@
                   :style="'width:'+( customers.filter(c=>normalizeSource(c.source)===sd.key).length / Math.max(customers.length,1)*100 )+'%'"></span>
               </template>
             </div>
-            <div class="mt-1.5 text-[11.5px] text-slate-400">กระจาย <span x-text="sourceDefs.length"></span> แหล่ง</div>
+            <div class="mt-1.5 text-[11.5px] text-slate-400">กระจาย <span x-text="sourceSummary.length"></span> แหล่ง</div>
           </div>
         </div>
 
@@ -1226,7 +1226,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '8 ส.ค. 69 v45 · customer popup center (no slide)';
+const CRM_BUILD       = '8 ส.ค. 69 v46 · hide lead cards with 0 count';
 const CACHE_SCHEMA    = 'v19';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1753,7 +1753,7 @@ function app() {
       return tags;
     },
 
-    get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>this.customerMatchesSource(c, sd.key)).length})); },
+    get sourceSummary() { return this.sourceDefs.map(sd => ({...sd, count:this.customers.filter(c=>this.customerMatchesSource(c, sd.key)).length})).filter(sd => sd.count > 0); },
     _sourceKeysFor(sdKey) {
       const nk = normalizeSource(sdKey);
       const aliases = Object.keys(SOURCE_ALIASES).filter(k => SOURCE_ALIASES[k] === nk);
