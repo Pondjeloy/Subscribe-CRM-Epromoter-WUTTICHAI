@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v44</title>
+<title>LG Subscribe CRM · WUTTICHAI · v45</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -227,9 +227,32 @@
   /* ── Modal overlay ── */
   .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); backdrop-filter:blur(4px); box-sizing:border-box; }
 
-  /* ── Drawer ── */
-  .drawer-bd    { position:fixed; inset:0; background:rgba(15,23,42,.2); backdrop-filter:blur(2px); transition:opacity .3s; }
-  .drawer-panel { position:absolute; top:0; right:0; height:100%; width:100%; max-width:440px; background:#fff; box-shadow:-20px 0 60px rgba(15,23,42,.13); display:flex; flex-direction:column; transition:transform .3s cubic-bezier(.16,1,.3,1); }
+  /* ── Customer popup (กลางจอ — ไม่เลื่อนจากขวา / ไม่ bottom-sheet) ── */
+  .drawer-shell {
+    position: fixed; inset: 0; z-index: 80;
+    display: flex; align-items: center; justify-content: center;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+             max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    box-sizing: border-box;
+  }
+  .drawer-shell.is-under-modal { z-index: 40; }
+  .drawer-bd {
+    position: absolute; inset: 0;
+    background: rgba(15,23,42,.45);
+    backdrop-filter: blur(4px);
+  }
+  .drawer-panel {
+    position: relative; z-index: 1;
+    width: min(100%, 440px);
+    height: min(90dvh, 880px);
+    max-height: min(90dvh, 880px);
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 26px 70px rgba(15,23,42,.2);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .drawer-panel > .flex { min-height: 0; flex: 1 1 auto; height: 100%; }
 
   /* ── Mobile navbar ── */
   @media(max-width:640px) {
@@ -1023,13 +1046,13 @@
   </div><!-- /apiUrl -->
 </main>
 
-<!-- ═══ DRAWER ═══ -->
+<!-- ═══ CUSTOMER POPUP (กลางจอ ไม่เลื่อน) ═══ -->
 <!-- ต้อง x-show ปิดทั้งก้อน — อย่าใช้แค่ pointer-events-none บน parent
      (ลูกที่มี pointer-events:auto ยังบังคลิกได้ → ปุ่มโหลด/header กดไม่ได้) -->
-<div x-show="showDrawer" x-cloak class="fixed inset-0" :class="(fuModal || showConfig) ? 'z-[40]' : 'z-[80]'" style="display:none">
-  <div class="drawer-bd absolute inset-0 opacity-100" @click="closeDrawer()"></div>
-  <aside class="drawer-panel translate-x-0">
-    <template x-if="selectedCustomer">
+<div x-show="showDrawer" x-cloak class="drawer-shell" :class="(fuModal || showConfig) ? 'is-under-modal' : ''" style="display:none">
+  <div class="drawer-bd" @click="closeDrawer()"></div>
+  <aside class="drawer-panel" @click.stop>
+<template x-if="selectedCustomer">
       <div style="display:contents">
         <!-- Drawer header -->
         <div class="px-6 pt-6 pb-5 border-b border-slate-100">
@@ -1203,7 +1226,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '8 ส.ค. 69 v44 · modal above drawer (fix stack)';
+const CRM_BUILD       = '8 ส.ค. 69 v45 · customer popup center (no slide)';
 const CACHE_SCHEMA    = 'v19';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
