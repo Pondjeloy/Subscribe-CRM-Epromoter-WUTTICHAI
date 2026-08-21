@@ -327,7 +327,7 @@
   <div class="bg-white rounded-2xl p-6 max-w-[420px] w-full shadow-2xl">
     <div class="flex items-center justify-between mb-5">
       <div>
-        <div class="font-display font-bold text-[18px]">เลือกวันเวลาให้ติดต่อมาใหม่</div>
+        <div class="font-display font-bold text-[18px]">เลือกวันเวลานัดติดต่อกลับ</div>
         <div class="text-[13px] text-slate-500 mt-0.5">ระบบจะใส่ข้อความในช่องบันทึก</div>
       </div>
       <button @click="cancelFu()" class="h-9 w-9 grid place-items-center rounded-xl text-slate-400 hover:bg-slate-100 transition text-xl">×</button>
@@ -1171,7 +1171,7 @@
 
           <!-- Activity picker -->
           <div>
-            <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">📝 บันทึกกิจกรรม</div>
+            <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">บันทึกกิจกรรม</div>
             <div class="flex gap-2">
               <select x-model="selectedActivity"
                 class="flex-1 h-10 pl-3 pr-8 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[13px] text-slate-700 appearance-none"
@@ -1226,7 +1226,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '8 ส.ค. 69 v46 · hide lead cards with 0 count';
+const CRM_BUILD       = '21 ส.ค. 69 v47 · formal activity labels';
 const CACHE_SCHEMA    = 'v19';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1361,61 +1361,61 @@ function app() {
       {id:'docs',     emoji:'📄', label:'รอเอกสาร',     desc:'รอยื่นเอกสาร'},
     ],
     activityOpts: [
-      {label:'📵 ไม่รับสาย'},
-      {label:'📵 ไม่รับสาย 2 ครั้ง'},
-      {label:'📵 ไม่รับสาย 3 ครั้ง'},
-      {label:'📵 ไม่รับสาย 4 ครั้ง'},
-      {label:'📵 ไม่รับสาย 5 ครั้ง'},
-      {label:'📴 ตัดสาย'},
-      {label:'☎️ เบอร์ผิด'},
-      {label:'❌ ติดต่อไม่ได้'},
-      {label:'👤 มีเจ้าหน้าที่ติดต่อแล้ว'},
-      {label:'🚫 ติดบูโร'},
-      {label:'⚠️ ไม่เข้าเงื่อนไข'},
-      {label:'🙅 ไม่สะดวก'},
-      {label:'🔁 ให้ติดต่อมาใหม่', needsDateTime:true},
-      {label:'📄 รอยื่นเอกสาร'},
-      {label:'😐 ไม่สนใจแล้ว'},
-      {label:'🤔 ยังไม่ตัดสินใจ'},
-      {label:'❓ สอบถามข้อมูลเบื้องต้น'},
-      {label:'✉️ ส่งรายละเอียดทาง Email'},
-      {label:'🛒 ส่ง RemoteOrder รอชำระเงิน'},
-      {label:'💬 แอดไลน์ให้ข้อมูลเพิ่มเติม'},
-      {label:'🛍️ สนใจซื้อแบบปกติ'},
-      {label:'🛍️ ซื้อไปแล้ว'},
-      {label:'⏩ ไม่สนใจผ่อนนาน'},
-      {label:'🗂️ ไม่สะดวกยื่นเอกสาร'},
-      {label:'✅ ทำรายการสำเร็จเรียบร้อย'},
-      {label:'🌐 ซื้อผ่านตัวแทนแล้ว ทำรายการสำเร็จ ผ่าน LG.COM'},
+      {label:'ไม่รับสายครั้งที่ 1'},
+      {label:'ไม่รับสายครั้งที่ 2'},
+      {label:'ไม่รับสายครั้งที่ 3'},
+      {label:'ไม่รับสายครั้งที่ 4'},
+      {label:'ไม่รับสายครั้งที่ 5'},
+      {label:'รับแล้วตัดสาย'},
+      {label:'เบอร์โทรไม่ถูกต้อง'},
+      {label:'ไม่สามารถติดต่อได้'},
+      {label:'มีเจ้าหน้าที่ติดต่อแล้ว'},
+      {label:'ติดบูโร (ไม่ผ่านเครดิต)'},
+      {label:'ไม่เข้าเงื่อนไขการสมัคร'},
+      {label:'ไม่สะดวกในขณะนี้'},
+      {label:'นัดติดต่อกลับ', needsDateTime:true},
+      {label:'รอยื่นเอกสาร'},
+      {label:'ไม่สนใจแล้ว'},
+      {label:'ยังไม่ตัดสินใจ'},
+      {label:'สอบถามข้อมูลเบื้องต้น'},
+      {label:'ส่งรายละเอียดทางอีเมล'},
+      {label:'ส่ง Remote Order รอชำระเงิน'},
+      {label:'เพิ่มเพื่อน LINE เพื่อให้ข้อมูลเพิ่มเติม'},
+      {label:'สนใจซื้อแบบปกติ'},
+      {label:'ซื้อไปแล้ว'},
+      {label:'ไม่สนใจผ่อนระยะยาว'},
+      {label:'ไม่สะดวกยื่นเอกสาร'},
+      {label:'ทำรายการสำเร็จ'},
+      {label:'ซื้อผ่านตัวแทนแล้ว ทำรายการสำเร็จผ่าน LG.com'},
     ],
 
     activityFilters: [
-      {label:'📵 ไม่รับสาย',            key:'ไม่รับสาย'},
-      {label:'📵 ไม่รับสาย 2',         key:'ไม่รับสาย 2 ครั้ง'},
-      {label:'📵 ไม่รับสาย 3',         key:'ไม่รับสาย 3 ครั้ง'},
-      {label:'📵 ไม่รับสาย 4',         key:'ไม่รับสาย 4 ครั้ง'},
-      {label:'📵 ไม่รับสาย 5',         key:'ไม่รับสาย 5 ครั้ง'},
-      {label:'📴 ตัดสาย',              key:'ตัดสาย'},
-      {label:'☎️ เบอร์ผิด',             key:'เบอร์ผิด'},
-      {label:'❌ ติดต่อไม่ได้',         key:'ติดต่อไม่ได้'},
-      {label:'👤 มีเจ้าหน้าที่ติดต่อแล้ว', key:'มีเจ้าหน้าที่ติดต่อแล้ว'},
-      {label:'🔁 ติดต่อมาใหม่',        key:'ติดต่อมาใหม่'},
-      {label:'🙅 ไม่สะดวก',            key:'ไม่สะดวก'},
-      {label:'📄 รอยื่นเอกสาร',        key:'รอยื่นเอกสาร'},
-      {label:'😐 ไม่สนใจแล้ว',         key:'ไม่สนใจแล้ว'},
-      {label:'🤔 ยังไม่ตัดสินใจ',      key:'ยังไม่ตัดสินใจ'},
-      {label:'❓ สอบถามเบื้องต้น',     key:'สอบถามข้อมูลเบื้องต้น'},
-      {label:'✉️ ส่ง Email',           key:'ส่งรายละเอียดทาง Email'},
-      {label:'🚫 ติดบูโร',             key:'ติดบูโร'},
-      {label:'⚠️ ไม่เข้าเงื่อนไข',    key:'ไม่เข้าเงื่อนไข'},
-      {label:'🛒 RemoteOrder',          key:'RemoteOrder'},
-      {label:'💬 แอดไลน์',             key:'แอดไลน์'},
-      {label:'🛍️ ซื้อแบบปกติ',         key:'ซื้อแบบปกติ'},
-      {label:'🛍️ ซื้อไปแล้ว',         key:'ซื้อไปแล้ว'},
-      {label:'⏩ ไม่สนใจผ่อนนาน',     key:'ไม่สนใจผ่อนนาน'},
-      {label:'🗂️ ไม่สะดวกยื่นเอกสาร', key:'ไม่สะดวกยื่นเอกสาร'},
-      {label:'✅ ปิดการขาย',           key:'ทำรายการสำเร็จ'},
-      {label:'🌐 ซื้อผ่านตัวแทน LG.COM', key:'ซื้อผ่านตัวแทนแล้ว ทำรายการสำเร็จ ผ่าน LG.COM'},
+      {label:'ไม่รับสายครั้งที่ 1',     key:'ไม่รับสายครั้งที่ 1'},
+      {label:'ไม่รับสายครั้งที่ 2',     key:'ไม่รับสายครั้งที่ 2'},
+      {label:'ไม่รับสายครั้งที่ 3',     key:'ไม่รับสายครั้งที่ 3'},
+      {label:'ไม่รับสายครั้งที่ 4',     key:'ไม่รับสายครั้งที่ 4'},
+      {label:'ไม่รับสายครั้งที่ 5',     key:'ไม่รับสายครั้งที่ 5'},
+      {label:'รับแล้วตัดสาย',           key:'ตัดสาย'},
+      {label:'เบอร์โทรไม่ถูกต้อง',       key:'เบอร์โทรไม่ถูกต้อง'},
+      {label:'ไม่สามารถติดต่อได้',       key:'ติดต่อไม่ได้'},
+      {label:'มีเจ้าหน้าที่ติดต่อแล้ว', key:'มีเจ้าหน้าที่ติดต่อแล้ว'},
+      {label:'นัดติดต่อกลับ',           key:'นัดติดต่อกลับ'},
+      {label:'ไม่สะดวกในขณะนี้',       key:'ไม่สะดวกในขณะนี้'},
+      {label:'รอยื่นเอกสาร',            key:'รอยื่นเอกสาร'},
+      {label:'ไม่สนใจแล้ว',             key:'ไม่สนใจแล้ว'},
+      {label:'ยังไม่ตัดสินใจ',          key:'ยังไม่ตัดสินใจ'},
+      {label:'สอบถามข้อมูลเบื้องต้น',    key:'สอบถามข้อมูลเบื้องต้น'},
+      {label:'ส่งรายละเอียดทางอีเมล',    key:'ส่งรายละเอียดทางอีเมล'},
+      {label:'ติดบูโร (ไม่ผ่านเครดิต)', key:'ติดบูโร'},
+      {label:'ไม่เข้าเงื่อนไขการสมัคร',  key:'ไม่เข้าเงื่อนไข'},
+      {label:'Remote Order',            key:'RemoteOrder'},
+      {label:'เพิ่มเพื่อน LINE',         key:'เพิ่มเพื่อน LINE'},
+      {label:'สนใจซื้อแบบปกติ',         key:'ซื้อแบบปกติ'},
+      {label:'ซื้อไปแล้ว',              key:'ซื้อไปแล้ว'},
+      {label:'ไม่สนใจผ่อนระยะยาว',      key:'ไม่สนใจผ่อนระยะยาว'},
+      {label:'ไม่สะดวกยื่นเอกสาร',      key:'ไม่สะดวกยื่นเอกสาร'},
+      {label:'ทำรายการสำเร็จ',           key:'ทำรายการสำเร็จ'},
+      {label:'ซื้อผ่านตัวแทน LG.com',    key:'ซื้อผ่านตัวแทนแล้ว'},
     ],
 
     statusDefs: [
@@ -1740,7 +1740,7 @@ function app() {
       }
       if (this.filterActivity) {
         const a = this.activityFilters.find(x => x.key === this.filterActivity);
-        const lbl = (a?.label || this.filterActivity).replace(/^[^\s]+\s/, '');
+        const lbl = a?.label || this.filterActivity;
         tags.push({ id:'activity', label:'บันทึกหมายเหตุ: ' + lbl });
       }
       if (this.filterConvenientDate) tags.push({ id:'convenientDate', label:'วันที่สะดวก: ' + this.fmtFilterDate(this.filterConvenientDate) });
@@ -1882,19 +1882,42 @@ function app() {
     },
     _activityAliases: {
       'ไม่สนใจแล้ว': ['ไม่สนใจแล้ว', 'ยังไม่สนใจ'],
-      // รองรับบันทึกเก่า + ใหม่
-      'ไม่รับสาย 2 ครั้ง': ['ไม่รับสาย 2 ครั้ง', 'ไม่รับสายมากกว่า 2 ครั้ง'],
-      'ไม่รับสาย 5 ครั้ง': ['ไม่รับสาย 5 ครั้ง', 'ไม่รับสาย โทรมากกว่า 5 สาย', 'โทรมากกว่า 5 สาย'],
+      'เบอร์โทรไม่ถูกต้อง': ['เบอร์โทรไม่ถูกต้อง', 'เบอร์ผิด'],
+      'เบอร์ผิด': ['เบอร์โทรไม่ถูกต้อง', 'เบอร์ผิด'],
+      'ติดต่อไม่ได้': ['ไม่สามารถติดต่อได้', 'ติดต่อไม่ได้'],
+      'ไม่สามารถติดต่อได้': ['ไม่สามารถติดต่อได้', 'ติดต่อไม่ได้'],
+      'นัดติดต่อกลับ': ['นัดติดต่อกลับ', 'ติดต่อมาใหม่'],
+      'ติดต่อมาใหม่': ['นัดติดต่อกลับ', 'ติดต่อมาใหม่'],
+      'ส่งรายละเอียดทางอีเมล': ['ส่งรายละเอียดทางอีเมล', 'ส่งรายละเอียดทาง Email'],
+      'ส่งรายละเอียดทาง Email': ['ส่งรายละเอียดทางอีเมล', 'ส่งรายละเอียดทาง Email'],
+      'RemoteOrder': ['Remote Order', 'RemoteOrder'],
+      'เพิ่มเพื่อน LINE': ['เพิ่มเพื่อน LINE', 'แอดไลน์'],
+      'แอดไลน์': ['เพิ่มเพื่อน LINE', 'แอดไลน์'],
+      'ไม่สนใจผ่อนระยะยาว': ['ไม่สนใจผ่อนระยะยาว', 'ไม่สนใจผ่อนนาน'],
+      'ไม่สนใจผ่อนนาน': ['ไม่สนใจผ่อนระยะยาว', 'ไม่สนใจผ่อนนาน'],
+      'ตัดสาย': ['รับแล้วตัดสาย', 'ตัดสาย'],
+      'รับแล้วตัดสาย': ['รับแล้วตัดสาย', 'ตัดสาย'],
     },
     _activityKeys(key)     { return this._activityAliases[key] || [key]; },
+    _missedCallAttempt(text) {
+      const t = String(text || '');
+      if (!t.includes('ไม่รับสาย')) return 0;
+      const byNth = t.match(/ไม่รับสายครั้งที่\s*([1-5])/);
+      if (byNth) return parseInt(byNth[1], 10);
+      const byCount = t.match(/ไม่รับสาย\s*([2-5])\s*ครั้ง/);
+      if (byCount) return parseInt(byCount[1], 10);
+      if (/ไม่รับสายมากกว่า\s*2/.test(t)) return 2;
+      if (/ไม่รับสาย\s*โทรมากกว่า\s*5|โทรมากกว่า\s*5\s*สาย/.test(t)) return 5;
+      return 1;
+    },
     _matchActivity(text, filterKey) {
       const t = String(text || '');
-      // "ไม่รับสาย" อย่างเดียว — ไม่รวม 2/3/4/5 ครั้ง และข้อความเก่า "มากกว่า…"
-      if (filterKey === 'ไม่รับสาย') {
-        if (!t.includes('ไม่รับสาย')) return false;
-        if (/ไม่รับสาย\s*[2-5]\s*ครั้ง/.test(t)) return false;
-        if (/ไม่รับสายมากกว่า|โทรมากกว่า\s*5/.test(t)) return false;
-        return true;
+      const missed = this._missedCallAttempt(t);
+      if (filterKey === 'ไม่รับสาย' || filterKey === 'ไม่รับสายครั้งที่ 1') return missed === 1;
+      const nth = String(filterKey).match(/ไม่รับสาย(?:ครั้งที่\s*|\s+)([2-5])(?:\s*ครั้ง)?/);
+      if (nth && t.includes('ไม่รับสาย')) return missed === parseInt(nth[1], 10);
+      if (filterKey === 'ไม่สะดวก' || filterKey === 'ไม่สะดวกในขณะนี้') {
+        return t.includes('ไม่สะดวก') && !t.includes('ไม่สะดวกยื่นเอกสาร');
       }
       return this._activityKeys(filterKey).some(k => t.includes(k));
     },
@@ -2223,7 +2246,7 @@ function app() {
       if (!this.fuDateTime) { this.fuErr='กรุณาเลือกวันและเวลา'; return; }
       const when = this._fmtFuDt(this.fuDateTime);
       if (!when) { this.fuErr='วันเวลาไม่ถูกต้อง'; return; }
-      const label = (this._pendingFuActivity?.label||'🔁 ให้ติดต่อมาใหม่')+': '+when;
+      const label = (this._pendingFuActivity?.label||'นัดติดต่อกลับ')+': '+when;
       this.cancelFu();
       this._draftNote(label);
     },
