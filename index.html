@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v45</title>
+<title>LG Subscribe CRM · WUTTICHAI · v47</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -751,7 +751,7 @@
                   :class="filterActivity===a.key ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
                   :style="filterActivity===a.key ? 'background:var(--accent)' : ''">
                   <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="filterActivity===a.key ? 'bg-white/85' : 'bg-slate-300'"></span>
-                  <span x-text="a.label.replace(/^[^\s]+\s/,'')"></span>
+                  <span x-text="a.label"></span>
                   <span class="filter-chip-count"
                         :class="filterActivity===a.key ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
                         x-text="countByActivity(a.key)"></span>
