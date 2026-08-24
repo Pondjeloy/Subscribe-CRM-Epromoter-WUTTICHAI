@@ -36,6 +36,9 @@
 //  [Meta ITAX] โครงสร้างคอลัมน์เดียวกับ Meta Densu Aug
 //  A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
 //  H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter (P=หมายเหตุ ถ้ามี)
+//
+//  [Meta ที่อยู่] อ่านคอลัมน์ประเภทที่อยู่จากหัวตาราง (บ้านเดี่ยว / คอนโด)
+//  ถ้าไม่มีหัวที่ตรง ไล่ค่าในชีต Meta ที่เป็นบ้านเดี่ยว/คอนโด แล้วแปะเป็น housingType
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1aiyNPYJHy3TA0NRj7vNUBgZs_htLiPJ3VALGeL_nLA0'; // ส.ค. 2569
@@ -127,8 +130,8 @@ function doGet(e) {
 function getSheetConfig(name) {
   var cfg = {
 
-    // Meta Densu Aug: A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
-    // H=ชื่อ I=อายุ J=เบอร์ K=email N=สถานะ O=Epromoter P=หมายเหตุ
+    // Meta Densu Aug: A=ชำระ C=จังหวัด D=ที่อยู่(บ้านเดี่ยว/คอนโด) E=สินค้า
+    // F=วันที่สะดวก G=ช่วงเวลาติดต่อ H=ชื่อ I=อายุ J=เบอร์ K=email N=สถานะ O=Epromoter P=หมายเหตุ
     'Meta Densu Aug': {
       picCol:14, statusCol:13, notesCol:15,
       parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
@@ -146,7 +149,7 @@ function getSheetConfig(name) {
     },
 
     // Meta ITAX: คอลัมน์เดียวกับ Meta Densu Aug
-    // A=ชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
+    // A=ชำระ C=จังหวัด D=ที่อยู่(บ้านเดี่ยว/คอนโด) E=สินค้า F=วันที่สะดวก G=เวลาติดต่อ
     // H=ชื่อ I=อายุ J=เบอร์ K=Email N=สถานะ O=Epromoter P=หมายเหตุ
     'Meta ITAX': {
       picCol:14, statusCol:13, notesCol:15,
@@ -359,6 +362,45 @@ function findHeaderCol(headers, keywords) {
   return -1;
 }
 
+function normalizeHousingType(v) {
+  var s = clean(v);
+  if (!s) return '';
+  var n = s.replace(/\s+/g, '').toLowerCase();
+  if (n === 'condo' || n === 'apartment' || n === 'คอนโดมิเนียม') return 'คอนโด';
+  if (n === 'house' || n === 'home' || n === 'บ้าน') return 'บ้านเดี่ยว';
+  return s;
+}
+
+function isHousingValue(v) {
+  var s = normalizeHousingType(v);
+  if (!s) return false;
+  var n = s.replace(/\s+/g, '').toLowerCase();
+  return /คอนโด|condo|บ้านเดี่ยว|บ้านพัก|ทาวน์|house|home|^บ้าน$/.test(n);
+}
+
+function findHousingCol(headers, data) {
+  var col = findHeaderCol(headers || [], [
+    'ประเภทที่อยู่', 'ประเภทที่พัก', 'ที่พักอาศัย', 'ลักษณะที่อยู่',
+    'ประเภทบ้าน', 'ที่อยู่อาศัย', 'บ้านเดี่ยว', 'คอนโด',
+    'housing', 'residence', 'house type', 'ประเภทที่พักอาศัย',
+    'สถานที่ติดตั้ง', 'ประเภทที่พักอาศัย', 'ที่อยู่ติดตั้ง'
+  ]);
+  if (col >= 0) return col;
+  var maxCols = 0, r, c, hits, sample, v;
+  sample = Math.min((data && data.length) || 0, 80);
+  for (r = 1; r < sample; r++) {
+    if (data[r].length > maxCols) maxCols = data[r].length;
+  }
+  for (c = 0; c < maxCols; c++) {
+    hits = 0;
+    for (r = 1; r < sample; r++) {
+      if (isHousingValue(data[r][c])) hits++;
+    }
+    if (hits >= 3) return c;
+  }
+  return -1;
+}
+
 // สแกนหาคอลัมน์ที่มี promoter มากสุด (เมื่อ map เดิม match 0)
 function autoFindPicCol(data, promoter) {
   var maxCols = 0, r, c, n, bestCol = -1, bestCount = 0;
@@ -484,6 +526,7 @@ function getCustomers(promoter) {
     var disp = needsDisp ? range.getDisplayValues() : null;
     var cfg  = getRuntimeConfig(sName, sheet, data, promoter);
     if (!cfg) continue;
+    var housingCol = needsDisp ? findHousingCol(data[0], data) : -1;
 
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
@@ -492,6 +535,13 @@ function getCustomers(promoter) {
 
       var fields = cfg.parse(row, disp ? disp[i] : row);
       if (!fields.name && !fields.phone) continue;
+      if (!fields.housingType && housingCol >= 0 && row.length > housingCol) {
+        fields.housingType = normalizeHousingType(
+          cleanDisplay(row[housingCol], disp && disp[i] ? disp[i][housingCol] : row[housingCol])
+        );
+      } else if (!fields.housingType) {
+        fields.housingType = '';
+      }
 
       var notes = '';
       if (cfg.notesCol !== undefined && row.length > cfg.notesCol)
@@ -758,8 +808,9 @@ function parseMetaDensuLegacyRow(row, disp) {
 }
 
 // ── Meta Densu July / Meta ITAX parse ─────────────────
-// A=ช่องทางชำระ C=จังหวัด E=สินค้า F=วันที่สะดวก G=ช่วงเวลาติดต่อ
-// H=ชื่อ I=อายุ J=เบอร์ K=email · N=สถานะ O=Epromoter P=หมายเหตุ
+// A=ช่องทางชำระ C=จังหวัด D=ที่อยู่(บ้านเดี่ยว/คอนโด) E=สินค้า
+// F=วันที่สะดวก G=ช่วงเวลาติดต่อ H=ชื่อ I=อายุ J=เบอร์ K=email
+// N=สถานะ O=Epromoter P=หมายเหตุ
 function parseMetaDensuJulyRow(row, disp) {
   var ageRaw = calcAge(row[8]);
   var age = (String(ageRaw).replace(/\D/g,'').length >= 9) ? '' : ageRaw;
@@ -772,6 +823,7 @@ function parseMetaDensuJulyRow(row, disp) {
     convenientDate: cleanDisplay(row[5], disp&&disp[5]),
     paymentChannel: clean(row[0]),
     province:       clean(row[2]),
+    housingType:    normalizeHousingType(clean(row[3])),
     productType:    clean(row[4]),
     lineId:         ''
   };

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v47</title>
+<title>LG Subscribe CRM · WUTTICHAI · v48</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -789,6 +789,35 @@
             </div>
           </div>
 
+          <!-- ประเภทที่อยู่ (Meta · บ้านเดี่ยว / คอนโด) -->
+          <div class="filter-row chips-scroll" x-show="housingOptions.length" x-cloak>
+            <span class="filter-row-label">ที่อยู่</span>
+            <div class="filter-chips chips-scroll">
+              <div class="filter-slot filter-slot-1">
+                <button @click="setFilterHousing('')"
+                  class="filter-chip"
+                  :class="filterHousing==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterHousing==='' ? 'background:var(--accent)' : ''">
+                  ทั้งหมด
+                  <span class="filter-chip-count"
+                        :class="filterHousing==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="countWithHousing()"></span>
+                </button>
+              </div>
+              <template x-for="opt in housingOptions" :key="'hs-'+opt.value">
+                <button @click="setFilterHousing(opt.value)"
+                  class="filter-chip"
+                  :class="filterHousing===opt.value ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                  :style="filterHousing===opt.value ? 'background:var(--accent)' : ''">
+                  <span x-text="opt.value"></span>
+                  <span class="filter-chip-count"
+                        :class="filterHousing===opt.value ? 'bg-white/20' : 'text-slate-400 bg-slate-100'"
+                        x-text="opt.count"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+
           <!-- ช่วงเวลาติดต่อ (Meta Densu July · G) -->
           <div class="filter-row chips-scroll" x-show="contactTimeOptions.length" x-cloak>
             <span class="filter-row-label">ช่วงเวลา</span>
@@ -927,7 +956,9 @@
                             <span class="inline-flex items-center gap-0.5 min-w-0" x-show="c.province || c.age">
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="shrink-0" style="color:var(--accent);opacity:.7"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
                               <span x-show="c.province" x-text="c.province"></span>
-                              <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="(c.province?' · ':'')+c.age+'ปี'"></span>
+                              <span class="text-slate-300" x-show="housingLabel(c.housingType)"> · </span>
+                              <span x-show="housingLabel(c.housingType)" x-text="housingLabel(c.housingType)"></span>
+                              <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="((c.province||housingLabel(c.housingType))?' · ':'')+c.age+'ปี'"></span>
                             </span>
                             <span x-show="(c.province || c.age) && (c.convenientDate || c.contactTime)" class="text-slate-300">·</span>
                             <span x-show="c.convenientDate || c.contactTime" class="whitespace-nowrap">
@@ -994,6 +1025,9 @@
                 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                 <span class="text-[12px] font-semibold text-slate-700 tabular-nums" x-text="fmtPhone(c.phone)"></span>
                 <span x-show="c.province" class="text-[11.5px] text-slate-400" x-text="'📍'+c.province"></span>
+                <span x-show="housingLabel(c.housingType)" class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-normal max-w-[14rem]"
+                      :class="housingIsCondo(c.housingType) ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-800'"
+                      x-text="housingLabel(c.housingType)"></span>
               </div>
               <div x-show="c.convenientDate || c.contactTime" class="text-[11px] text-slate-400 mb-1">
                 <span x-show="c.convenientDate" x-text="'📅 '+fmtFilterDate(c.convenientDate)"></span>
@@ -1052,10 +1086,10 @@
 <div x-show="showDrawer" x-cloak class="drawer-shell" :class="(fuModal || showConfig) ? 'is-under-modal' : ''" style="display:none">
   <div class="drawer-bd" @click="closeDrawer()"></div>
   <aside class="drawer-panel" @click.stop>
-<template x-if="selectedCustomer">
-      <div style="display:contents">
-        <!-- Drawer header -->
-        <div class="px-6 pt-6 pb-5 border-b border-slate-100">
+    <template x-if="selectedCustomer">
+      <div class="flex flex-col h-full min-h-0">
+        <!-- Popup header -->
+        <div class="px-6 pt-5 pb-4 border-b border-slate-100 shrink-0 bg-white rounded-t-[20px]">
           <div class="flex items-start justify-between">
             <div class="flex items-center gap-3.5">
               <div class="h-12 w-12 rounded-2xl grid place-items-center text-white font-display font-bold text-[15px]" style="background:var(--accent)"
@@ -1069,6 +1103,8 @@
                   <span x-text="'#'+selectedCustomer.id"></span>
                   <span class="text-slate-300" x-show="selectedCustomer.province">·</span>
                   <span x-show="selectedCustomer.province" x-text="'📍 '+selectedCustomer.province+(isMetaSource(selectedCustomer.source)?' (C)':'')"></span>
+                  <span class="text-slate-300" x-show="housingLabel(selectedCustomer.housingType)">·</span>
+                  <span x-show="housingLabel(selectedCustomer.housingType)" x-text="housingLabel(selectedCustomer.housingType)"></span>
                   <span x-show="selectedCustomer.age" x-text="selectedCustomer.age+' ปี'"></span>
                   <span class="text-slate-300" x-show="selectedCustomer.row">·</span>
                   <span class="text-[11px]" x-show="selectedCustomer.row" x-text="'แถว '+selectedCustomer.row"></span>
@@ -1092,7 +1128,7 @@
         </div>
 
         <!-- Drawer body -->
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div class="flex-1 overflow-y-auto overscroll-contain px-6 py-5 space-y-5 min-h-0">
 
           <!-- Quick actions -->
           <div class="flex flex-col gap-2">
@@ -1134,6 +1170,10 @@
             <div x-show="selectedCustomer.paymentChannel">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300">(A)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
+            </div>
+            <div x-show="isMetaSource(selectedCustomer.source) && housingLabel(selectedCustomer.housingType)">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ที่อยู่ <span class="normal-case font-semibold text-slate-300">(D)</span></div>
+              <div class="text-[14px] text-slate-800 font-medium leading-snug" x-text="housingLabel(selectedCustomer.housingType)"></div>
             </div>
             <div x-show="isMetaSource(selectedCustomer.source) && selectedCustomer.convenientDate">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300">(F)</span></div>
@@ -1212,7 +1252,7 @@
         </div>
 
         <!-- Footer note input -->
-        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
           <div class="flex gap-2">
             <input type="text" x-model="newNote" @keydown.enter="addNote()" placeholder="เพิ่มบันทึกการติดต่อ…"
               class="flex-1 h-10 px-3.5 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[13.5px] placeholder:text-slate-400"/>
@@ -1226,8 +1266,8 @@
 </div>
 
 <script>
-const CRM_BUILD       = '21 ส.ค. 69 v47 · formal activity labels';
-const CACHE_SCHEMA    = 'v19';
+const CRM_BUILD       = '24 ส.ค. 69 v49 · housing full label';
+const CACHE_SCHEMA    = 'v21';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
@@ -1332,7 +1372,7 @@ function app() {
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
-    filterConvenientDate: '', filterContactTime: '',
+    filterConvenientDate: '', filterContactTime: '', filterHousing: '',
     activeQuickView: '',
     sortCol: 'lastNote', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
@@ -1446,6 +1486,7 @@ function app() {
     metaColumnLegend: [
       {col:'A', label:'ช่องทางการชำระเงิน'},
       {col:'C', label:'จังหวัด'},
+      {col:'D', label:'ประเภทที่อยู่ (บ้านเดี่ยว / คอนโด)'},
       {col:'E', label:'สินค้า'},
       {col:'F', label:'วันที่สะดวก'},
       {col:'G', label:'ช่วงเวลาในการติดต่อ'},
@@ -1468,11 +1509,11 @@ function app() {
 
     sourceDefs: [
       {key:'Meta Densu Aug',              short:'Meta ส.ค.', label:'Meta Densu Aug', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
-        columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
+        columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
       {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', img:'assets/channels/meta-itax.png',
-        columnHelp:'A=ชำระ · C=จังหวัด · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
+        columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
@@ -1668,7 +1709,8 @@ function app() {
       if (q) list = list.filter(c =>
         (c.name||'').toLowerCase().includes(q) ||
         (c.phone||'').includes(q) ||
-        (c.email||'').toLowerCase().includes(q)
+        (c.email||'').toLowerCase().includes(q) ||
+        (this.housingLabel(c.housingType)||'').toLowerCase().includes(q)
       );
       if (this.filterSource)   list = list.filter(c => this.customerMatchesSource(c, this.filterSource));
       if (this.filterStatusGroup?.length) list = list.filter(c => this.filterStatusGroup.includes(c.status));
@@ -1678,6 +1720,7 @@ function app() {
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
       if (this.filterConvenientDate) list = list.filter(c => this._normField(c.convenientDate) === this.filterConvenientDate);
       if (this.filterContactTime) list = list.filter(c => this._normField(c.contactTime) === this.filterContactTime);
+      if (this.filterHousing) list = list.filter(c => this.housingLabel(c.housingType) === this.filterHousing);
       if (this.filterHL === 'ranked') list = list.filter(c => this.getHL(c) > 0);
       else if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
       const col = this.sortCol, dir = this.sortDir === 'asc' ? 1 : -1;
@@ -1705,7 +1748,7 @@ function app() {
       for (let p=Math.max(1,cur-d); p<=Math.min(total,cur+d); p++) pages.push(p);
       return pages;
     },
-    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterStatusGroup?.length||this.filterPayment||this.filterActivity||this.filterHL!==null||this.filterConvenientDate||this.filterContactTime); },
+    get hasFilter()     { return !!(this.search||this.filterSource||this.filterStatus||this.filterStatusGroup?.length||this.filterPayment||this.filterActivity||this.filterHL!==null||this.filterConvenientDate||this.filterContactTime||this.filterHousing); },
     get convenientDateOptions() {
       const counts = {};
       for (const c of this.customers) {
@@ -1726,6 +1769,21 @@ function app() {
         .map(([value, count]) => ({ value, count }))
         .sort((a, b) => this._timeSortKey(a.value) - this._timeSortKey(b.value) || a.value.localeCompare(b.value, 'th'));
     },
+    get housingOptions() {
+      const counts = {};
+      for (const c of this.customers) {
+        const v = this.housingLabel(c.housingType);
+        if (v) counts[v] = (counts[v] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => {
+          const ac = this.housingIsCondo(a.value) ? 2 : 1;
+          const bc = this.housingIsCondo(b.value) ? 2 : 1;
+          if (ac !== bc) return ac - bc;
+          return a.value.length - b.value.length || a.value.localeCompare(b.value, 'th');
+        });
+    },
     get activeFilterTags() {
       const tags = [];
       const q = this.search.trim();
@@ -1745,6 +1803,7 @@ function app() {
       }
       if (this.filterConvenientDate) tags.push({ id:'convenientDate', label:'วันที่สะดวก: ' + this.fmtFilterDate(this.filterConvenientDate) });
       if (this.filterContactTime) tags.push({ id:'contactTime', label:'ช่วงเวลา: ' + this.filterContactTime });
+      if (this.filterHousing) tags.push({ id:'housing', label:'ที่อยู่: ' + this.filterHousing });
       if (this.filterHL === 'ranked') tags.push({ id:'hl', label:'ไฮไลท์: มีสีทั้งหมด' });
       else if (this.filterHL !== null) {
         const h = this.hlFilterDefs.find(x => x.value === this.filterHL);
@@ -1804,7 +1863,7 @@ function app() {
       if (this.activeQuickView===id) { this.clearFilters(); return; }
       this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null;
       this.filterPayment=''; this.filterActivity=''; this.filterHL=null;
-      this.filterConvenientDate=''; this.filterContactTime='';
+      this.filterConvenientDate=''; this.filterContactTime=''; this.filterHousing='';
       this.activeQuickView=id;
       if (id==='unset') this.filterStatus='__unset__';
       else if (id==='followup') { this.filterStatusGroup=['Called','Follow up']; this.sortCol='lastNote'; this.sortDir='desc'; }
@@ -1821,17 +1880,19 @@ function app() {
       else if (id==='activity') this.filterActivity='';
       else if (id==='convenientDate') this.filterConvenientDate='';
       else if (id==='contactTime') this.filterContactTime='';
+      else if (id==='housing') this.filterHousing='';
       else if (id==='hl') this.filterHL=null;
       this.page=1;
     },
     toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.filterHousing=''; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
     setFilterStatus(val)   { this._frozenRows=null; this._resetQuickView(); this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
     setFilterPayment(key)  { this._frozenRows=null; this._resetQuickView(); this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
     setFilterActivity(key) { this._frozenRows=null; this._resetQuickView(); this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
     setFilterHL(val)       { this._frozenRows=null; this._resetQuickView(); this.filterHL = this.filterHL===val ? null : val; this.page=1; },
     setFilterConvenientDate(val) { this._frozenRows=null; this._resetQuickView(); this.filterConvenientDate = this.filterConvenientDate===val ? '' : val; this.page=1; },
     setFilterContactTime(val)    { this._frozenRows=null; this._resetQuickView(); this.filterContactTime = this.filterContactTime===val ? '' : val; this.page=1; },
+    setFilterHousing(val)        { this._frozenRows=null; this._resetQuickView(); this.filterHousing = this.filterHousing===val ? '' : val; this.page=1; },
     setSearch(val)         { this._frozenRows=null; this._resetQuickView(); this.search=val; this.page=1; },
     _normField(v) {
       return String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
@@ -1876,6 +1937,18 @@ function app() {
     },
     countWithConvenientDate() { return this.customers.filter(c => this._normField(c.convenientDate)).length; },
     countWithContactTime()    { return this.customers.filter(c => this._normField(c.contactTime)).length; },
+    countWithHousing()        { return this.customers.filter(c => this.housingLabel(c.housingType)).length; },
+    housingLabel(v) {
+      const raw = String(v == null ? '' : v).trim();
+      if (!raw) return '';
+      const s = raw.replace(/\s+/g, '').toLowerCase();
+      if (s === 'condo' || s === 'apartment' || s === 'คอนโดมิเนียม') return 'คอนโด';
+      if (s === 'house' || s === 'home' || s === 'บ้าน') return 'บ้านเดี่ยว';
+      return raw;
+    },
+    housingIsCondo(v) {
+      return /คอนโด|condo|apartment|อพาร์ท/.test(String(v == null ? '' : v).toLowerCase());
+    },
     countByStatus(val) {
       if (val === '__unset__') return this.customers.filter(c => !c.status).length;
       return this.customers.filter(c => c.status === val).length;
@@ -2369,9 +2442,9 @@ function app() {
 
     /* ── Export ── */
     exportCSV() {
-      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','อายุ','สินค้า','ชำระเงิน','วันที่สะดวก','ช่วงเวลา','Status','ที่มา'];
+      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','ที่อยู่','อายุ','สินค้า','ชำระเงิน','วันที่สะดวก','ช่วงเวลา','Status','ที่มา'];
       const rows = this.filtered.map(c => [c.id, c.name||'', this.rawPhone(c.phone)||'', c.email||'',
-                                            c.lineId||'', c.province||'', c.age||'', c.productType||'',
+                                            c.lineId||'', c.province||'', this.housingLabel(c.housingType)||'', c.age||'', c.productType||'',
                                             c.paymentChannel||'', c.convenientDate||'', c.contactTime||'',
                                             c.status||'', c.source||'']);
       const csv  = [cols,...rows].map(r => r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
