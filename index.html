@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v48</title>
+<title>LG Subscribe CRM · WUTTICHAI · v51</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -368,7 +368,7 @@
     <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
-    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Aug2026/" target="_blank" class="btn-text">
+    <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Sep2026/" target="_blank" class="btn-text">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7h7M8.5 11h.01M12 11h.01M15.5 11h.01M8.5 15h.01M12 15h.01M15.5 15h.01"/></svg>
       คำนวณ
     </a>
@@ -393,7 +393,7 @@
 
     <!-- Test mode banner -->
     <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
-      <b>🧪 CRM v34</b> — ชีตสิงหาคม · Meta Densu Aug + Meta เก่า + Meta ITAX
+      <b>🧪 CRM v51</b> — ชีตกันยายน · Meta Densu Sep + Meta เก่า + Meta ITAX
       <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
         รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
         <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
@@ -470,7 +470,7 @@
         <!-- Source strip -->
         <div>
           <div class="flex items-center justify-between mb-3 px-0.5">
-            <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">ช่องทาง Lead</div>
+            <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">ช่องทาง Lead / ลูกค้า</div>
             <div class="text-[11px] text-slate-400">กดเพื่อกรอง · กดซ้ำเพื่อยกเลิก</div>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
@@ -487,6 +487,16 @@
                 <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
               </button>
             </template>
+          </div>
+          <!-- Sell out column legend -->
+          <div x-show="isSelloutFilterActive()"
+            class="mt-3 rounded-xl bg-emerald-50 ring-1 ring-emerald-200/80 px-4 py-3 text-[12px] text-emerald-900 leading-relaxed">
+            <div class="font-bold text-[11px] uppercase tracking-[.1em] text-emerald-700 mb-2">ฐานลูกค้า Sell out Wuttichai.P (POND)</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1">
+              <template x-for="item in selloutColumnLegend" :key="item.col">
+                <div><span class="font-bold tabular-nums" x-text="item.col"></span> = <span x-text="item.label"></span></div>
+              </template>
+            </div>
           </div>
           <!-- Meta column legend -->
           <div x-show="isMetaFilterActive() && showMetaLegend"
@@ -960,12 +970,13 @@
                               <span x-show="housingLabel(c.housingType)" x-text="housingLabel(c.housingType)"></span>
                               <span class="text-slate-300 tabular-nums" x-show="c.age" x-text="((c.province||housingLabel(c.housingType))?' · ':'')+c.age+'ปี'"></span>
                             </span>
-                            <span x-show="(c.province || c.age) && (c.convenientDate || c.contactTime)" class="text-slate-300">·</span>
+                            <span x-show="(c.province || c.age) && (c.convenientDate || c.contactTime || c.installDate)" class="text-slate-300">·</span>
                             <span x-show="c.convenientDate || c.contactTime" class="whitespace-nowrap">
                               <span x-show="c.convenientDate" x-text="fmtFilterDate(c.convenientDate)"></span>
                               <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
                               <span x-show="c.contactTime" x-text="c.contactTime"></span>
                             </span>
+                            <span x-show="c.installDate" class="whitespace-nowrap" x-text="'ติดตั้ง '+c.installDate"></span>
                           </div>
                         </div>
                       </div>
@@ -1029,10 +1040,11 @@
                       :class="housingIsCondo(c.housingType) ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-800'"
                       x-text="housingLabel(c.housingType)"></span>
               </div>
-              <div x-show="c.convenientDate || c.contactTime" class="text-[11px] text-slate-400 mb-1">
+              <div x-show="c.convenientDate || c.contactTime || c.installDate" class="text-[11px] text-slate-400 mb-1">
                 <span x-show="c.convenientDate" x-text="'📅 '+fmtFilterDate(c.convenientDate)"></span>
                 <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
                 <span x-show="c.contactTime" x-text="'🕐 '+c.contactTime"></span>
+                <span x-show="c.installDate" x-text="(c.convenientDate||c.contactTime?' · ':'')+'ติดตั้ง '+c.installDate"></span>
               </div>
               <div x-show="c.parsedNotes.length>0" class="flex items-baseline gap-2 pt-1.5 border-t border-slate-100 mt-1.5">
                 <span class="text-[10px] tabular-nums text-slate-400 shrink-0" x-text="fmtNoteDate(c.parsedNotes[0].date)"></span>
@@ -1167,6 +1179,30 @@
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า <span x-show="isMetaSource(selectedCustomer.source)" class="normal-case font-semibold text-slate-300">(E)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.productType"></div>
             </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.orderNo">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">OP</div>
+              <div class="text-[14px] text-slate-800 font-medium tabular-nums" x-text="selectedCustomer.orderNo"></div>
+            </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.sellDate">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่ขาย</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.sellDate"></div>
+            </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.installDate">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันติดตั้ง</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.installDate"></div>
+            </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.quantity">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">จำนวน</div>
+              <div class="text-[14px] text-slate-800 font-medium tabular-nums" x-text="selectedCustomer.quantity"></div>
+            </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.amount">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Amount</div>
+              <div class="text-[14px] text-slate-800 font-semibold tabular-nums" x-text="selectedCustomer.amount"></div>
+            </div>
+            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.policyName" class="col-span-2">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Policy Name</div>
+              <div class="text-[13px] text-slate-800 font-medium break-all" x-text="selectedCustomer.policyName"></div>
+            </div>
             <div x-show="selectedCustomer.paymentChannel">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300">(A)</span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
@@ -1186,7 +1222,7 @@
           </div>
 
           <!-- Status changer -->
-          <div>
+          <div x-show="!isSelloutSource(selectedCustomer.source)">
             <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-2">เปลี่ยนสถานะ</div>
             <div class="flex flex-wrap gap-1.5 mb-3">
               <template x-for="s in statusDefs.filter(x=>x.value!=='')" :key="s.value">
@@ -1266,8 +1302,8 @@
 </div>
 
 <script>
-const CRM_BUILD       = '24 ส.ค. 69 v49 · housing full label';
-const CACHE_SCHEMA    = 'v21';
+const CRM_BUILD       = '3 ก.ย. 69 v51 · Meta Densu Sep';
+const CACHE_SCHEMA    = 'v23';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
@@ -1281,11 +1317,16 @@ const isTimeoutErr = (e) => /timeout|หมดเวลา/i.test(String(e && e.
 // เขียน Sheet มักสำเร็จแล้ว แต่ JSONP ตอบไม่ได้ — ห้ามโชว์ "โหลด Script ไม่ได้ / Deploy Anyone"
 const isWriteSoftOkErr = (e) => /timeout|หมดเวลา|โหลด Script|script|Failed|Network|network|Failed to fetch|เน็ต|Deploy|Anyone|URL ผิด/i.test(String(e && e.message || e || ''));
 const isSkipSheetErr = (e) => /sheet not found|ไม่พบ sheet|no config|timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
-const META_PAIR         = {'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
-const SOURCE_PRIORITY   = {'Meta Densu Aug':1,'Meta Densu July':2,'Meta Densu':3};
-// Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Aug
+const META_PAIR         = {'Meta Densu Sep':true,'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
+const SOURCE_PRIORITY   = {'Meta Densu Sep':1,'Meta Densu Aug':2,'Meta Densu July':3,'Meta Densu':4};
+// Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Sep
 // ทุกแท็บ POP UP (ชื่อสะกดต่างกัน) แสดงรวมการ์ด POP UP เดียว
 const SOURCE_ALIASES    = {
+  'Meta Densu Aug': 'Meta Densu Sep',
+  'Meta Densu July': 'Meta Densu Sep',
+  'Meta Densu August': 'Meta Densu Sep',
+  'Meta Densu September': 'Meta Densu Sep',
+  'Meta Desu Sep': 'Meta Densu Sep',
   'POP UP Bannar': 'Lead Subscribe POP UP Braner',
   'POP UP Banner': 'Lead Subscribe POP UP Braner',
   'POP UP Braner': 'Lead Subscribe POP UP Braner',
@@ -1294,12 +1335,20 @@ const SOURCE_ALIASES    = {
   'Lead POP UP Banner': 'Lead Subscribe POP UP Braner',
   'POP UP': 'Lead Subscribe POP UP Braner',
   'Lead Subscribe POP UP': 'Lead Subscribe POP UP Braner',
+  'Sell out Wuttichai.P (POND)': 'Sell out Wuttichai.P',
+  'Sell out Wuttichai.P(POND)': 'Sell out Wuttichai.P',
+  'Sell out Wuttichai P': 'Sell out Wuttichai.P',
+  'Sellout Wuttichai.P': 'Sell out Wuttichai.P',
+  'Sell out POND': 'Sell out Wuttichai.P',
 };
 function normalizeSource(src) {
   if (!src) return '';
   if (SOURCE_ALIASES[src]) return SOURCE_ALIASES[src];
+  if (/meta\s*de[ns]su\s*(sep|september|ก\.?\s*ย)/i.test(src)) return 'Meta Densu Sep';
+  if (/meta\s*de[ns]su\s*(aug|august|july|ส\.?\s*ค|ก\.?\s*ค)/i.test(src)) return 'Meta Densu Sep';
   // fuzzy: ชื่อแท็บที่มี POP UP / Braner / Bannar
   if (/pop\s*up|braner|bannar|banner/i.test(src)) return 'Lead Subscribe POP UP Braner';
+  if (/sell\s*out/i.test(src)) return 'Sell out Wuttichai.P';
   return src;
 }
 function phoneKey(phone) {
@@ -1496,6 +1545,22 @@ function app() {
       {col:'K', label:'Email'},
       {col:'N', label:'ดำเนินการ / สถานะ'},
     ],
+    selloutColumnLegend: [
+      {col:'A', label:'No.'},
+      {col:'B', label:'Date'},
+      {col:'C', label:'OP'},
+      {col:'D', label:'Category'},
+      {col:'E', label:'Model'},
+      {col:'F', label:'Quantity'},
+      {col:'G', label:'Amount'},
+      {col:'H', label:'Policy Name'},
+      {col:'I', label:'Installation Date'},
+      {col:'J', label:'Customer'},
+      {col:'K', label:'tel'},
+      {col:'L', label:'Province'},
+      {col:'M', label:'E-Promoter'},
+      {col:'N', label:'Remark'},
+    ],
     metaLegacyColumnLegend: [
       {col:'A', label:'จังหวัด'},
       {col:'B', label:'สินค้า'},
@@ -1508,7 +1573,7 @@ function app() {
     ],
 
     sourceDefs: [
-      {key:'Meta Densu Aug',              short:'Meta ส.ค.', label:'Meta Densu Aug', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
+      {key:'Meta Densu Sep',              short:'Meta ก.ย.', label:'Meta Densu Sep', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
@@ -1519,13 +1584,15 @@ function app() {
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
       {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png',
         columnHelp:'Bannar(ก.ค.): B=ชื่อ C=เบอร์ F=Sale Consultant · Braner(เก่า): C+D=ชื่อ F=เบอร์ L=PIC'},
+      {key:'Sell out Wuttichai.P', short:'Sell out', label:'Sell out POND', toneClass:'tone-emerald', barClass:'bg-emerald-600', img:'assets/channels/sell-out.png',
+        columnHelp:'A=No. · B=Date · C=OP · D=Category · E=Model · F=Qty · G=Amount · H=Policy · I=ติดตั้ง · J=ลูกค้า · K=เบอร์ · L=จังหวัด · N=Remark'},
     ],
 
     /* ── Init ── */
     init() {
       if (localStorage.getItem(CACHE_VER_KEY) !== CACHE_SCHEMA) {
         localStorage.removeItem(CACHE_KEY);
-        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11','lgCrmCache_v12','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
+        ['lgCrmCache','lgCrmCache_v7','lgCrmCache_v8','lgCrmCache_v9','lgCrmCache_v10','lgCrmCache_v11','lgCrmCache_v12','lgCrmCache_v13','lgCrmCache_v11_test','lgCrmBuildVer'].forEach(k => localStorage.removeItem(k));
         localStorage.setItem(CACHE_VER_KEY, CACHE_SCHEMA);
       }
       if (this.isLoggedIn && this.apiUrl) {
@@ -1710,6 +1777,11 @@ function app() {
         (c.name||'').toLowerCase().includes(q) ||
         (c.phone||'').includes(q) ||
         (c.email||'').toLowerCase().includes(q) ||
+        (c.orderNo||'').toLowerCase().includes(q) ||
+        (c.model||'').toLowerCase().includes(q) ||
+        (c.productType||'').toLowerCase().includes(q) ||
+        (c.policyName||'').toLowerCase().includes(q) ||
+        (c.province||'').toLowerCase().includes(q) ||
         (this.housingLabel(c.housingType)||'').toLowerCase().includes(q)
       );
       if (this.filterSource)   list = list.filter(c => this.customerMatchesSource(c, this.filterSource));
@@ -2081,18 +2153,25 @@ function app() {
       return {'':'— ยังไม่ระบุ','Called':'Called','Follow up':'Follow up','Unqualified':'Unqualified',
               'Called buy denied':'Called but denied','No Credit Card':'No Credit Card','Purchased':'Purchased'}[s] ?? (s||'— ยังไม่ระบุ');
     },
+    isSelloutSource(src) {
+      return normalizeSource(src) === 'Sell out Wuttichai.P';
+    },
+    isSelloutFilterActive() {
+      return this.filterSource === 'Sell out Wuttichai.P';
+    },
     isMetaSource(src) {
       const s = normalizeSource(src);
-      return s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
+      return s === 'Meta Densu Sep' || s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
     },
     isMetaFilterActive() {
-      return this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
+      return this.filterSource === 'Meta Densu Sep' || this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
     },
     get metaLegendTitle() {
       if (this.filterSource === 'Meta Densu') return 'โครงสร้างชีต Meta Densu (เก่า)';
       if (this.filterSource === 'Meta ITAX') return 'โครงสร้างชีต Meta ITAX';
       if (this.filterSource === 'Meta Densu July') return 'โครงสร้างชีต Meta Densu July';
-      return 'โครงสร้างชีต Meta Densu Aug';
+      if (this.filterSource === 'Meta Densu Aug') return 'โครงสร้างชีต Meta Densu Aug';
+      return 'โครงสร้างชีต Meta Densu Sep';
     },
     get activeMetaColumnLegend() {
       return this.filterSource === 'Meta Densu' ? this.metaLegacyColumnLegend : this.metaColumnLegend;
@@ -2442,10 +2521,11 @@ function app() {
 
     /* ── Export ── */
     exportCSV() {
-      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','ที่อยู่','อายุ','สินค้า','ชำระเงิน','วันที่สะดวก','ช่วงเวลา','Status','ที่มา'];
+      const cols = ['#','ชื่อ','เบอร์','Email','LINE ID','จังหวัด','ที่อยู่','อายุ','สินค้า','ชำระเงิน','วันที่สะดวก','ช่วงเวลา','OP','วันที่ขาย','วันติดตั้ง','จำนวน','Amount','Policy','Status','ที่มา'];
       const rows = this.filtered.map(c => [c.id, c.name||'', this.rawPhone(c.phone)||'', c.email||'',
                                             c.lineId||'', c.province||'', this.housingLabel(c.housingType)||'', c.age||'', c.productType||'',
                                             c.paymentChannel||'', c.convenientDate||'', c.contactTime||'',
+                                            c.orderNo||'', c.sellDate||'', c.installDate||'', c.quantity||'', c.amount||'', c.policyName||'',
                                             c.status||'', c.source||'']);
       const csv  = [cols,...rows].map(r => r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
       const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
