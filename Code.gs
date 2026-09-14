@@ -3,7 +3,8 @@
 //  Deploy: Web App | Execute as: Me | Anyone
 //  แก้แล้ว Redeploy: Manage Deployments → Edit → New version → Deploy
 //
-//  [แก้ไขล่าสุด] 'Lead LG Success': statusCol/picCol/notesCol เลื่อน
+//  [แก้ไขล่าสุด] appendNote กันบรรทัดซ้ำจาก JSONP timeout+retry
+//  [ก่อนหน้า] 'Lead LG Success': statusCol/picCol/notesCol เลื่อน
 //  จาก 8/9/10 → 7/8/9 เพราะโครงสร้างชีตมีคอลัมน์ระหว่าง
 //  Model Code กับ Status ลดลง (เหลือ Order No. / Total Rental
 //  Amount / Price Policy Name 3 คอลัมน์) ทำให้ Status ที่เคย
@@ -48,6 +49,8 @@
 //  M=E-Promoter (WUTTICHAI.P) N=Remark
 //  ไม่มีคอลัมน์ Status — ตั้ง Purchased อัตโนมัติ (ยกเลิก/ปฏิเสธเครดิตแยกสถานะ)
 //  ดึงเฉพาะ promoter=POND (กัน CRM WUTTICHAI N. ดึงชีตนี้)
+//
+//  [ลงยอดขาย UI ถอดแล้ว ก.ย. 2569] ยังอ่านชีต Sell out เป็นฐานลูกค้า
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1EUfdN0N05b-R2sAWgCraTxkMtyfvQEAqUNbNUZ9D7ps'; // ก.ย. 2569
@@ -694,7 +697,13 @@ function appendNote(sheetName, rowNum, note) {
   if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   var cell = opened.sheet.getRange(rowNum, opened.cfg.notesCol+1);
   var cur  = clean(cell.getValue());
-  cell.setValue(cur ? cur+'\n'+note : note);
+  var add  = clean(note);
+  if (!add) return { success:true, sheet:opened.name, skipped:true };
+  // กันซ้ำจาก JSONP timeout+retry: บรรทัดล่าสุดเหมือนกันแล้วไม่ append
+  var lines = cur ? String(cur).split(/\r?\n/) : [];
+  var last = lines.length ? clean(lines[lines.length - 1]) : '';
+  if (last === add) return { success:true, sheet:opened.name, skipped:true };
+  cell.setValue(cur ? cur + '\n' + add : add);
   return { success:true, sheet:opened.name };
 }
 
@@ -815,7 +824,13 @@ function normalizeKey(v) {
 }
 
 function isPromoter(v, promoter) {
-  return normalizeKey(v).indexOf(normalizeKey(promoter || PROMOTER)) !== -1;
+  var want = normalizeKey(promoter || PROMOTER);
+  var key  = normalizeKey(v);
+  if (!key || !want) return false;
+  if (key.indexOf(want) !== -1) return true;
+  if (want === 'PAIRAT' && key.indexOf('PIRAT') !== -1) return true;
+  if (want === 'PIRAT' && key.indexOf('PAIRAT') !== -1) return true;
+  return false;
 }
 
 // ชีต Sell out Wuttichai.P — คอลัมน์ M เขียน WUTTICHAI.P ไม่ใช่ POND

@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v51</title>
+<title>LG Subscribe CRM · WUTTICHAI · v75</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -115,97 +115,132 @@
   }
   .filter-chip-count { font-variant-numeric:tabular-nums; font-size:11.5px; font-weight:700; padding:0 .375rem; border-radius:9999px; }
 
+  /* ── Filter rail (left tabs) ── */
+  .crm-list-layout { display:grid; grid-template-columns:248px minmax(0,1fr); gap:16px; align-items:start; }
+  .filter-rail { position:sticky; top:68px; background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
+  .filter-rail-head { padding:12px 14px 8px; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#94a3b8; }
+  .filter-rail-tabs { display:flex; flex-direction:column; padding:0 8px 8px; gap:2px; }
+  .filter-rail-tab { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; border:0; background:transparent; text-align:left; font-family:inherit; font-size:13px; font-weight:600; color:#64748b; padding:8px 10px; border-radius:10px; cursor:pointer; }
+  .filter-rail-tab:hover { background:#f8fafc; color:#334155; }
+  .filter-rail-tab.is-active { background:var(--accent-tint); color:#111; }
+  .filter-rail-tab.is-active { box-shadow:inset 3px 0 0 var(--accent); }
+  .filter-rail-dot { width:7px; height:7px; border-radius:99px; background:var(--accent); flex-shrink:0; }
+  .filter-rail-panel { border-top:1px solid #f1f5f9; padding:10px 10px 12px; }
+  .filter-rail-panel .filter-chips { flex-direction:column; align-items:stretch; flex-wrap:nowrap; gap:6px; max-height:min(52vh, 420px); overflow-y:auto; }
+  .filter-rail-panel .filter-slot, .filter-rail-panel .filter-slot-1, .filter-rail-panel .filter-slot-2 { width:100%; }
+  .filter-rail-panel .filter-chip { width:100%; justify-content:space-between; border-radius:10px; height:auto; min-height:2.25rem; }
+  .filter-rail-empty { font-size:12px; color:#94a3b8; padding:8px 4px; }
+  @media (max-width:900px) {
+    .crm-list-layout { grid-template-columns:1fr; }
+    .filter-rail { position:static; }
+    .filter-rail-tabs { flex-direction:row; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 8px 8px; }
+    .filter-rail-tab { flex:0 0 auto; white-space:nowrap; box-shadow:none; }
+    .filter-rail-tab.is-active { box-shadow:inset 0 -3px 0 var(--accent); }
+    .filter-rail-panel .filter-chips { flex-direction:row; flex-wrap:wrap; max-height:none; }
+    .filter-rail-panel .filter-slot, .filter-rail-panel .filter-slot-1, .filter-rail-panel .filter-slot-2 { width:auto; }
+    .filter-rail-panel .filter-chip { width:auto; }
+  }
+
   /* ── Work summary ── */
   .summary-rank-bar { height:6px; border-radius:9999px; background:#f1f5f9; overflow:hidden; }
   .summary-rank-fill { height:100%; border-radius:9999px; background:var(--accent); transition:width .35s ease; }
 
-  /* ── Source channel cards ── */
+  /* ── Source channel cards (corporate tiles, no photos) ── */
   .source-card {
     position: relative;
-    overflow: hidden;
-    border-radius: 18px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 76px;
+    padding: 12px 14px 12px 16px;
+    border: 1px solid #e6ebf1;
+    border-radius: 12px;
     background: #fff;
-    padding-bottom: 6px;
-    transition: transform .2s ease, box-shadow .2s ease, ring-color .2s ease;
-  }
-  .source-card:hover { transform: translateY(-2px); }
-  .source-card.is-active {
-    box-shadow: 0 14px 36px rgba(200,16,46,.22);
-    transform: translateY(-2px);
-  }
-  .source-card-media {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 420 / 401;
+    cursor: pointer;
+    font-family: inherit;
     overflow: hidden;
-    border-radius: 18px;
-    background: #f1f5f9;
-  }
-  .source-card img {
-    display: block;
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top center;
-  }
-  .source-card-count {
-    position: absolute;
-    right: 18px;
-    bottom: 22px;
-    left: auto;
-    z-index: 2;
-    padding: 0;
-    min-width: 0;
-    height: auto;
-    border-radius: 0;
-    background: none;
-    backdrop-filter: none;
     box-shadow: none;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 800;
-    font-size: 30px;
-    line-height: 1;
-    color: #334155;
-    text-shadow: 0 1px 0 rgba(255,255,255,.85), 0 0 10px rgba(255,255,255,.65);
-    pointer-events: none;
+    text-align: left;
+    transition: border-color .15s ease, background .15s ease;
   }
-  .source-card.is-active .source-card-count {
-    color: var(--accent);
-    background: none;
-  }
-  .source-card-check {
+  .source-card::before {
+    content: '';
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
+    left: 0; top: 10px; bottom: 10px;
+    width: 3px;
+    border-radius: 99px;
+    background: var(--card-accent, #94a3b8);
+  }
+  .source-card:hover {
+    border-color: #cfd8e3;
+    background: #fcfdfe;
+  }
+  .source-card.is-active {
+    border-color: #c8102e;
+    background: #fff8f8;
+  }
+  .source-card.is-active::before {
+    top: 0; bottom: 0; border-radius: 0;
+    background: var(--accent);
+  }
+  .source-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
     display: grid;
     place-items: center;
-    font-size: 13px;
-    font-weight: 800;
-    color: #fff;
-    background: linear-gradient(135deg, #c8102e, #e23a54);
-    box-shadow: 0 8px 20px rgba(200,16,46,.35);
+    background: var(--card-tint, #f1f5f9);
+    color: var(--card-accent, #475569);
+    flex-shrink: 0;
   }
+  .source-card-icon svg { width: 17px; height: 17px; display: block; }
+  .source-card.is-active .source-card-icon {
+    background: #fff;
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+  .source-card-body { flex: 1; min-width: 0; }
+  .source-card-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .source-card-count {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .source-card.is-active .source-card-count { color: var(--accent); }
   .source-card-label {
     display: block;
-    margin-top: 8px;
-    padding: 0 4px 2px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
-    letter-spacing: .01em;
-    color: #334155;
-    line-height: 1.25;
-    text-align: center;
+    color: #1e293b;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
-  .source-card.is-active .source-card-label {
-    color: var(--accent);
+  .source-card.is-active .source-card-label { color: var(--accent); }
+  .source-card-hint {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
   /* ── Quick View + Active filters ── */
   .qv-btn-active { background:linear-gradient(135deg,var(--accent),#e23a54); border-color:transparent!important; box-shadow:0 8px 20px rgba(200,16,46,.22); }
@@ -337,7 +372,7 @@
       class="w-full h-11 px-4 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[14px] text-slate-700"/>
     <div x-show="fuErr" class="mt-3 text-[13px] text-rose-600" x-text="fuErr"></div>
     <div class="flex gap-3 mt-5">
-      <button class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white transition" style="background:var(--accent)" @click="confirmFu()">ใส่ในช่องบันทึก</button>
+      <button type="button" class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white transition" style="background:var(--accent)" @click="confirmFu()">ใส่ในช่องบันทึก</button>
       <button class="h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition" @click="cancelFu()">ยกเลิก</button>
     </div>
   </div>
@@ -473,25 +508,30 @@
             <div class="text-[11px] font-bold uppercase tracking-[.14em] text-slate-400">ช่องทาง Lead / ลูกค้า</div>
             <div class="text-[11px] text-slate-400">กดเพื่อกรอง · กดซ้ำเพื่อยกเลิก</div>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
             <template x-for="sd in sourceSummary" :key="sd.key">
-              <button @click="toggleSource(sd.key)"
-                class="source-card text-left ring-1 ring-slate-200/80 hover:ring-slate-300 hover:shadow-md"
-                :class="filterSource===sd.key ? 'is-active ring-2 ring-[var(--accent)]' : ''">
-                <div class="source-card-media">
-                  <img :src="sd.img" :alt="sd.short + ' — ' + sd.label" loading="eager" decoding="async"
-                    @error="$el.style.opacity='0'"/>
-                  <span class="source-card-count tabular-nums" x-text="sd.count"></span>
-                </div>
-                <span class="source-card-label" x-text="sd.short"></span>
-                <span x-show="filterSource===sd.key" class="source-card-check">✓</span>
+              <button type="button" @click="toggleSource(sd.key)"
+                class="source-card"
+                :class="filterSource===sd.key ? 'is-active' : ''"
+                :style="'--card-accent:'+sd.accent+';--card-tint:'+sd.tint"
+                :title="sd.label">
+                <span class="source-card-icon" x-html="sourceIconSvg(sd.icon)"></span>
+                <span class="source-card-body">
+                  <span class="source-card-row">
+                    <span class="source-card-label" x-text="sd.short"></span>
+                    <span class="source-card-count" x-text="sd.count"></span>
+                  </span>
+                  <span class="source-card-hint" x-text="sd.label"></span>
+                </span>
               </button>
             </template>
           </div>
           <!-- Sell out column legend -->
           <div x-show="isSelloutFilterActive()"
             class="mt-3 rounded-xl bg-emerald-50 ring-1 ring-emerald-200/80 px-4 py-3 text-[12px] text-emerald-900 leading-relaxed">
-            <div class="font-bold text-[11px] uppercase tracking-[.1em] text-emerald-700 mb-2">ฐานลูกค้า Sell out Wuttichai.P (POND)</div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="font-bold text-[11px] uppercase tracking-[.1em] text-emerald-700">ฐานลูกค้า Sell out Wuttichai.P (POND)</div>
+            </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1">
               <template x-for="item in selloutColumnLegend" :key="item.col">
                 <div><span class="font-bold tabular-nums" x-text="item.col"></span> = <span x-text="item.label"></span></div>
@@ -618,13 +658,36 @@
       </section>
 
       <!-- ── List View ── -->
-      <div class="space-y-4">
+      <div class="crm-list-layout">
 
-        <!-- Status chips -->
-        <section class="space-y-3">
-          <div class="filter-row chips-scroll">
-            <span class="filter-row-label">Status</span>
-            <div class="filter-chips chips-scroll">
+        <aside class="filter-rail">
+          <div class="filter-rail-head">ตัวกรอง</div>
+          <nav class="filter-rail-tabs" aria-label="ตัวกรองรายชื่อ">
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='status' }" @click="setFilterRailTab('status')">
+              <span>Status</span><span class="filter-rail-dot" x-show="filterRailOn('status')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='payment' }" @click="setFilterRailTab('payment')">
+              <span>ชำระเงิน</span><span class="filter-rail-dot" x-show="filterRailOn('payment')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='hl' }" @click="setFilterRailTab('hl')">
+              <span>ไฮไลท์รายชื่อ</span><span class="filter-rail-dot" x-show="filterRailOn('hl')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='activity' }" @click="setFilterRailTab('activity')">
+              <span>บันทึกหมายเหตุ</span><span class="filter-rail-dot" x-show="filterRailOn('activity')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='convenientDate' }" @click="setFilterRailTab('convenientDate')">
+              <span>วันที่สะดวก</span><span class="filter-rail-dot" x-show="filterRailOn('convenientDate')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='housing' }" @click="setFilterRailTab('housing')">
+              <span>ที่อยู่</span><span class="filter-rail-dot" x-show="filterRailOn('housing')" x-cloak></span>
+            </button>
+            <button type="button" class="filter-rail-tab" :class="{ 'is-active': filterRailTab==='contactTime' }" @click="setFilterRailTab('contactTime')">
+              <span>ช่วงเวลา</span><span class="filter-rail-dot" x-show="filterRailOn('contactTime')" x-cloak></span>
+            </button>
+          </nav>
+
+          <div class="filter-rail-panel">
+          <div class="filter-chips" x-show="filterRailTab==='status'">
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterStatus('')"
                   class="filter-chip"
@@ -659,12 +722,8 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- Payment chips -->
-          <div class="filter-row chips-scroll">
-            <span class="filter-row-label">ชำระเงิน</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='payment'" x-cloak>
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterPayment('')"
                   class="filter-chip"
@@ -703,12 +762,8 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- Highlight chips -->
-          <div class="filter-row chips-scroll">
-            <span class="filter-row-label">ไฮไลท์ รายชื่อ</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='hl'" x-cloak>
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterHL(null)"
                   class="filter-chip"
@@ -749,12 +804,15 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- Activity chips -->
-          <div class="filter-row chips-scroll">
-            <span class="filter-row-label">บันทึกหมายเหตุ</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='activity'" x-cloak>
+              <button @click="setFilterActivity('')"
+                class="filter-chip"
+                :class="filterActivity==='' ? 'text-white shadow-sm' : 'text-slate-600 bg-white ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50'"
+                :style="filterActivity==='' ? 'background:var(--accent)' : ''">
+                ทั้งหมด
+                <span class="filter-chip-count" :class="filterActivity==='' ? 'bg-white/20' : 'text-slate-400 bg-slate-100'" x-text="customers.length"></span>
+              </button>
               <template x-for="a in activityFilters" :key="a.key">
                 <button @click="setFilterActivity(a.key)"
                   class="filter-chip"
@@ -768,12 +826,8 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- วันที่สะดวก (Meta Densu July · F) -->
-          <div class="filter-row chips-scroll" x-show="convenientDateOptions.length" x-cloak>
-            <span class="filter-row-label">วันที่สะดวก</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='convenientDate'" x-cloak>
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterConvenientDate('')"
                   class="filter-chip"
@@ -797,12 +851,8 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- ประเภทที่อยู่ (Meta · บ้านเดี่ยว / คอนโด) -->
-          <div class="filter-row chips-scroll" x-show="housingOptions.length" x-cloak>
-            <span class="filter-row-label">ที่อยู่</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='housing'" x-cloak>
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterHousing('')"
                   class="filter-chip"
@@ -826,12 +876,8 @@
                 </button>
               </template>
             </div>
-          </div>
 
-          <!-- ช่วงเวลาติดต่อ (Meta Densu July · G) -->
-          <div class="filter-row chips-scroll" x-show="contactTimeOptions.length" x-cloak>
-            <span class="filter-row-label">ช่วงเวลา</span>
-            <div class="filter-chips chips-scroll">
+          <div class="filter-chips" x-show="filterRailTab==='contactTime'" x-cloak>
               <div class="filter-slot filter-slot-1">
                 <button @click="setFilterContactTime('')"
                   class="filter-chip"
@@ -855,9 +901,13 @@
                 </button>
               </template>
             </div>
+            <div class="filter-rail-empty" x-show="filterRailTab==='convenientDate' && !convenientDateOptions.length" x-cloak>ไม่มีวันที่สะดวกในชุดนี้</div>
+            <div class="filter-rail-empty" x-show="filterRailTab==='housing' && !housingOptions.length" x-cloak>ไม่มีประเภทที่อยู่ในชุดนี้</div>
+            <div class="filter-rail-empty" x-show="filterRailTab==='contactTime' && !contactTimeOptions.length" x-cloak>ไม่มีช่วงเวลาในชุดนี้</div>
           </div>
-        </section>
+        </aside>
 
+        <div class="crm-list-main space-y-4">
         <!-- Search row -->
         <div class="flex items-center gap-3">
           <div class="relative flex-1">
@@ -923,7 +973,7 @@
                     </span>
                   </th>
                   <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400">เบอร์โทร</th>
-                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('productType')">สินค้า</th>
+                  <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 w-[9.5rem] max-w-[9.5rem] cursor-pointer select-none" @click="setSort('productType')">สินค้า</th>
                   <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400">ชำระเงิน</th>
                   <th class="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('status')">
                     <span class="inline-flex items-center gap-1">Status
@@ -984,7 +1034,9 @@
                     <td class="px-3 whitespace-nowrap">
                       <span class="font-semibold text-slate-800 tabular-nums tracking-tight text-[13.5px]" x-text="fmtPhone(c.phone)"></span>
                     </td>
-                    <td class="px-3 text-[13px] text-slate-600 whitespace-nowrap" x-text="c.productType||'—'"></td>
+                    <td class="px-3 text-[13px] text-slate-600 w-[9.5rem] max-w-[9.5rem]">
+                      <div class="truncate" :title="c.productType||''" x-text="c.productType||'—'"></div>
+                    </td>
                     <td class="px-3">
                       <span x-show="c.paymentChannel" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold" :style="paymentStyle(c.paymentChannel)" x-text="c.paymentChannel"></span>
                       <span x-show="!c.paymentChannel" class="text-[12px] text-slate-400">—</span>
@@ -1087,6 +1139,7 @@
           </div>
         </div>
 
+        </div><!-- /crm-list-main -->
       </div><!-- /list -->
     </div><!-- /!loading -->
   </div><!-- /apiUrl -->
@@ -1257,10 +1310,10 @@
                   <option :value="a.label" x-text="a.label"></option>
                 </template>
               </select>
-              <button @click="selectedActivity && addActivity(activityOpts.find(a=>a.label===selectedActivity)); selectedActivity=''"
+              <button type="button" @click="selectedActivity && addActivity(activityOpts.find(a=>a.label===selectedActivity)); selectedActivity=''"
                 :disabled="!selectedActivity"
                 class="h-10 px-4 rounded-xl text-white text-[13px] font-bold transition disabled:opacity-40 shrink-0" style="background:var(--accent)">
-                บันทึก
+                ใส่ช่อง
               </button>
             </div>
           </div>
@@ -1290,9 +1343,9 @@
         <!-- Footer note input -->
         <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
           <div class="flex gap-2">
-            <input type="text" x-model="newNote" @keydown.enter="addNote()" placeholder="เพิ่มบันทึกการติดต่อ…"
+            <input type="text" x-ref="noteInput" x-model="newNote" @keydown.enter.prevent="addNote()" placeholder="เพิ่มบันทึกการติดต่อ…"
               class="flex-1 h-10 px-3.5 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[13.5px] placeholder:text-slate-400"/>
-            <button @click="addNote()" :disabled="!newNote.trim()"
+            <button type="button" @click.prevent="addNote()" :disabled="!String(newNote||'').trim() || noteSaving"
               class="h-10 px-4 rounded-xl text-white text-[13px] font-bold transition disabled:opacity-40" style="background:var(--accent)">บันทึก</button>
           </div>
         </div>
@@ -1302,14 +1355,14 @@
 </div>
 
 <script>
-const CRM_BUILD       = '3 ก.ย. 69 v51 · Meta Densu Sep';
+const CRM_BUILD       = '13 ก.ย. 69 v75 · ถอดระบบลงยอดขาย';
 const CACHE_SCHEMA    = 'v23';
-const NOTE_DATE_ONLY  = false;
+const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
-const CACHE_KEY         = 'lgCrmCache_wuttichai_v13';
-const CACHE_VER_KEY     = 'lgCrmCacheSchema_wuttichai';
+const CACHE_KEY         = 'lgCrmCache_wuttichai_v14';
+const CACHE_VER_KEY     = 'lgCrmCacheSchema';
 // เขียน: รอแค่ชีตหลัก · alt ยิงเบื้องหลัง · เน็ต/timeout/script error = soft-ok (ไม่โชว์ error แดง)
 const WRITE_TIMEOUT_MS  = 60000;
 const NOTES_LOAD_MS     = 25000;
@@ -1395,7 +1448,7 @@ function dedupeCustomersByPhone(list) {
   let id = 1;
   return dedupeMetaOnly(meta).concat(rest).map(c => ({...c, id: id++}));
 }
-const HL_KEY            = 'lgCrmHL_wuttichai';
+const HL_KEY            = 'lgDashHL_wuttichai';
 const PROMOTER          = 'WUTTICHAI';
 const CACHE_TTL         = 30 * 60 * 1000; // 30 min
 
@@ -1422,6 +1475,7 @@ function app() {
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
     filterConvenientDate: '', filterContactTime: '', filterHousing: '',
+    filterRailTab: (function () { try { return localStorage.getItem('lgCrmRailTab') || 'status'; } catch (e) { return 'status'; } })(),
     activeQuickView: '',
     sortCol: 'lastNote', sortDir: 'desc', page: 1, pageSize: 25,
     _frozenRows: null,
@@ -1429,7 +1483,7 @@ function app() {
     /* ── Drawer ── */
     showDrawer: false, selectedCustomer: null,
     pendingStatus: '', savingStatus: false, saveMsg: '', saveOk: false,
-    sheetNotes: [], notesLoading: false, newNote: '',
+    sheetNotes: [], notesLoading: false, newNote: '', noteSaving: false,
     syncMsg: '', syncOk: null,
 
     /* ── Follow-up modal ── */
@@ -1573,18 +1627,18 @@ function app() {
     ],
 
     sourceDefs: [
-      {key:'Meta Densu Sep',              short:'Meta ก.ย.', label:'Meta Densu Sep', toneClass:'tone-violet', barClass:'bg-violet-400', img:'assets/channels/meta-densu.png',
+      {key:'Meta Densu Sep',              short:'Meta ก.ย.', label:'Meta Densu Sep', toneClass:'tone-violet', barClass:'bg-violet-400', icon:'meta', accent:'#5B5FC7', tint:'#eef0ff',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
-      {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', img:'assets/channels/meta-densu.png',
+      {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', icon:'meta', accent:'#A21CAF', tint:'#faf0ff',
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
-      {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', img:'assets/channels/meta-itax.png',
+      {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', icon:'itax', accent:'#0284C7', tint:'#e8f4fc',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
-      {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', img:'assets/channels/subscribe-lg.png'},
-      {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', img:'assets/channels/lg-success.png'},
-      {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', img:'assets/channels/lead-consult.png'},
-      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP', toneClass:'tone-rose',   barClass:'bg-rose-400', img:'assets/channels/pop-up.png',
+      {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', icon:'web', accent:'#C8102E', tint:'#fdecee'},
+      {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', icon:'success', accent:'#047857', tint:'#e8f6f0'},
+      {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', icon:'consult', accent:'#C2410C', tint:'#fff3ea'},
+      {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP', toneClass:'tone-rose',   barClass:'bg-rose-400', icon:'popup', accent:'#BE123C', tint:'#fdecef',
         columnHelp:'Bannar(ก.ค.): B=ชื่อ C=เบอร์ F=Sale Consultant · Braner(เก่า): C+D=ชื่อ F=เบอร์ L=PIC'},
-      {key:'Sell out Wuttichai.P', short:'Sell out', label:'Sell out POND', toneClass:'tone-emerald', barClass:'bg-emerald-600', img:'assets/channels/sell-out.png',
+      {key:'Sell out Wuttichai.P', short:'Sell out', label:'Sell out POND', toneClass:'tone-emerald', barClass:'bg-emerald-600', icon:'sellout', accent:'#0F766E', tint:'#e7f5f3',
         columnHelp:'A=No. · B=Date · C=OP · D=Category · E=Model · F=Qty · G=Amount · H=Policy · I=ติดตั้ง · J=ลูกค้า · K=เบอร์ · L=จังหวัด · N=Remark'},
     ],
 
@@ -1958,6 +2012,20 @@ function app() {
     },
     toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.page=1; },
     clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.filterHousing=''; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
+    setFilterRailTab(id) {
+      this.filterRailTab = id;
+      try { localStorage.setItem('lgCrmRailTab', id); } catch (e) {}
+    },
+    filterRailOn(id) {
+      if (id === 'status') return !!(this.filterStatus || this.filterStatusGroup?.length);
+      if (id === 'payment') return !!this.filterPayment;
+      if (id === 'hl') return this.filterHL !== null;
+      if (id === 'activity') return !!this.filterActivity;
+      if (id === 'convenientDate') return !!this.filterConvenientDate;
+      if (id === 'housing') return !!this.filterHousing;
+      if (id === 'contactTime') return !!this.filterContactTime;
+      return false;
+    },
     setFilterStatus(val)   { this._frozenRows=null; this._resetQuickView(); this.filterStatus = this.filterStatus===val ? '' : val; this.page=1; },
     setFilterPayment(key)  { this._frozenRows=null; this._resetQuickView(); this.filterPayment = this.filterPayment===key ? '' : key; this.page=1; },
     setFilterActivity(key) { this._frozenRows=null; this._resetQuickView(); this.filterActivity = this.filterActivity===key ? '' : key; this.page=1; },
@@ -2153,6 +2221,9 @@ function app() {
       return {'':'— ยังไม่ระบุ','Called':'Called','Follow up':'Follow up','Unqualified':'Unqualified',
               'Called buy denied':'Called but denied','No Credit Card':'No Credit Card','Purchased':'Purchased'}[s] ?? (s||'— ยังไม่ระบุ');
     },
+    isPondCrm() {
+      return PROMOTER === 'POND';
+    },
     isSelloutSource(src) {
       return normalizeSource(src) === 'Sell out Wuttichai.P';
     },
@@ -2191,6 +2262,19 @@ function app() {
     srcToneClass(src) { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.toneClass:'tone-slate'; },
     srcShort(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.short:normalizeSource(src)||src; },
     srcLabel(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.label:normalizeSource(src)||src; },
+    sourceIconSvg(icon) {
+      const stroke = 'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"';
+      const icons = {
+        meta:    `<svg viewBox="0 0 24 24" ${stroke}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M8 13h4M8 16h8"/></svg>`,
+        itax:    `<svg viewBox="0 0 24 24" ${stroke}><path d="M8 3h6l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16h5"/></svg>`,
+        web:     `<svg viewBox="0 0 24 24" ${stroke}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 3.2 3.8 6.2 3.8 9S14.5 17.8 12 21c-2.5-3.2-3.8-6.2-3.8-9S9.5 6.2 12 3z"/></svg>`,
+        success: `<svg viewBox="0 0 24 24" ${stroke}><path d="M8 20h8"/><path d="M12 16v4"/><path d="M7 9a5 5 0 0 0 10 0V5H7v4z"/><path d="M7 8H5a3 3 0 0 0 3 3M17 8h2a3 3 0 0 1-3 3"/></svg>`,
+        consult: `<svg viewBox="0 0 24 24" ${stroke}><path d="M5 5h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M18 10h1a2 2 0 0 1 2 2v5h-1l-3 2v-2h-2"/></svg>`,
+        popup:   `<svg viewBox="0 0 24 24" ${stroke}><path d="M4 11v2a1 1 0 0 0 1 1h1v6h4v-4h4v4h4v-6h1a1 1 0 0 0 1-1v-2"/><path d="M3 11l9-8 9 8"/></svg>`,
+        sellout: `<svg viewBox="0 0 24 24" ${stroke}><path d="M9 12l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`,
+      };
+      return icons[icon] || icons.web;
+    },
     paymentStyle(val) {
       if (!val) return '';
       const v = val.toLowerCase();
@@ -2264,7 +2348,13 @@ function app() {
     _fireWriteAltRows(action, fields) {
       const alts = this.selectedCustomer?.altRows || [];
       if (!alts.length || !this.apiUrl) return;
+      const src = this.selectedCustomer.source;
+      const row = this.selectedCustomer.row;
+      const nSrc = normalizeSource(src);
       for (const a of alts) {
+        if (!a || !a.source || !a.row) continue;
+        // ห้ามยิงซ้ำแถวเดียวกับชีตหลัก
+        if (Number(a.row) === Number(row) && (a.source === src || normalizeSource(a.source) === nSrc)) continue;
         jsonpCall(this.apiUrl, {
           action,
           sheet: a.source,
@@ -2369,6 +2459,7 @@ function app() {
     },
 
     addActivity(a) {
+      if (!a) return;
       if (a.needsDateTime) {
         this._pendingFuActivity = a;
         this.fuDateTime = this._defaultFuDt();
@@ -2382,6 +2473,13 @@ function app() {
       const t = String(text||'').trim();
       if (!t) return;
       this.newNote = this.newNote.trim() ? this.newNote.trim()+' / '+t : t;
+      this.$nextTick(() => {
+        const el = this.$refs.noteInput;
+        if (!el) return;
+        el.focus();
+        const n = el.value.length;
+        try { el.setSelectionRange(n, n); } catch (e) {}
+      });
     },
     _defaultFuDt() {
       const d = new Date(); d.setDate(d.getDate()+1);
@@ -2405,24 +2503,31 @@ function app() {
     cancelFu() { this.fuModal=false; this._pendingFuActivity=null; this.fuDateTime=''; this.fuErr=''; },
 
     async addNote() {
-      const text = this.newNote.trim(); if (!text) return;
+      const text = this.newNote.trim(); if (!text || this.noteSaving) return;
+      this.noteSaving = true;
       const now = new Date();
       let stamp = now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
       if (!NOTE_DATE_ONLY) stamp += ' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
       this.newNote = '';
-      await this._syncNote(stamp+' — '+text);
+      try {
+        await this._syncNote(stamp+' — '+text);
+      } finally {
+        this.noteSaving = false;
+      }
     },
     async _writeJsonp(params) {
-      // ลอง 2 รอบเงียบๆ · soft-ok ถ้า timeout/script/เน็ต
+      // appendNote ห้าม retry — timeout มักแปลว่า Sheet เขียนสำเร็จแล้ว ยิงซ้ำจะซ้ำบรรทัด
+      // updateStatus / updateNotes ทับค่าได้ ลอง 2 รอบได้
+      const maxAttempt = params.action === 'appendNote' ? 1 : 2;
       let lastErr = null;
-      for (let attempt = 1; attempt <= 2; attempt++) {
+      for (let attempt = 1; attempt <= maxAttempt; attempt++) {
         try {
           const r = await jsonpCall(this.apiUrl, params, WRITE_TIMEOUT_MS);
           if (!r?.success) throw new Error(r?.error || 'API error');
           return { ok: true, soft: false, data: r };
         } catch (e) {
           lastErr = e;
-          if (!isWriteSoftOkErr(e) || attempt === 2) break;
+          if (!isWriteSoftOkErr(e) || attempt === maxAttempt) break;
           await new Promise(r => setTimeout(r, 800));
         }
       }
