@@ -51,6 +51,13 @@
 //  ดึงเฉพาะ promoter=POND (กัน CRM WUTTICHAI N. ดึงชีตนี้)
 //
 //  [ลงยอดขาย UI ถอดแล้ว ก.ย. 2569] ยังอ่านชีต Sell out เป็นฐานลูกค้า
+//
+//  [TikTok] แท็บชื่อ TikTok — ไม่เข้า META_PAIR (ไม่ dedup กับ Meta)
+//  A=Email B=Final page C=ชื่อ D=นามสกุล E=Phone
+//  F=ช่องทางชำระรายเดือน G=เคยติดเครดิตบูโรหรือไม่
+//  H=ประเภทที่พัก I=พื้นที่ติดตั้ง J=วันที่สะดวกให้ติดต่อ
+//  K=หมวดสินค้า L=เวลาที่สะดวก M=Action N=Epromoter O=Remark
+//  picCol=N(13) statusCol=M(12) notesCol=O(14)
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1EUfdN0N05b-R2sAWgCraTxkMtyfvQEAqUNbNUZ9D7ps'; // ก.ย. 2569
@@ -59,6 +66,7 @@ var PROMOTER       = 'POND';
 // ชื่อ canonical ใน CRM (1 การ์ด POP UP) — resolveSheet หาแท็บจริงให้
 var SHEET_NAMES = [
   'Meta Densu Sep','Meta Densu','Meta ITAX',
+  'TikTok',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
   'Lead Subscribe POP UP Braner',
   'Sell out Wuttichai.P'
@@ -94,6 +102,14 @@ var SHEET_ALIASES = {
     'Meta iTax',
     'META ITAX',
     'Meta I-TAX'
+  ],
+  'TikTok': [
+    'TikTok',
+    'Tiktok',
+    'TIKTOK',
+    'Lead TikTok',
+    'Lead Subscribe TikTok',
+    'หลีด TikTok'
   ],
   'Lead Subscribe POP UP Braner': [
     'Lead Subscribe POP UP Braner',
@@ -186,6 +202,15 @@ function getSheetConfig(name) {
     'Meta ITAX': {
       picCol:14, statusCol:13, notesCol:15,
       parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
+    },
+
+    // TikTok: A=Email C=ชื่อ D=นามสกุล E=Phone F=ชำระ G=บูโร
+    // H=ประเภทที่พัก I=พื้นที่ J=วันสะดวก K=สินค้า L=เวลา
+    // M=Action N=Epromoter O=Remark
+    'TikTok': {
+      picCol:13, statusCol:12, notesCol:14,
+      needsDisplay: true,
+      parse: function(row, disp) { return parseTikTokRow(row, disp); }
     },
 
     // ── หลีดอื่น: mapping มิถุนายน 2569 (บนชีตกรกฎาคม) ──────────────
@@ -366,6 +391,7 @@ function lookupSheetConfig(name) {
   var want = normalizeSheetKey(name);
   var keys = [
     'Meta Densu Sep', 'Meta Densu Aug', 'Meta Densu July', 'Meta Densu', 'Meta ITAX',
+    'TikTok',
     'Lead Subscribe Lg.com', 'Lead LG Success', 'Lead Consult',
     'Lead Subscribe POP UP Braner', 'POP UP Bannar',
     'Sell out Wuttichai.P'
@@ -569,7 +595,7 @@ function getCustomers(promoter) {
     var range = sheet.getRange(1, 1, lastRow, maxCol);
     var data  = range.getValues();
     // Meta ใช้ display สำหรับวันที่/เบอร์ — ชีตอื่น parse จาก values พอ (เร็วขึ้น ~2x)
-    var needsDisp = !!(META_PAIR[sName] || sName === 'Meta ITAX' || sName.indexOf('Meta') === 0 || (baseCfg && baseCfg.isSellout));
+    var needsDisp = !!(META_PAIR[sName] || sName === 'Meta ITAX' || sName === 'TikTok' || (baseCfg && baseCfg.needsDisplay) || sName.indexOf('Meta') === 0 || (baseCfg && baseCfg.isSellout));
     var disp = needsDisp ? range.getDisplayValues() : null;
     var cfg  = getRuntimeConfig(sName, sheet, data, promoter);
     if (!cfg) continue;
@@ -930,6 +956,29 @@ function parseMetaDensuLegacyRow(row, disp) {
     paymentChannel: clean(row[3]),
     province:       clean(row[0]),
     productType:    clean(row[1]),
+    lineId:         ''
+  };
+}
+
+// ── TikTok lead form ──────────────────────────────────
+// A=Email C=ชื่อ D=นามสกุล E=Phone F=ช่องทางชำระ G=เคยติดบูโร
+// H=ประเภทที่พัก I=พื้นที่ติดตั้ง J=วันที่สะดวก K=หมวดสินค้า L=เวลา
+// M=Action N=Epromoter O=Remark
+function parseTikTokRow(row, disp) {
+  var first = clean(row[2]), last = clean(row[3]);
+  var phone = cleanDisplay(row[4], disp && disp[4]).replace(/[\s\u00a0\-]+/g, '');
+  return {
+    name:           (first + ' ' + last).trim(),
+    phone:          phone,
+    email:          clean(row[0]),
+    age:            '',
+    contactTime:    clean(row[11]),
+    convenientDate: cleanDisplay(row[9], disp && disp[9]),
+    paymentChannel: clean(row[5]),
+    creditBureau:   clean(row[6]),
+    province:       clean(row[8]),
+    housingType:    normalizeHousingType(clean(row[7])),
+    productType:    clean(row[10]),
     lineId:         ''
   };
 }

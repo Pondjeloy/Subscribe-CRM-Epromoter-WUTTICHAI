@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v75</title>
+<title>LG Subscribe CRM · WUTTICHAI · v76</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -534,6 +534,20 @@
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1">
               <template x-for="item in selloutColumnLegend" :key="item.col">
+                <div><span class="font-bold tabular-nums" x-text="item.col"></span> = <span x-text="item.label"></span></div>
+              </template>
+            </div>
+          </div>
+          <!-- TikTok column legend -->
+          <div x-show="isTiktokFilterActive() && showTiktokLegend"
+            class="mt-3 rounded-xl bg-slate-50 ring-1 ring-slate-200/80 px-4 py-3 text-[12px] text-slate-800 leading-relaxed">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="font-bold text-[11px] uppercase tracking-[.1em] text-slate-600">โครงสร้างชีต TikTok</div>
+              <button type="button" @click="showTiktokLegend=false"
+                class="text-[11px] font-semibold text-slate-600 hover:underline shrink-0">ซ่อนคำอธิบาย</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-1">
+              <template x-for="item in tiktokColumnLegend" :key="'tt-'+item.col">
                 <div><span class="font-bold tabular-nums" x-text="item.col"></span> = <span x-text="item.label"></span></div>
               </template>
             </div>
@@ -1257,19 +1271,23 @@
               <div class="text-[13px] text-slate-800 font-medium break-all" x-text="selectedCustomer.policyName"></div>
             </div>
             <div x-show="selectedCustomer.paymentChannel">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300">(A)</span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300" x-show="payColMark(selectedCustomer.source)" x-text="payColMark(selectedCustomer.source)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
             </div>
-            <div x-show="isMetaSource(selectedCustomer.source) && housingLabel(selectedCustomer.housingType)">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ที่อยู่ <span class="normal-case font-semibold text-slate-300">(D)</span></div>
+            <div x-show="isTiktokSource(selectedCustomer.source) && selectedCustomer.creditBureau">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">เคยติดบูโร <span class="normal-case font-semibold text-slate-300">(G)</span></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.creditBureau"></div>
+            </div>
+            <div x-show="showsLeadDetail(selectedCustomer.source) && housingLabel(selectedCustomer.housingType)">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ที่อยู่ <span class="normal-case font-semibold text-slate-300" x-show="housingColMark(selectedCustomer.source)" x-text="housingColMark(selectedCustomer.source)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium leading-snug" x-text="housingLabel(selectedCustomer.housingType)"></div>
             </div>
-            <div x-show="isMetaSource(selectedCustomer.source) && selectedCustomer.convenientDate">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300">(F)</span></div>
+            <div x-show="showsLeadDetail(selectedCustomer.source) && selectedCustomer.convenientDate">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300" x-show="dateColMark(selectedCustomer.source)" x-text="dateColMark(selectedCustomer.source)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.convenientDate"></div>
             </div>
-            <div x-show="isMetaSource(selectedCustomer.source) && selectedCustomer.contactTime">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300">(G)</span></div>
+            <div x-show="showsLeadDetail(selectedCustomer.source) && selectedCustomer.contactTime">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300" x-show="timeColMark(selectedCustomer.source)" x-text="timeColMark(selectedCustomer.source)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.contactTime"></div>
             </div>
           </div>
@@ -1355,9 +1373,9 @@
 </div>
 
 <script>
-const CRM_BUILD       = '13 ก.ย. 69 v75 · ถอดระบบลงยอดขาย';
-const CACHE_SCHEMA    = 'v23';
-const NOTE_DATE_ONLY  = true;
+const CRM_BUILD       = '23 ก.ย. 69 v76 · เพิ่มหลีด TikTok';
+const CACHE_SCHEMA    = 'v24';
+const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
@@ -1393,10 +1411,16 @@ const SOURCE_ALIASES    = {
   'Sell out Wuttichai P': 'Sell out Wuttichai.P',
   'Sellout Wuttichai.P': 'Sell out Wuttichai.P',
   'Sell out POND': 'Sell out Wuttichai.P',
+  'Tiktok': 'TikTok',
+  'TIKTOK': 'TikTok',
+  'Lead TikTok': 'TikTok',
+  'Lead Subscribe TikTok': 'TikTok',
+  'หลีด TikTok': 'TikTok',
 };
 function normalizeSource(src) {
   if (!src) return '';
   if (SOURCE_ALIASES[src]) return SOURCE_ALIASES[src];
+  if (/tiktok/i.test(src)) return 'TikTok';
   if (/meta\s*de[ns]su\s*(sep|september|ก\.?\s*ย)/i.test(src)) return 'Meta Densu Sep';
   if (/meta\s*de[ns]su\s*(aug|august|july|ส\.?\s*ค|ก\.?\s*ค)/i.test(src)) return 'Meta Densu Sep';
   // fuzzy: ชื่อแท็บที่มี POP UP / Braner / Bannar
@@ -1586,6 +1610,22 @@ function app() {
     ],
 
     showMetaLegend: false,
+    showTiktokLegend: false,
+    tiktokColumnLegend: [
+      {col:'A', label:'Email'},
+      {col:'C+D', label:'ชื่อ นามสกุล'},
+      {col:'E', label:'Phone'},
+      {col:'F', label:'ช่องทางชำระรายเดือน'},
+      {col:'G', label:'เคยติดเครดิตบูโรหรือไม่'},
+      {col:'H', label:'ประเภทที่พักอาศัย'},
+      {col:'I', label:'พื้นที่ที่อยู่อาศัย'},
+      {col:'J', label:'วันที่สะดวกให้ติดต่อ'},
+      {col:'K', label:'หมวดสินค้าที่สนใจ'},
+      {col:'L', label:'เวลาที่สะดวกให้ติดต่อ'},
+      {col:'M', label:'Action'},
+      {col:'N', label:'Epromoter'},
+      {col:'O', label:'Remark'},
+    ],
     metaColumnLegend: [
       {col:'A', label:'ช่องทางการชำระเงิน'},
       {col:'C', label:'จังหวัด'},
@@ -1633,6 +1673,8 @@ function app() {
         columnHelp:'ชีต legacy มิ.ย. · M=สถานะ · F=ชื่อ · I=เบอร์'},
       {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', icon:'itax', accent:'#0284C7', tint:'#e8f4fc',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
+      {key:'TikTok',                      short:'TikTok', label:'TikTok', toneClass:'tone-slate', barClass:'bg-slate-800', icon:'tiktok', accent:'#111111', tint:'#f4f4f5',
+        columnHelp:'A=Email · C+D=ชื่อ · E=เบอร์ · F=ชำระ · G=บูโร · H=ที่พัก · I=พื้นที่ · J=วันสะดวก · K=สินค้า · L=เวลา · M=Action · N=Epromoter'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', icon:'web', accent:'#C8102E', tint:'#fdecee'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', icon:'success', accent:'#047857', tint:'#e8f6f0'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', icon:'consult', accent:'#C2410C', tint:'#fff3ea'},
@@ -2010,8 +2052,8 @@ function app() {
       else if (id==='hl') this.filterHL=null;
       this.page=1;
     },
-    toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.page=1; },
-    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.filterHousing=''; this.activeQuickView=''; this.showMetaLegend=false; this.page=1; },
+    toggleSource(key)      { this._frozenRows=null; this._resetQuickView(); this.filterSource = this.filterSource===key ? '' : key; this.showMetaLegend = this.isMetaFilterActive(); this.showTiktokLegend = this.isTiktokFilterActive(); this.page=1; },
+    clearFilters()         { this._frozenRows=null; this.search=''; this.filterSource=''; this.filterStatus=''; this.filterStatusGroup=null; this.filterPayment=''; this.filterActivity=''; this.filterHL=null; this.filterConvenientDate=''; this.filterContactTime=''; this.filterHousing=''; this.activeQuickView=''; this.showMetaLegend=false; this.showTiktokLegend=false; this.page=1; },
     setFilterRailTab(id) {
       this.filterRailTab = id;
       try { localStorage.setItem('lgCrmRailTab', id); } catch (e) {}
@@ -2234,6 +2276,35 @@ function app() {
       const s = normalizeSource(src);
       return s === 'Meta Densu Sep' || s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
     },
+    isTiktokSource(src) {
+      return normalizeSource(src) === 'TikTok';
+    },
+    isTiktokFilterActive() {
+      return this.filterSource === 'TikTok';
+    },
+    showsLeadDetail(src) {
+      return this.isMetaSource(src) || this.isTiktokSource(src);
+    },
+    payColMark(src) {
+      if (this.isMetaSource(src)) return '(A)';
+      if (this.isTiktokSource(src)) return '(F)';
+      return '';
+    },
+    housingColMark(src) {
+      if (this.isMetaSource(src)) return '(D)';
+      if (this.isTiktokSource(src)) return '(H)';
+      return '';
+    },
+    dateColMark(src) {
+      if (this.isMetaSource(src)) return '(F)';
+      if (this.isTiktokSource(src)) return '(J)';
+      return '';
+    },
+    timeColMark(src) {
+      if (this.isMetaSource(src)) return '(G)';
+      if (this.isTiktokSource(src)) return '(L)';
+      return '';
+    },
     isMetaFilterActive() {
       return this.filterSource === 'Meta Densu Sep' || this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
     },
@@ -2272,6 +2343,7 @@ function app() {
         consult: `<svg viewBox="0 0 24 24" ${stroke}><path d="M5 5h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M18 10h1a2 2 0 0 1 2 2v5h-1l-3 2v-2h-2"/></svg>`,
         popup:   `<svg viewBox="0 0 24 24" ${stroke}><path d="M4 11v2a1 1 0 0 0 1 1h1v6h4v-4h4v4h4v-6h1a1 1 0 0 0 1-1v-2"/><path d="M3 11l9-8 9 8"/></svg>`,
         sellout: `<svg viewBox="0 0 24 24" ${stroke}><path d="M9 12l2 2 4-4"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`,
+        tiktok:  `<svg viewBox="0 0 24 24" ${stroke}><path d="M9 17.5a2.5 2.5 0 1 1-2-2.45V8.2h2.6c.3 1.9 1.5 3.2 3.4 3.6v2.1a5.2 5.2 0 0 1-2.2-.7v4.3z"/></svg>`,
       };
       return icons[icon] || icons.web;
     },
