@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>LG Subscribe CRM · WUTTICHAI · v76</title>
+<title>LG Subscribe CRM · WUTTICHAI · v77</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -1038,7 +1038,7 @@
                             <span x-show="c.convenientDate || c.contactTime" class="whitespace-nowrap">
                               <span x-show="c.convenientDate" x-text="fmtFilterDate(c.convenientDate)"></span>
                               <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
-                              <span x-show="c.contactTime" x-text="c.contactTime"></span>
+                              <span x-show="c.contactTime" x-text="contactTimeKey(c.contactTime)"></span>
                             </span>
                             <span x-show="c.installDate" class="whitespace-nowrap" x-text="'ติดตั้ง '+c.installDate"></span>
                           </div>
@@ -1109,7 +1109,7 @@
               <div x-show="c.convenientDate || c.contactTime || c.installDate" class="text-[11px] text-slate-400 mb-1">
                 <span x-show="c.convenientDate" x-text="'📅 '+fmtFilterDate(c.convenientDate)"></span>
                 <span x-show="c.convenientDate && c.contactTime" class="text-slate-300"> · </span>
-                <span x-show="c.contactTime" x-text="'🕐 '+c.contactTime"></span>
+                <span x-show="c.contactTime" x-text="'🕐 '+contactTimeKey(c.contactTime)"></span>
                 <span x-show="c.installDate" x-text="(c.convenientDate||c.contactTime?' · ':'')+'ติดตั้ง '+c.installDate"></span>
               </div>
               <div x-show="c.parsedNotes.length>0" class="flex items-baseline gap-2 pt-1.5 border-t border-slate-100 mt-1.5">
@@ -1288,7 +1288,7 @@
             </div>
             <div x-show="showsLeadDetail(selectedCustomer.source) && selectedCustomer.contactTime">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300" x-show="timeColMark(selectedCustomer.source)" x-text="timeColMark(selectedCustomer.source)"></span></div>
-              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.contactTime"></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="contactTimeKey(selectedCustomer.contactTime)"></div>
             </div>
           </div>
 
@@ -1373,7 +1373,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '23 ก.ย. 69 v76 · เพิ่มหลีด TikTok';
+const CRM_BUILD       = '23 ก.ย. 69 v77 · รวมช่วงเวลา';
 const CACHE_SCHEMA    = 'v24';
 const NOTE_DATE_ONLY  = false;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1887,7 +1887,7 @@ function app() {
       if (this.filterPayment)  list = list.filter(c => this._matchPayment(c.paymentChannel, this.filterPayment));
       if (this.filterActivity) list = list.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, this.filterActivity)));
       if (this.filterConvenientDate) list = list.filter(c => this._normField(c.convenientDate) === this.filterConvenientDate);
-      if (this.filterContactTime) list = list.filter(c => this._normField(c.contactTime) === this.filterContactTime);
+      if (this.filterContactTime) list = list.filter(c => this.contactTimeKey(c.contactTime) === this.filterContactTime);
       if (this.filterHousing) list = list.filter(c => this.housingLabel(c.housingType) === this.filterHousing);
       if (this.filterHL === 'ranked') list = list.filter(c => this.getHL(c) > 0);
       else if (this.filterHL !== null) list = list.filter(c => this.getHL(c) === this.filterHL);
@@ -1930,7 +1930,7 @@ function app() {
     get contactTimeOptions() {
       const counts = {};
       for (const c of this.customers) {
-        const v = this._normField(c.contactTime);
+        const v = this.contactTimeKey(c.contactTime);
         if (v) counts[v] = (counts[v] || 0) + 1;
       }
       return Object.entries(counts)
@@ -2078,6 +2078,12 @@ function app() {
     setSearch(val)         { this._frozenRows=null; this._resetQuickView(); this.search=val; this.page=1; },
     _normField(v) {
       return String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+    },
+    contactTimeKey(v) {
+      let t = String(v == null ? '' : v).replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!t) return '';
+      t = t.replace(/\s*[-–—]\s*/g, ' - ').replace(/\s*น\.?\s*$/g, '').replace(/\s+/g, ' ').trim();
+      return t;
     },
     _dateSortKey(s) {
       const t = this._normField(s);
