@@ -146,10 +146,6 @@
     .filter-rail-panel .filter-chip { width:auto; }
   }
 
-  /* ── Work summary ── */
-  .summary-rank-bar { height:6px; border-radius:9999px; background:#f1f5f9; overflow:hidden; }
-  .summary-rank-fill { height:100%; border-radius:9999px; background:var(--accent); transition:width .35s ease; }
-
   /* ── Source channel cards (corporate tiles, no photos) ── */
   .source-card {
     position: relative;
@@ -587,9 +583,9 @@
     <div x-show="!loading || customers.length">
 
 
-<div class="workspace-top">
-<div class="workspace-heading"><div><h1>รายชื่อลูกค้า</h1><p>จัดการการติดต่อ ติดตามงาน และดูข้อมูลลูกค้าในที่เดียว</p></div></div>
-<section class="workspace-sources" aria-label="การ์ดแหล่งที่มาของหลีด"><h2 class="workspace-sources-title">แหล่งที่มาของหลีด</h2>
+    <div class="workspace-top">
+      <div class="workspace-heading"><div><h1>รายชื่อลูกค้า</h1><p>จัดการการติดต่อ ติดตามงาน และดูข้อมูลลูกค้าในที่เดียว</p></div></div>
+      <section class="workspace-sources" aria-label="การ์ดแหล่งที่มาของหลีด"><h2 class="workspace-sources-title">แหล่งที่มาของหลีด</h2>
       <!-- ── Metrics ── -->
       <section class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
         <!-- Total card -->
@@ -640,14 +636,10 @@
               </button>
             </template>
           </div>
-          
-          
-          
         </div>
       </section>
-
-</section>
-</div>
+      </section>
+    </div>
 
       <!-- Quick Views -->
       <section class="workspace-quick rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
@@ -1372,7 +1364,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '29.09.2026.V92';
+const CRM_BUILD       = '29.09.2026.V93';
 const CACHE_SCHEMA    = 'v24';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1492,8 +1484,6 @@ function app() {
     testMode: false,
     customers: [], loading: false, softLoading: false, loadErr: null, lastFetch: '',
     sourceCounts: null, sheetsFound: null, rawCount: null,
-    workSummary: {totalClosed: 0, sources: [], products: [], payments: []},
-    showWorkSummary: false,
 
     /* ── Filters ── */
     search: '', filterSource: '', filterStatus: '', filterStatusGroup: null, filterPayment: '', filterActivity: '', filterHL: null,
@@ -1713,7 +1703,6 @@ function app() {
     },
     logout() {
       this.isLoggedIn = false; this.showDrawer = false; this.customers = [];
-      this.workSummary = {totalClosed: 0, sources: [], products: [], payments: []};
       localStorage.removeItem(LOGIN_SESSION_KEY);
     },
 
@@ -1748,7 +1737,6 @@ function app() {
       this.rawCount = rawCount != null ? rawCount : this.customers.length;
       this._frozenRows = null;
       this.lastFetch = label;
-      this.refreshWorkSummary();
     },
     _readCache(ignoreTtl) {
       try {
@@ -2201,66 +2189,6 @@ function app() {
     countByActivity(key)   { return this.customers.filter(c => c.parsedNotes.some(n => this._matchActivity(n.text, key))).length; },
     countByHL(val)         { return this.customers.filter(c => this.getHL(c) === val).length; },
     countByHLRanked()      { return this.customers.filter(c => this.getHL(c) > 0).length; },
-    _isClosedSale(c)       { return !!c && c.status === 'Purchased'; },
-    _buildRankRows(rows, total, limit) {
-      limit = limit || 5;
-      if (!rows.length) return [];
-      const top = Math.max(...rows.map(r => r.count), 1);
-      return rows.slice(0, limit).map(r => ({
-        ...r,
-        barPct: Math.round(r.count / top * 100),
-        pct: total ? Math.round(r.count / total * 100) : 0,
-      }));
-    },
-    refreshWorkSummary() {
-      const empty = {totalClosed: 0, sources: [], products: [], payments: []};
-      try {
-        const closed = this.customers.filter(c => this._isClosedSale(c));
-        const totalClosed = closed.length;
-
-        const srcMap = new Map();
-        for (const c of this.customers) {
-          const key = normalizeSource(c.source);
-          if (!key) continue;
-          if (!srcMap.has(key)) srcMap.set(key, {key, label: this.srcLabel(key), total: 0, count: 0});
-          const row = srcMap.get(key);
-          row.total++;
-          if (this._isClosedSale(c)) row.count++;
-        }
-        const sources = this._buildRankRows(
-          [...srcMap.values()].filter(r => r.count > 0).sort((a, b) => b.count - a.count || b.total - a.total)
-            .map(r => ({...r, rate: r.total ? Math.round(r.count / r.total * 100) : 0})),
-          totalClosed
-        );
-
-        const prodMap = new Map();
-        for (const c of closed) {
-          const key = String(c.productType || '').trim() || 'อื่นๆ';
-          prodMap.set(key, (prodMap.get(key) || 0) + 1);
-        }
-        const products = this._buildRankRows(
-          [...prodMap.entries()].map(([key, count]) => ({key, label: key, count})).sort((a, b) => b.count - a.count),
-          totalClosed
-        );
-
-        const payMap = new Map();
-        for (const c of closed) {
-          const raw = String(c.paymentChannel || '').trim();
-          const key = raw || '__unset__';
-          const label = raw || 'ไม่ระบุ';
-          if (!payMap.has(key)) payMap.set(key, {key, label, count: 0});
-          payMap.get(key).count++;
-        }
-        const payments = this._buildRankRows(
-          [...payMap.values()].sort((a, b) => b.count - a.count),
-          totalClosed
-        );
-
-        this.workSummary = {totalClosed, sources, products, payments};
-      } catch (e) {
-        this.workSummary = empty;
-      }
-    },
     _paymentType(channel) {
       const v = String(channel || '').toLowerCase().trim();
       if (!v) return '';
@@ -2477,7 +2405,6 @@ function app() {
       const idx = this.customers.findIndex(c => c.id===this.selectedCustomer.id);
       if (idx >= 0) this.customers[idx].status = ns;
       this._persistCache();
-      this.refreshWorkSummary();
       this._bumpCustomerList(this.selectedCustomer.id);
       this.pendingStatus = '';
 
