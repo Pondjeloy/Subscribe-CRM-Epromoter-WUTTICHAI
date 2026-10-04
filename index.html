@@ -550,7 +550,7 @@
 
     <!-- Test mode banner -->
     <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
-      <b>🧪 CRM v95</b> — ชีตตุลาคม · Meta Densu Oct + Meta เก่า + Meta ITAX
+      <b>🧪 CRM v96</b> — Meta ต.ค. คอลัมน์ใหม่ · ชื่ออยู่ A · เบอร์อยู่ C
       <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
         รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
         <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
@@ -1042,6 +1042,7 @@
                               <span x-show="c.contactTime" x-text="contactTimeKey(c.contactTime)"></span>
                             </span>
                             <span x-show="c.installDate" class="whitespace-nowrap" x-text="'ติดตั้ง '+c.installDate"></span>
+                            <span x-show="c.registeredAt" class="whitespace-nowrap" x-text="'ลงทะเบียน '+c.registeredAt"></span>
                           </div>
                         </div>
                       </div>
@@ -1244,7 +1245,7 @@
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.lineId"></div>
             </div>
             <div x-show="selectedCustomer.productType">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า <span x-show="isMetaSource(selectedCustomer.source)" class="normal-case font-semibold text-slate-300">(E)</span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า <span class="normal-case font-semibold text-slate-300" x-show="productColMark(selectedCustomer)" x-text="productColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.productType"></div>
             </div>
             <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.orderNo">
@@ -1272,24 +1273,28 @@
               <div class="text-[13px] text-slate-800 font-medium break-all" x-text="selectedCustomer.policyName"></div>
             </div>
             <div x-show="selectedCustomer.paymentChannel">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300" x-show="payColMark(selectedCustomer.source)" x-text="payColMark(selectedCustomer.source)"></span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ชำระเงิน <span class="normal-case font-semibold text-slate-300" x-show="payColMark(selectedCustomer)" x-text="payColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.paymentChannel"></div>
             </div>
-            <div x-show="isTiktokSource(selectedCustomer.source) && selectedCustomer.creditBureau">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">เคยติดบูโร <span class="normal-case font-semibold text-slate-300">(G)</span></div>
-              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.creditBureau"></div>
+            <div x-show="bureauLabel(selectedCustomer.creditBureau)">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">เคยติดบูโร <span class="normal-case font-semibold text-slate-300" x-show="bureauColMark(selectedCustomer)" x-text="bureauColMark(selectedCustomer)"></span></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="bureauLabel(selectedCustomer.creditBureau)"></div>
             </div>
             <div x-show="showsLeadDetail(selectedCustomer.source) && housingLabel(selectedCustomer.housingType)">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ที่อยู่ <span class="normal-case font-semibold text-slate-300" x-show="housingColMark(selectedCustomer.source)" x-text="housingColMark(selectedCustomer.source)"></span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ที่อยู่ <span class="normal-case font-semibold text-slate-300" x-show="housingColMark(selectedCustomer)" x-text="housingColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium leading-snug" x-text="housingLabel(selectedCustomer.housingType)"></div>
             </div>
             <div x-show="showsLeadDetail(selectedCustomer.source) && selectedCustomer.convenientDate">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300" x-show="dateColMark(selectedCustomer.source)" x-text="dateColMark(selectedCustomer.source)"></span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่สะดวก <span class="normal-case font-semibold text-slate-300" x-show="dateColMark(selectedCustomer)" x-text="dateColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.convenientDate"></div>
             </div>
             <div x-show="showsLeadDetail(selectedCustomer.source) && selectedCustomer.contactTime">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300" x-show="timeColMark(selectedCustomer.source)" x-text="timeColMark(selectedCustomer.source)"></span></div>
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">ช่วงเวลาติดต่อ <span class="normal-case font-semibold text-slate-300" x-show="timeColMark(selectedCustomer)" x-text="timeColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="contactTimeKey(selectedCustomer.contactTime)"></div>
+            </div>
+            <div x-show="selectedCustomer.registeredAt" class="col-span-2">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่ลงทะเบียน <span class="normal-case font-semibold text-slate-300">(K)</span></div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.registeredAt"></div>
             </div>
           </div>
 
@@ -1374,8 +1379,8 @@
 </div>
 
 <script>
-const CRM_BUILD       = '02.10.2026.V95';
-const CACHE_SCHEMA    = 'v25';
+const CRM_BUILD       = '04.10.2026.V96';
+const CACHE_SCHEMA    = 'v26';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
@@ -1618,18 +1623,29 @@ function app() {
     showTiktokLegend: false,
     tiktokColumnLegend: [
       {col:'A', label:'Email'},
-      {col:'C+D', label:'ชื่อ นามสกุล'},
-      {col:'E', label:'Phone'},
-      {col:'F', label:'ช่องทางชำระรายเดือน'},
-      {col:'G', label:'เคยติดเครดิตบูโรหรือไม่'},
-      {col:'H', label:'ประเภทที่พักอาศัย'},
-      {col:'I', label:'พื้นที่ที่อยู่อาศัย'},
-      {col:'J', label:'วันที่สะดวกให้ติดต่อ'},
-      {col:'K', label:'หมวดสินค้าที่สนใจ'},
-      {col:'L', label:'เวลาที่สะดวกให้ติดต่อ'},
+      {col:'B+C', label:'ชื่อ นามสกุล (ฟอร์มใหม่)'},
+      {col:'D', label:'Phone (ฟอร์มใหม่)'},
+      {col:'C+D', label:'ชื่อ นามสกุล (ฟอร์มเก่า)'},
+      {col:'E', label:'Phone (ฟอร์มเก่า · B=Final page)'},
       {col:'M', label:'Action'},
       {col:'N', label:'Epromoter'},
       {col:'O', label:'Remark'},
+    ],
+    metaOctColumnLegend: [
+      {col:'A', label:'ชื่อ นามสกุล'},
+      {col:'B', label:'Email'},
+      {col:'C', label:'เบอร์โทร'},
+      {col:'D', label:'เคยติดบูโร'},
+      {col:'E', label:'ที่อยู่'},
+      {col:'F', label:'ชำระเงิน'},
+      {col:'G', label:'จังหวัด'},
+      {col:'H', label:'วันที่สะดวก'},
+      {col:'I', label:'เวลาที่สะดวก'},
+      {col:'J', label:'สินค้า'},
+      {col:'K', label:'วันที่เวลาที่ลงทะเบียน'},
+      {col:'N', label:'Status'},
+      {col:'O', label:'Epromoter'},
+      {col:'P', label:'บันทึกกิจกรรม / หมายเหตุ'},
     ],
     metaColumnLegend: [
       {col:'A', label:'ช่องทางการชำระเงิน'},
@@ -1673,7 +1689,7 @@ function app() {
 
     sourceDefs: [
       {key:'Meta Densu Oct',              short:'Meta ต.ค.', label:'Meta Densu Oct', toneClass:'tone-violet', barClass:'bg-violet-400', icon:'meta', accent:'#5B5FC7', tint:'#eef0ff',
-        columnHelp:'A=ชำระ · B=บูโร · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ · O=Epromoter'},
+        columnHelp:'ตั้งแต่ 2 ต.ค.: A=ชื่อ · B=Email · C=เบอร์ · E=ที่อยู่ · F=ชำระ · G=จังหวัด · H=วัน · I=เวลา · J=สินค้า · K=วันลงทะเบียน · N=สถานะ · O=Epromoter · P=หมายเหตุ'},
       {key:'Meta Densu Sep',              short:'Meta ก.ย.', label:'Meta Densu Sep', toneClass:'tone-violet', barClass:'bg-violet-300', icon:'meta', accent:'#7C83D6', tint:'#f4f5ff',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=ช่วงเวลา · H=ชื่อ · J=เบอร์ · N=สถานะ'},
       {key:'Meta Densu',                  short:'Meta เก่า', label:'Meta Densu (เก่า)', toneClass:'tone-fuchsia', barClass:'bg-fuchsia-400', icon:'meta', accent:'#A21CAF', tint:'#faf0ff',
@@ -1681,7 +1697,7 @@ function app() {
       {key:'Meta ITAX',                   short:'Meta ITAX', label:'Meta ITAX', toneClass:'tone-sky', barClass:'bg-sky-400', icon:'itax', accent:'#0284C7', tint:'#e8f4fc',
         columnHelp:'A=ชำระ · C=จังหวัด · D=ที่อยู่(บ้านเดี่ยว/คอนโด) · E=สินค้า · F=วันที่ · G=เวลาติดต่อ · H=ชื่อ · I=อายุ · J=เบอร์ · K=Email · N=สถานะ · O=Epromoter'},
       {key:'TikTok',                      short:'TikTok', label:'TikTok', toneClass:'tone-slate', barClass:'bg-slate-800', icon:'tiktok', accent:'#111111', tint:'#f4f4f5',
-        columnHelp:'A=Email · C+D=ชื่อ · E=เบอร์ · F=ชำระ · G=บูโร · H=ที่พัก · I=พื้นที่ · J=วันสะดวก · K=สินค้า · L=เวลา · M=Action · N=Epromoter'},
+        columnHelp:'ฟอร์มใหม่: B+C=ชื่อ · D=เบอร์ · E=บูโร · F=ที่พัก · G=ชำระ · H=พื้นที่ · I=วัน · J=เวลา · K=สินค้า · ฟอร์มเก่า (B=Final page): C+D=ชื่อ · E=เบอร์ · M=Action · N=Epromoter'},
       {key:'Lead Subscribe Lg.com',        short:'LG.com',  label:'Subscribe LG',  toneClass:'tone-indigo', barClass:'bg-indigo-400', icon:'web', accent:'#C8102E', tint:'#fdecee'},
       {key:'Lead LG Success',              short:'Success', label:'LG Success',    toneClass:'tone-emerald',barClass:'bg-emerald-500', icon:'success', accent:'#047857', tint:'#e8f6f0'},
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', icon:'consult', accent:'#C2410C', tint:'#fff3ea'},
@@ -2253,25 +2269,58 @@ function app() {
     showsLeadDetail(src) {
       return this.isMetaSource(src) || this.isTiktokSource(src);
     },
+    leadSourceOf(src) {
+      return (src && src.source) ? src.source : (src || '');
+    },
+    isOctNewMeta(src) {
+      return !!(src && src.metaLayout === 'oct-new');
+    },
     payColMark(src) {
-      if (this.isMetaSource(src)) return '(A)';
-      if (this.isTiktokSource(src)) return '(F)';
+      if (this.isOctNewMeta(src)) return '(F)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(A)';
+      if (this.isTiktokSource(s)) return '(F)';
       return '';
     },
     housingColMark(src) {
-      if (this.isMetaSource(src)) return '(D)';
-      if (this.isTiktokSource(src)) return '(H)';
+      if (this.isOctNewMeta(src)) return '(E)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(D)';
+      if (this.isTiktokSource(s)) return '(H)';
       return '';
     },
     dateColMark(src) {
-      if (this.isMetaSource(src)) return '(F)';
-      if (this.isTiktokSource(src)) return '(J)';
+      if (this.isOctNewMeta(src)) return '(H)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(F)';
+      if (this.isTiktokSource(s)) return '(J)';
       return '';
     },
     timeColMark(src) {
-      if (this.isMetaSource(src)) return '(G)';
-      if (this.isTiktokSource(src)) return '(L)';
+      if (this.isOctNewMeta(src)) return '(I)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(G)';
+      if (this.isTiktokSource(s)) return '(L)';
       return '';
+    },
+    productColMark(src) {
+      if (this.isOctNewMeta(src)) return '(J)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(E)';
+      if (this.isTiktokSource(s)) return '(K)';
+      return '';
+    },
+    bureauColMark(src) {
+      if (this.isOctNewMeta(src)) return '(D)';
+      const s = this.leadSourceOf(src);
+      if (this.isMetaSource(s)) return '(B)';
+      if (this.isTiktokSource(s)) return '(G)';
+      return '';
+    },
+    bureauLabel(v) {
+      const s = String(v == null ? '' : v).trim();
+      if (!s || s === 'ไม่ระบุ' || s === '-' || /^true$/i.test(s)) return '';
+      return s;
     },
     isMetaFilterActive() {
       return this.filterSource === 'Meta Densu Oct' || this.filterSource === 'Meta Densu Sep' || this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
@@ -2285,7 +2334,9 @@ function app() {
       return 'โครงสร้างชีต Meta Densu Oct';
     },
     get activeMetaColumnLegend() {
-      return this.filterSource === 'Meta Densu' ? this.metaLegacyColumnLegend : this.metaColumnLegend;
+      if (this.filterSource === 'Meta Densu') return this.metaLegacyColumnLegend;
+      if (this.filterSource === 'Meta Densu Oct' || !this.filterSource) return this.metaOctColumnLegend;
+      return this.metaColumnLegend;
     },
     customerMatchesSource(c, key) {
       if (!c || !key) return false;
