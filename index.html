@@ -662,23 +662,27 @@
       </section>
     </div>
 
-      <details x-show="callReportEnabled" class="bg-white border border-slate-200 rounded-2xl p-5">
-        <summary class="cursor-pointer font-bold text-[var(--accent)]">สรุปผลการติดต่อลูกค้า · POND / WUTTICHAI</summary>
+      <details x-show="callReportEnabled" @toggle="if($el.open && !teamReportLoaded) loadTeamReport()" class="bg-white border border-slate-200 rounded-2xl p-5">
+        <summary class="cursor-pointer font-bold text-[var(--accent)]">สรุปผลการติดต่อลูกค้า · Epromoter ทุกคน</summary>
         <div class="mt-4 space-y-4">
           <div class="flex flex-wrap items-center gap-3">
             <label>แหล่งลีด <select aria-label="แหล่งลีดสำหรับรายงาน" x-model="callReportSource" class="border rounded-lg p-2">
               <option value="">ทุกแหล่งลีด (ไม่รวม Sell out)</option>
-              <template x-for="sd in sourceSummary.filter(s=>!isSelloutSource(s.key))" :key="sd.key"><option :value="sd.key" x-text="sd.short"></option></template>
+              <template x-for="sd in teamReportSources" :key="sd.key"><option :value="sd.key" x-text="sd.short"></option></template>
             </select></label>
-            <button type="button" @click="copyCallReport()" class="border rounded-lg px-3 py-2">คัดลอกสรุป</button>
+            <button type="button" @click="loadTeamReport()" :disabled="teamReportLoading" class="border rounded-lg px-3 py-2" x-text="teamReportLoading ? 'กำลังโหลด '+teamReportProgress+'/'+teamReportPromoters.length : 'โหลดข้อมูลทุกคนใหม่'"></button>
+            <button type="button" :disabled="!teamReportLoaded || teamReportLoading" @click="copyCallReport()" class="border rounded-lg px-3 py-2">คัดลอกสรุป</button>
             <span role="status" class="text-sm" x-text="callReportMessage"></span>
           </div>
-          <p class="text-sm text-slate-500">นับรายชื่อที่โหลดอยู่จากแหล่งที่เลือก ใช้บันทึกล่าสุด รายละ 1 เหตุผล ไม่รวมประวัติทุกครั้งที่โทร และไม่อิงตัวกรองตารางรายชื่อด้านล่าง</p>
+          <p class="text-sm text-slate-500">รวมข้อมูลจาก Epromoter ทุกคนตามรายชื่อทีมที่ตั้งค่าไว้ ใช้บันทึกล่าสุด รายละ 1 เหตุผล ตัดแถวซ้ำ POND/WUTTICHAI และไม่รวม Sell out ตารางลูกค้าด้านล่างยังเป็นรายชื่อส่วนตัว</p>
+          <p role="status" class="text-sm text-slate-600" x-text="teamReportError || (teamReportLoading ? 'กำลังโหลดข้อมูลทั้งทีม กรุณารอสักครู่' : teamReportLoaded ? 'ข้อมูลครบ '+teamReportPromoters.length+' ชื่อ · '+teamReportUpdated : 'เปิดรายงานเพื่อโหลดข้อมูลทุกคน')"></p>
+          <div x-show="teamReportLoaded && !teamReportLoading">
           <table class="w-full text-sm"><thead class="bg-amber-50"><tr><th class="p-2 text-left">เหตุผล (Reason)</th><th class="p-2 text-right">จำนวนคน</th></tr></thead>
             <tbody><template x-for="r in callReport.rows" :key="r.key"><tr class="border-b border-slate-100"><td class="p-2" x-text="r.label"></td><td class="p-2 text-right tabular-nums" x-text="r.count.toLocaleString('th-TH')"></td></tr></template></tbody>
             <tfoot class="bg-amber-50 font-bold"><tr><td class="p-2">รวม 9 เหตุผล</td><td class="p-2 text-right" x-text="callReport.classified.toLocaleString('th-TH')"></td></tr></tfoot>
           </table>
           <p class="text-sm text-slate-600">ไม่มีบันทึก: <b x-text="callReport.empty"></b> คน · บันทึกอื่น / ต้องตรวจสอบ: <b x-text="callReport.other"></b> คน · รายชื่อทั้งหมดในขอบเขตนี้: <b x-text="callReport.total"></b> คน</p>
+          </div>
           <details class="text-sm text-slate-600"><summary class="cursor-pointer">คำอธิบายการจัดกลุ่ม</summary><ol class="list-decimal pl-5 mt-2 space-y-2"><template x-for="r in callReportReasons" :key="r.key"><li><strong x-text="r.label"></strong><span x-text="' : '+r.help"></span></li></template></ol><p class="mt-2">จัดกลุ่มอัตโนมัติจากคำในบันทึกล่าสุด ควรตรวจทานก่อนส่งรายงาน หากบันทึกเดียวเข้าได้หลายเหตุผล จะอยู่ใน “บันทึกอื่น / ต้องตรวจสอบ”</p></details>
         </div>
       </details>
@@ -1390,7 +1394,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '30.10.2026.V107';
+const CRM_BUILD       = '30.10.2026.V108';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1946,6 +1950,38 @@ function app() {
     },
 
     callReportEnabled: ['POND','WUTTICHAI'].includes(PROMOTER),
+    teamReportPromoters: ['POND','WUTTICHAI','CHANWIT','WICHIT','SHANCHANOK','PAIRAT','TAKDANAI','NOPPARAT','NARASAK','NIWAT','SURASAK'],
+    teamReportCustomers: [], teamReportLoading: false, teamReportLoaded: false,
+    teamReportProgress: 0, teamReportError: '', teamReportUpdated: '',
+    get teamReportSources() {
+      return this.sourceDefs.filter(sd=>!this.isSelloutSource(sd.key) && (!this.teamReportLoaded || this.teamReportCustomers.some(c=>this.customerMatchesSource(c,sd.key))));
+    },
+    async loadTeamReport() {
+      if(!this.callReportEnabled || this.teamReportLoading)return;
+      if(!this.apiUrl){this.teamReportError='ยังไม่ได้ตั้งค่าการเชื่อมต่อข้อมูล';return;}
+      this.teamReportLoading=true;this.teamReportLoaded=false;this.teamReportProgress=0;this.teamReportError='';this.callReportMessage='';
+      const payloads=[],failed=[];let next=0;
+      const worker=async()=>{
+        while(next<this.teamReportPromoters.length){
+          const name=this.teamReportPromoters[next++];
+          try{
+            const response=await jsonpCall(this.apiUrl,{action:'getCustomers',promoter:name},90000);
+            if(!response?.success || !Array.isArray(response.data))throw new Error('invalid response');
+            payloads.push(response);
+          }catch(e){failed.push(name);}
+          this.teamReportProgress++;
+        }
+      };
+      try{
+        await Promise.all([worker(),worker()]);
+        if(failed.length){this.teamReportError='ข้อมูลยังไม่ครบ: '+failed.join(', ')+' — กรุณากดโหลดข้อมูลทุกคนใหม่ (ยังไม่แสดงยอดรวม)';return;}
+        const merged=mergePromoterPayloads(payloads);
+        this.teamReportCustomers=dedupeCustomersByPhone(merged.data).map(c=>({...c,parsedNotes:this._parseNotes(c.notes || '')}));
+        this.teamReportUpdated=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok'});
+        this.teamReportLoaded=true;
+      }catch(e){this.teamReportError='รวมข้อมูลไม่สำเร็จ กรุณาโหลดใหม่';}
+      finally{this.teamReportLoading=false;}
+    },
     callReportSource: 'Meta Densu Oct',
     callReportMessage: '',
     callReportReasons: [
@@ -1978,14 +2014,15 @@ function app() {
     },
     get callReport() {
       const rows=this.callReportReasons.map(r=>({...r,count:0}));
-      const list=this.customers.filter(c=>!this.isSelloutSource(c.source) && (!this.callReportSource || this.customerMatchesSource(c,this.callReportSource)));
+      const list=this.teamReportCustomers.filter(c=>!this.isSelloutSource(c.source) && (!this.callReportSource || this.customerMatchesSource(c,this.callReportSource)));
       let empty=0,other=0;
       for(const c of list){const key=this.callReportCategory(c),r=rows.find(r=>r.key===key);if(r)r.count++;else if(key==='empty')empty++;else other++;}
       return {rows,empty,other,total:list.length,classified:list.length-empty-other};
     },
     async copyCallReport() {
+      if(!this.teamReportLoaded || this.teamReportLoading)return;
       const r=this.callReport,source=this.callReportSource?this.srcShort(this.callReportSource):'ทุกแหล่งลีด (ไม่รวม Sell out)';
-      const text=['สรุปผลการติดต่อลูกค้า · '+PROMOTER,'แหล่งลีด: '+source,'อ้างอิงข้อมูลที่โหลด: '+(this.lastFetch || 'ยังไม่ได้โหลด'),...r.rows.map(x=>x.label+': '+x.count+' คน'),'รวม 9 เหตุผล: '+r.classified+' คน','ไม่มีบันทึก: '+r.empty+' คน','บันทึกอื่น / ต้องตรวจสอบ: '+r.other+' คน','รายชื่อทั้งหมด: '+r.total+' คน','หมายเหตุ: นับรายละ 1 เหตุผลจากบันทึกล่าสุด ควรตรวจทานการจัดกลุ่มก่อนส่ง'].join('\n');
+      const text=['สรุปผลการติดต่อลูกค้า · Epromoter ทุกคน','แหล่งลีด: '+source,'ข้อมูลครบ '+this.teamReportPromoters.length+' ชื่อ · '+this.teamReportUpdated,...r.rows.map(x=>x.label+': '+x.count+' คน'),'รวม 9 เหตุผล: '+r.classified+' คน','ไม่มีบันทึก: '+r.empty+' คน','บันทึกอื่น / ต้องตรวจสอบ: '+r.other+' คน','รายชื่อทั้งหมด: '+r.total+' คน','หมายเหตุ: นับรายละ 1 เหตุผลจากบันทึกล่าสุด ควรตรวจทานการจัดกลุ่มก่อนส่ง'].join('\n');
       try{await navigator.clipboard.writeText(text);this.callReportMessage='คัดลอกสรุปแล้ว';}catch(e){this.callReportMessage='คัดลอกไม่สำเร็จ โปรดลองอีกครั้ง';}
     },
 
