@@ -679,7 +679,7 @@
           <div x-show="teamReportLoaded && !teamReportLoading">
           <table class="w-full text-sm"><thead class="bg-amber-50"><tr><th class="p-2 text-left">เหตุผล (Reason)</th><th class="p-2 text-right">จำนวนคน</th></tr></thead>
             <tbody><template x-for="r in callReport.rows" :key="r.key"><tr class="border-b border-slate-100"><td class="p-2" x-text="r.label"></td><td class="p-2 text-right tabular-nums" x-text="r.count.toLocaleString('th-TH')"></td></tr></template></tbody>
-            <tfoot class="bg-amber-50 font-bold"><tr><td class="p-2">รวม 9 เหตุผล</td><td class="p-2 text-right" x-text="callReport.classified.toLocaleString('th-TH')"></td></tr></tfoot>
+            <tfoot class="bg-amber-50 font-bold"><tr><td class="p-2">รวมทุกเหตุผล</td><td class="p-2 text-right" x-text="callReport.classified.toLocaleString('th-TH')"></td></tr></tfoot>
           </table>
           <p class="text-sm text-slate-600">ไม่มีบันทึก: <b x-text="callReport.empty"></b> คน · บันทึกอื่น / ต้องตรวจสอบ: <b x-text="callReport.other"></b> คน · รายชื่อทั้งหมดในขอบเขตนี้: <b x-text="callReport.total"></b> คน</p>
           </div>
@@ -1985,32 +1985,50 @@ function app() {
     callReportSource: 'Meta Densu Oct',
     callReportMessage: '',
     callReportReasons: [
-      {key:'unreachable',label:'ติดต่อไม่ได้',help:'ปิดเครื่อง เบอร์โทรผิด เบอร์ไม่ครบ ไม่มีหมายเลขในระบบ'},
-      {key:'noanswer',label:'ลูกค้าไม่รับสาย',help:'ไม่รับสาย รับแล้วตัดสาย ตัดสายทิ้ง'},
-      {key:'bureau',label:'ติดบูโร',help:'ติดบูโร / ไม่ผ่านเครดิต ตามบันทึกการติดต่อ'},
-      {key:'ineligible',label:'ไม่เข้าเงื่อนไข/ไม่มีเอกสาร',help:'ไม่เข้าเงื่อนไขการสมัคร ไม่มีเอกสาร ไม่สะดวกยื่นเอกสาร'},
-      {key:'callback',label:'ลูกค้าให้ติดต่อกลับไปใหม่',help:'ยังไม่สะดวก ทำงาน ติดภารกิจ ติดธุระ ประชุม นัดติดต่อกลับ'},
-      {key:'declined',label:'ลูกค้าไม่สนใจแล้ว',help:'ไม่สนใจแล้ว ไม่สะดวกแบบผ่อน ไม่สนใจผ่อนระยะยาว'},
-      {key:'outright',label:'ซื้อขาดแล้ว/สนใจแบบซื้อขาด',help:'ซื้อไปแล้ว สนใจซื้อแบบปกติ สนใจซื้อขาด'},
-      {key:'undecided',label:'ลูกค้ายังไม่ตัดสินใจ',help:'ขอปรึกษาครอบครัวก่อน เปรียบเทียบ ยังไม่ตัดสินใจ'},
-      {key:'line',label:'แอดไลน์ให้ข้อมูลเพิ่มเติม',help:'เพิ่มเพื่อน LINE แอดไลน์เพื่อส่งข้อมูล คุยกันทางไลน์ส่วนตัว'}
+      {key:'unreachable',label:'ติดต่อไม่ได้',help:'ปิดเครื่อง เบอร์โทรผิด เบอร์ไม่ครบ ไม่มีหมายเลขในระบบ โทรไม่ติด'},
+      {key:'noanswer',label:'ลูกค้าไม่รับสาย',help:'ไม่รับสาย รับแล้วตัดสาย สายไม่ว่าง ฝากข้อความ'},
+      {key:'bureau',label:'ติดบูโร',help:'ติดบูโร / ติดเครดิต / ไม่ผ่านเครดิต ตามบันทึกการติดต่อ'},
+      {key:'ineligible',label:'ไม่เข้าเงื่อนไข/ไม่มีเอกสาร',help:'ไม่เข้าเงื่อนไขการสมัคร ไม่มีเอกสาร ไม่สะดวกยื่น/ส่งเอกสาร รอยื่นเอกสาร'},
+      {key:'callback',label:'ลูกค้าให้ติดต่อกลับไปใหม่',help:'ไม่สะดวกคุย/ในขณะนี้ ทำงาน ติดภารกิจ ติดธุระ ประชุม สะดวกเสาร์-อาทิตย์/ช่วงเย็น นัดติดต่อกลับ'},
+      {key:'declined',label:'ลูกค้าไม่สนใจแล้ว',help:'ไม่สนใจ / ไม่สนใจแล้ว ไม่สะดวกแบบผ่อน'},
+      {key:'outright',label:'ซื้อขาดแล้ว/สนใจแบบซื้อขาด',help:'ซื้อไปแล้ว ซื้อกับคนอื่น สนใจซื้อแบบปกติ สนใจซื้อขาด'},
+      {key:'undecided',label:'ลูกค้ายังไม่ตัดสินใจ',help:'ขอปรึกษาครอบครัว/แฟน เปรียบเทียบราคา ขอคิดก่อน ศึกษารายละเอียด'},
+      {key:'line',label:'แอดไลน์ให้ข้อมูลเพิ่มเติม',help:'เพิ่มเพื่อน LINE แอดไลน์เพื่อส่งข้อมูล add line แจ้งไลน์ OA'},
+      {key:'inquiry',label:'สอบถามข้อมูล/สนใจ รอติดต่อกลับเอง',help:'สอบถามข้อมูลเบื้องต้น สนใจ เดี๋ยวติดต่อกลับเอง หากสนใจจะติดต่อมา'},
+      {key:'done',label:'ทำรายการสำเร็จ/รอชำระเงิน',help:'ลูกค้าทำรายการเอง/ผ่านเว็บเรียบร้อย ส่ง Remote Order รอชำระเงิน'},
+      {key:'staff',label:'มีเจ้าหน้าที่/ตัวแทนติดต่อแล้ว',help:'มีเจ้าหน้าที่หรือตัวแทนคนอื่นติดต่อลูกค้าไปแล้ว'},
+      {key:'email',label:'ส่งรายละเอียดทางอีเมล',help:'ส่งรายละเอียดสินค้า/เงื่อนไขทางอีเมลให้ลูกค้า'},
+      {key:'dup',label:'ลีดซ้ำ',help:'ลีดซ้ำ / รายชื่อซ้ำกับ Epromoter คนอื่นหรือรอบก่อน'},
+      {key:'wrong',label:'ไม่ใช่ผู้ลงทะเบียน',help:'ลูกค้าแจ้งว่าไม่ได้ลงทะเบียนไว้'},
+      {key:'closed',label:'ปิดงานนัดหมาย (ไม่ระบุผล)',help:'บันทึกปิดงานนัดหมายอย่างเดียว ไม่ได้ระบุผลการติดต่อ'}
     ],
     callReportCategory(c) {
-      const t=String((c.parsedNotes || this._parseNotes(c.notes || ''))[0]?.text || '').trim();
+      const t=String((c.parsedNotes || this._parseNotes(c.notes || ''))[0]?.text || '').replace(/เเ/g,'แ').replace(/([ัิ-ฺ็-๎])\1+/g,'$1').replace(/\s+/g,' ').trim();
       if(!t)return 'empty';
       const rules=[
-        ['unreachable',/ติดต่อไม่ได้|ไม่สามารถติดต่อได้|ปิดเครื่อง|เบอร์โทรไม่ถูกต้อง|เบอร์(?:โทร)?ผิด|เบอร์(?:โทร)?ไม่ครบ|ไม่มีหมายเลข/],
-        ['noanswer',/ไม่รับสาย|ตัดสาย/],
-        ['bureau',/(?:^|[\s:—])ติด(?:เครดิต)?บูโร|ไม่ผ่านเครดิต/],
-        ['ineligible',/ไม่เข้าเงื่อนไข|ไม่มีเอกสาร|ไม่สะดวกยื่นเอกสาร/],
-        ['callback',/นัดติดต่อกลับ|ให้ติดต่อกลับ|ติดต่อกลับ(?:มา|ไป)?ใหม่|ไม่สะดวกในขณะนี้|ยังไม่สะดวก|ติดภารกิจ|ติดธุระ|ประชุม|กำลังทำงาน|ติดต่อในวันเสาร์อาทิตย์/],
-        ['declined',/ไม่สนใจแล้ว|ไม่สนใจผ่อน|ไม่สะดวกแบบผ่อน/],
-        ['outright',/ซื้อไปแล้ว|ซื้อขาดแล้ว|สนใจ(?:ซื้อ)?แบบปกติ|สนใจ(?:แบบ)?ซื้อขาด/],
-        ['undecided',/ยังไม่ตัดสินใจ|ปรึกษา(?:คนใน)?ครอบครัว|เปรียบเทียบ/],
-        ['line',/เพิ่มเพื่อน\s*LINE|แอดไลน์|แอดไลน|คุย(?:กัน)?ทางไลน์/i]
+        ['unreachable',/ติดต่อไม่ได้|ไม่สามารถติดต่อ|ไม่สามรถติดต่อ|ปิดเครื่อง|เบอร์(?:โทร)?(?:ไม่ถูกต้อง|ผิด|ไม่ครบ)|ไม่มีหมายเลข|ไม่มีเบอร์|โทรไม่ติด/],
+        ['noanswer',/ไม่?รับ?ส?สาย|ใม่รับสาย|ตัดสาย|ไม่มีคนรับ|สายไม่ว่าง|ฝากข้อความ/],
+        ['bureau',/(?<!ไม่)(?<!ไม่ )ติด\s*(?:เครดิต|เตรดิต|เครบรูโร|บู|บรู)|ไม่ผ่านเครดิต|(?<!ไม่ติด)(?<!ไม่ติด )เครดิตบรูโร/],
+        ['ineligible',/ไม่เข้าเงื่อนไข|ไม่มีเอกสาร|ไม่สะดวก(?:ยื่น|ส่ง)เอกสาร|รอยื่นเอกสาร|เตรียมเอกสาร/],
+        ['wrong',/ไม่ได้(?:เป็นผู้)?ลงทะเบียน|ไม่ใช่ผู้ลงทะเบียน/],
+        ['dup',/ลีดซ้ำ|ชื่อซ้ำ|รายชื่อซ้ำ/],
+        ['callback',/นัดติดต่อกลับ|ให้ติดต่อกลับ|ให้ติดต่อมาใหม่|ติดต่อกลับ(?:มา|ไป)?ใหม่|ติดต่อ(?:ใหม่|อีก)|เสาร์ ?-? ?อาทิตย์|ไม่สะ?ดวก|ยังไม่สะดวก|ติดภารกิจ|ติดธุระ|ประชุม|กำลังทำงาน|ไม่ได้ทำงาน|ช่วงเย็น|สะดวก ?\d|ฝากหมายเลข|ขับรถ|เดี[๋้]ยว(?:โทร|ติดต่อ)กลับ|ถามแฟน/],
+        ['declined',/ไม่สนใจ|ไม่สะดวกแบบผ่อน/],
+        ['outright',/ซื้อ(?:กับ|ไป|ขาด|ผ่านตัวแทน)|สนใจ(?:ซื้อ)?แบบปกติ|ซื้ื?อ?ขาด/],
+        ['undecided',/ยังไม่ตัดสินใจ|ปรึกษา|เปรียบเทียบ|เทียบราคา|ขอคิด|ตัดสินใจก่อน|ศึกษา/],
+        ['line',/เพิ่มเพื่อน\s*LINE|แอด\s*ไลน์?|แอด\s*LINE|add\s*line|คุย(?:กัน)?ทางไลน์|ไลน์ OA/i],
+        ['done',/ทำรายการ(?:สำเร็จ|เรียบร้อย|ด้วยตัวเอง|ผ่าน)|Remote Order|รอชำระ/i],
+        ['inquiry',/สอบถามข้อมูล|หากสนใจ|ถ้าสนใจ|สนใจ ?(?:จะ|เดี๋ยว)ติดต่อ|สนใจเดี๋ยว|ลูกค้าติดต่อกลับ|ติดต่อมาเอง|ติดต่อกลับเอง|ติดต่อกลับมาเอง/],
+        ['staff',/มีเจ้าหน้าที่ติดต่อ(?:แล้ว|ไปแล้ว)|มีคนติดต่อแล้ว|ติดต่อผ่านตัวแทน/],
+        ['email',/ทาง ?(?:อีเมล|Email)|ส่งอีเมล/i],
+        ['closed',/ปิดงานนัดหมาย/]
       ];
-      const matches=rules.filter(([,re])=>re.test(t));
-      return matches.length===1?matches[0][0]:'other';
+      // callback / inquiry เป็นคำกว้าง: ให้เหตุผลที่เจาะจงกว่าชนะเมื่อชนกัน
+      const weak=['callback','inquiry'];
+      let matches=rules.filter(([,re])=>re.test(t)).map(([key])=>key);
+      const strong=matches.filter(key=>!weak.includes(key));
+      if(strong.length)matches=strong;
+      return matches.length===1?matches[0]:'other';
     },
     get callReport() {
       const rows=this.callReportReasons.map(r=>({...r,count:0}));
@@ -2022,7 +2040,7 @@ function app() {
     async copyCallReport() {
       if(!this.teamReportLoaded || this.teamReportLoading)return;
       const r=this.callReport,source=this.callReportSource?this.srcShort(this.callReportSource):'ทุกแหล่งลีด (ไม่รวม Sell out)';
-      const text=['สรุปผลการติดต่อลูกค้า · Epromoter ทุกคน','แหล่งลีด: '+source,'ข้อมูลครบ '+this.teamReportPromoters.length+' ชื่อ · '+this.teamReportUpdated,...r.rows.map(x=>x.label+': '+x.count+' คน'),'รวม 9 เหตุผล: '+r.classified+' คน','ไม่มีบันทึก: '+r.empty+' คน','บันทึกอื่น / ต้องตรวจสอบ: '+r.other+' คน','รายชื่อทั้งหมด: '+r.total+' คน','หมายเหตุ: นับรายละ 1 เหตุผลจากบันทึกล่าสุด ควรตรวจทานการจัดกลุ่มก่อนส่ง'].join('\n');
+      const text=['สรุปผลการติดต่อลูกค้า · Epromoter ทุกคน','แหล่งลีด: '+source,'ข้อมูลครบ '+this.teamReportPromoters.length+' ชื่อ · '+this.teamReportUpdated,...r.rows.map(x=>x.label+': '+x.count+' คน'),'รวมทุกเหตุผล: '+r.classified+' คน','ไม่มีบันทึก: '+r.empty+' คน','บันทึกอื่น / ต้องตรวจสอบ: '+r.other+' คน','รายชื่อทั้งหมด: '+r.total+' คน','หมายเหตุ: นับรายละ 1 เหตุผลจากบันทึกล่าสุด ควรตรวจทานการจัดกลุ่มก่อนส่ง'].join('\n');
       try{await navigator.clipboard.writeText(text);this.callReportMessage='คัดลอกสรุปแล้ว';}catch(e){this.callReportMessage='คัดลอกไม่สำเร็จ โปรดลองอีกครั้ง';}
     },
 
