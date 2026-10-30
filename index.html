@@ -1369,7 +1369,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '26.10.2026.V103';
+const CRM_BUILD       = '30.10.2026.V104';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1525,7 +1525,7 @@ function app() {
     filterConvenientDate: '', filterContactTime: '', filterHousing: '',
     filterRailTab: (function () { try { return localStorage.getItem('lgCrmRailTab') || 'status'; } catch (e) { return 'status'; } })(),
     activeQuickView: '',
-    sortCol: 'row', sortDir: 'desc', page: 1, pageSize: 25,
+    sortCol: 'row', sortDir: 'asc', page: 1, pageSize: 25,
     _frozenRows: null,
 
     /* ── Drawer ── */
@@ -1871,7 +1871,7 @@ function app() {
             const json = ok.length === 1 ? ok[0] : mergePromoterPayloads(ok);
             const raw = dedupeCustomersByPhone(json.data || []);
             this.sheetsFound = json.sheetsFound || null;
-            this.sortCol = 'row'; this.sortDir = 'desc'; this.page = 1;
+            this.sortCol = 'row'; this.sortDir = 'asc'; this.page = 1;
             const n = new Date();
             let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
             if (PROMOTER === 'POND') ts += fail.length ? ' · WUTTICHAI ยังไม่ครบ' : ' · POND+WUTTICHAI';
@@ -2006,7 +2006,7 @@ function app() {
           const hd = this.getHL(b) - this.getHL(a);
           if (hd) return hd;
         }
-        // ลำดับชีต: แหล่งเดียวกันอยู่ด้วยกัน แถวล่างของชีต (หลีดใหม่) อยู่บน
+        // ลำดับชีต: แหล่งเดียวกันอยู่ด้วยกัน แถวบนของชีต (หลีดที่เข้ามาก่อน) อยู่บน
         if (col === 'row') {
           const so = this._sourceOrder(a.source) - this._sourceOrder(b.source);
           if (so) return so;
