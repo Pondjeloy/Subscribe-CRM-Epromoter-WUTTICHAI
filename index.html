@@ -947,11 +947,11 @@
             <table class="w-full border-collapse min-w-[960px]">
               <thead>
                 <tr class="bg-slate-50/95">
-                  <th class="px-5 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('id')">
+                  <th class="px-5 py-2.5 text-left text-[11px] font-bold uppercase tracking-[.08em] text-slate-400 cursor-pointer select-none" @click="setSort('row')">
                     <span class="inline-flex items-center gap-1">#
                       <span class="inline-flex flex-col -space-y-1">
-                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='id'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
-                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='id'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='row'&&sortDir==='asc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 0l4 6H0z"/></svg>
+                        <svg width="7" height="5" viewBox="0 0 8 6" :class="sortCol==='row'&&sortDir==='desc'?'text-[var(--accent)]':'text-slate-300'" fill="currentColor"><path d="M4 6L0 0h8z"/></svg>
                       </span>
                     </span>
                   </th>
@@ -999,10 +999,10 @@
                     <div class="text-[14px] text-slate-400">ไม่พบรายชื่อที่ตรงกับเงื่อนไข</div>
                   </td></tr>
                 </template>
-                <template x-for="c in paginated" :key="c.id">
+                <template x-for="(c, rowIndex) in paginated" :key="c.id">
                   <tr @click="openDrawer(c)" class="row-stripe border-b border-slate-100 cursor-pointer group"
                       :class="[selectedCustomer&&selectedCustomer.id===c.id?'!bg-[var(--accent-tint)]':'', hlTrClass(c)]">
-                    <td class="pl-5 pr-2 h-[34px] text-[12px] tabular-nums text-slate-400 font-medium" x-text="c.id"></td>
+                    <td class="pl-5 pr-2 h-[34px] text-[12px] tabular-nums text-slate-400 font-medium" x-text="(page - 1) * pageSize + rowIndex + 1"></td>
                     <td class="px-3">
                       <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap" :class="srcToneClass(c.source)" x-text="displaySource(c)"></span>
                     </td>
@@ -1074,7 +1074,7 @@
           <template x-if="paginated.length===0">
             <div class="rounded-2xl bg-white ring-1 ring-slate-200/70 py-12 text-center text-[13px] text-slate-400">ไม่พบข้อมูล</div>
           </template>
-          <template x-for="c in paginated" :key="c.id">
+          <template x-for="(c, rowIndex) in paginated" :key="c.id">
             <div @click="openDrawer(c)" class="bg-white ring-1 ring-slate-200/70 rounded-xl p-3.5 cursor-pointer active:bg-slate-50 transition" :class="hlMobClass(c)">
               <div class="flex items-center justify-between gap-2 mb-1.5">
                 <div class="flex items-center gap-2 min-w-0">
@@ -1369,7 +1369,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '30.10.2026.V104';
+const CRM_BUILD       = '30.10.2026.V105';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
