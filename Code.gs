@@ -3,7 +3,10 @@
 //  Deploy: Web App | Execute as: Me | Anyone
 //  แก้แล้ว Redeploy: Manage Deployments → Edit → New version → Deploy
 //
-//  [แก้ไขล่าสุด] appendNote กันบรรทัดซ้ำจาก JSONP timeout+retry
+//  [แก้ไขล่าสุด 20 ต.ค. 2569] Meta Densu Oct: แถวโครงใหม่ที่ J = วันเวลาลงทะเบียน
+//  (เช่น "17 ต.ค. 2026 15:55:25") ถูกนับเป็นเบอร์ → ตกไปโครงเก่า ชื่อกลายเป็นวันที่สะดวก
+//  แก้: เบอร์ต้องเป็นตัวเลขล้วน + สลับ J/K ตามชนิดข้อมูล (สินค้า / ลงทะเบียน)
+//  [ก่อนหน้า] appendNote กันบรรทัดซ้ำจาก JSONP timeout+retry
 //  [ก่อนหน้า] 'Lead LG Success': statusCol/picCol/notesCol เลื่อน
 //  จาก 8/9/10 → 7/8/9 เพราะโครงสร้างชีตมีคอลัมน์ระหว่าง
 //  Model Code กับ Status ลดลง (เหลือ Order No. / Total Rental
@@ -61,13 +64,14 @@
 //  [ลงยอดขาย UI ถอดแล้ว ก.ย. 2569] ยังอ่านชีต Sell out เป็นฐานลูกค้า
 //
 //  [TikTok] แท็บชื่อ TikTok — ไม่เข้า META_PAIR (ไม่ dedup กับ Meta)
-//  ฟอร์มเก่า: A=Email B=Final page C=ชื่อ D=นามสกุล E=Phone
-//    F=ชำระ G=บูโร H=ที่พัก I=พื้นที่ J=วันสะดวก K=สินค้า L=เวลา
-//  ฟอร์มใหม่ (ไม่มี Final page, เบอร์อยู่ D): A=Email B=ชื่อ C=นามสกุล D=Phone
+//  ฟอร์มชื่อนำ (ต.ค. 2569): A=ชื่อ B=นามสกุล C=ว่าง D=Email E=เบอร์
+//    F=ประเภทที่พัก G=ช่องทางชำระ H=พื้นที่ I=วันสะดวก J=เวลา K=สินค้า L=วันลงทะเบียน
+//  ฟอร์มเบอร์คอลัมน์ D (ไม่มี Final page): A=Email B=ชื่อ C=นามสกุล D=Phone
 //    E=บูโร F=ที่พัก G=ชำระ H=พื้นที่ I=วันสะดวก J=เวลา K=สินค้า
-//  ทั้งสองฟอร์ม: M=Action N=Epromoter O=Remark
+//  ฟอร์มเก่า (B=Final/End page): A=Email C=ชื่อ D=นามสกุล E=Phone
+//    F=ชำระ G=บูโร H=ที่พัก I=พื้นที่ J=วันสะดวก K=สินค้า L=เวลา
+//  ทั้งสามฟอร์ม: M=Action N=Epromoter O=Remark
 //  picCol=N(13) statusCol=M(12) notesCol=O(14)
-//  parseTikTokRow เลือกฟอร์มต่อแถว: D เป็นเบอร์และ E ไม่ใช่เบอร์ = ฟอร์มใหม่
 // ════════════════════════════════════════════════════════
 
 var SPREADSHEET_ID = '1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280'; // ต.ค. 2569
@@ -228,11 +232,11 @@ function getSheetConfig(name) {
       parse: function(row, disp) { return parseMetaDensuJulyRow(row, disp); }
     },
 
-    // TikTok ฟอร์มเก่า: A=Email B=Final page C=ชื่อ D=นามสกุล E=Phone
-    //   F=ชำระ G=บูโร H=ที่พัก I=พื้นที่ J=วัน K=สินค้า L=เวลา
-    // ฟอร์มใหม่: A=Email B=ชื่อ C=นามสกุล D=Phone E=บูโร F=ที่พัก
-    //   G=ชำระ H=พื้นที่ I=วัน J=เวลา K=สินค้า
-    // ทั้งคู่ M=Action N=Epromoter O=Remark — parse เลือกต่อแถว
+    // TikTok สามฟอร์มในแท็บเดียว — M=Action N=Epromoter O=Remark
+    // ชื่อนำ (ต.ค. 2569): A+B=ชื่อ D=Email E=เบอร์ F=ที่พัก G=ชำระ H=พื้นที่
+    //   I=วัน J=เวลา K=สินค้า L=วันลงทะเบียน
+    // เบอร์อยู่ D: A=Email B+C=ชื่อ D=Phone E=บูโร F=ที่พัก G=ชำระ
+    // เก่า (B=Final/End page): A=Email C+D=ชื่อ E=Phone L=เวลา
     'TikTok': {
       picCol:13, statusCol:12, notesCol:14,
       needsDisplay: true,
@@ -875,10 +879,25 @@ function normalizeKey(v) {
   return clean(v).replace(/[​-‍﻿]/g,'').replace(/\s+/g,'').toUpperCase();
 }
 
+// WUTTICHAI.N เป็นคนละคนกับ POND — ไม่ดึงเข้า CRM POND
+function isWuttichaiN(key) {
+  return /WUTTICHAI\.?N/.test(key) && !/WUTTICHAI\.?P/.test(key);
+}
+
+// POND กับ WUTTICHAI / WUTTICHAI.P / WUTTICHAI P. เป็นชื่อเดียวกัน
+function isPondName(key) {
+  if (!key) return false;
+  if (key.indexOf('POND') !== -1) return true;
+  if (isWuttichaiN(key)) return false;
+  return key.indexOf('WUTTICHAI') !== -1;
+}
+
 function isPromoter(v, promoter) {
   var want = normalizeKey(promoter || PROMOTER);
   var key  = normalizeKey(v);
   if (!key || !want) return false;
+  // ดึงทั้งแถวที่คอลัมน์ Epromoter เขียน POND และที่เขียน WUTTICHAI
+  if (want === 'POND' && isPondName(key)) return true;
   if (key.indexOf(want) !== -1) return true;
   if (want === 'PAIRAT' && key.indexOf('PIRAT') !== -1) return true;
   if (want === 'PIRAT' && key.indexOf('PAIRAT') !== -1) return true;
@@ -987,11 +1006,13 @@ function parseMetaDensuLegacyRow(row, disp) {
 }
 
 // ── TikTok lead form ──────────────────────────────────
-// ฟอร์มเก่า: A=Email B=Final page C=ชื่อ D=นามสกุล E=Phone
-//   F=ชำระ G=บูโร H=ที่พัก I=พื้นที่ J=วันสะดวก K=สินค้า L=เวลา
-// ฟอร์มใหม่: A=Email B=ชื่อ C=นามสกุล D=Phone E=บูโร F=ที่พัก
+// ฟอร์มชื่อนำ (ต.ค. 2569): A=ชื่อ B=นามสกุล C=ว่าง D=Email E=เบอร์
+//   F=ประเภทที่พัก G=ช่องทางชำระ H=พื้นที่ I=วันสะดวก J=เวลา K=สินค้า L=วันลงทะเบียน
+// ฟอร์มเบอร์คอลัมน์ D: A=Email B=ชื่อ C=นามสกุล D=Phone E=บูโร F=ที่พัก
 //   G=ชำระ H=พื้นที่ I=วันสะดวก J=เวลา K=สินค้า
-// ทั้งคู่ M=Action N=Epromoter O=Remark
+// ฟอร์มเก่า (B=Final page / End page): A=Email C=ชื่อ D=นามสกุล E=Phone
+//   F=ชำระ G=บูโร H=ที่พัก I=พื้นที่ J=วันสะดวก K=สินค้า L=เวลา
+// ทั้งสามฟอร์ม: M=Action N=Epromoter O=Remark
 function tiktokPhoneText(v, disp) {
   return cleanDisplay(v, disp).replace(/[\s\u00a0\-]+/g, '');
 }
@@ -1003,15 +1024,66 @@ function isTikTokPhone(v) {
 }
 function tiktokNamePart(v) {
   var s = clean(v);
-  if (!s || s === '#N/A' || s.toUpperCase() === 'N/A') return '';
+  if (!s || s === '#N/A' || s.toUpperCase() === 'N/A' || s.toLowerCase() === 'null' || s === '-') return '';
   return s;
+}
+function tiktokHasAt(v) {
+  return clean(v).indexOf('@') !== -1;
+}
+function tiktokIsLeadPage(v) {
+  var s = clean(v).toLowerCase();
+  return s.indexOf('final page') !== -1 || s.indexOf('end page') !== -1;
+}
+function tiktokIsRegisteredAt(v, disp) {
+  var s = metaCellText(v, disp);
+  if (!s || s.toLowerCase() === 'null') return false;
+  if (/(ม\.ค\.|ก\.พ\.|มี\.ค\.|เม\.ย\.|พ\.ค\.|มิ\.ย\.|ก\.ค\.|ส\.ค\.|ก\.ย\.|ต\.ค\.|พ\.ย\.|ธ\.ค\.)/.test(s)) return true;
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s)) return true;
+  if (/^\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}/.test(s)) return true;
+  return v instanceof Date;
+}
+function tiktokPaymentAndHousing(fRaw, gRaw) {
+  var f = tiktokNamePart(fRaw);
+  var g = tiktokNamePart(gRaw);
+  var pays = [];
+  var housing = '';
+  if (isMetaPaymentChannel(f)) pays.push(f);
+  else if (f) housing = normalizeHousingType(f);
+  if (isMetaPaymentChannel(g)) pays.push(g);
+  else if (g && !housing) housing = normalizeHousingType(g);
+  return { paymentChannel: pays.join(' · '), housingType: housing };
+}
+function isTikTokNameFirst(row, disp, phoneE) {
+  if (!isTikTokPhone(phoneE)) return false;
+  if (tiktokHasAt(row[0]) || tiktokIsLeadPage(row[1])) return false;
+  if (tiktokHasAt(row[3])) return true;
+  return tiktokIsRegisteredAt(row[11], disp && disp[11]);
 }
 function parseTikTokRow(row, disp) {
   var phoneD = tiktokPhoneText(row[3], disp && disp[3]);
   var phoneE = tiktokPhoneText(row[4], disp && disp[4]);
-  var newForm = isTikTokPhone(phoneD) && !isTikTokPhone(phoneE);
-  var email = clean(row[0]);
-  if (newForm) {
+  if (isTikTokNameFirst(row, disp, phoneE)) {
+    var payHome = tiktokPaymentAndHousing(row[5], row[6]);
+    var emailD = tiktokNamePart(row[3]);
+    return {
+      name:           (tiktokNamePart(row[0]) + ' ' + tiktokNamePart(row[1])).trim(),
+      phone:          phoneE,
+      email:          emailD.indexOf('@') !== -1 ? emailD : '',
+      age:            '',
+      contactTime:    tiktokNamePart(row[9]),
+      convenientDate: metaCellText(row[8], disp && disp[8]),
+      paymentChannel: payHome.paymentChannel,
+      creditBureau:   '',
+      province:       tiktokNamePart(row[7]),
+      housingType:    payHome.housingType,
+      productType:    tiktokNamePart(row[10]),
+      registeredAt:   metaCellText(row[11], disp && disp[11]),
+      lineId:         '',
+      tiktokLayout:   'name-first'
+    };
+  }
+  var email = tiktokNamePart(row[0]);
+  if (isTikTokPhone(phoneD) && !isTikTokPhone(phoneE)) {
     var firstN = tiktokNamePart(row[1]), lastN = tiktokNamePart(row[2]);
     return {
       name:           (firstN + ' ' + lastN).trim(),
@@ -1025,7 +1097,8 @@ function parseTikTokRow(row, disp) {
       province:       clean(row[7]),
       housingType:    normalizeHousingType(clean(row[5])),
       productType:    clean(row[10]),
-      lineId:         ''
+      lineId:         '',
+      tiktokLayout:   'phone-d'
     };
   }
   var first = tiktokNamePart(row[2]), last = tiktokNamePart(row[3]);
@@ -1041,7 +1114,8 @@ function parseTikTokRow(row, disp) {
     province:       clean(row[8]),
     housingType:    normalizeHousingType(clean(row[7])),
     productType:    clean(row[10]),
-    lineId:         ''
+    lineId:         '',
+    tiktokLayout:   'final-page'
   };
 }
 
@@ -1082,12 +1156,30 @@ function metaCellText(v, disp) {
   if (v instanceof Date || typeof v === 'number') return String(disp == null ? v : disp).trim();
   return clean(disp || v);
 }
+// เบอร์จริงต้องมีแต่ตัวเลข/ขีด/เว้นวรรค — กันวันเวลาลงทะเบียน
+// เช่น "17 ต.ค. 2026 15:55:25" (ตัวเลข 12 หลัก) ถูกนับเป็นเบอร์
+function isMetaPhoneText(v) {
+  var s = clean(v);
+  if (!s || !/^[+\d\s\-().]+$/.test(s)) return false;
+  return isTikTokPhone(s);
+}
+// วันเวลาลงทะเบียน (Date / ตัวเลขวันที่ของชีต / ข้อความที่มีปี+เวลา หรือเดือนไทย)
+function isMetaDateTimeCell(v, disp) {
+  if (v instanceof Date) return true;
+  var s = clean(disp || v);
+  if (!s) return false;
+  if (/(ม\.?ค|ก\.?พ|มี\.?ค|เม\.?ย|พ\.?ค|มิ\.?ย|ก\.?ค|ส\.?ค|ก\.?ย|ต\.?ค|พ\.?ย|ธ\.?ค)\./.test(s) && /\d{4}/.test(s)) return true;
+  if (/\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}/.test(s)) return true;
+  if (/(25[6-7]\d|20[2-3]\d)/.test(s) && /\d{1,2}:\d{2}/.test(s)) return true;
+  return false;
+}
 function isMetaOctNewLayout(row, disp) {
   if (isMetaPaymentChannel(row[0])) return false;
   var phoneC = metaCellText(row[2], disp && disp[2]);
   var phoneJ = metaCellText(row[9], disp && disp[9]);
-  if (!isTikTokPhone(phoneC)) return false;
-  if (isTikTokPhone(phoneJ)) return false;
+  if (!isMetaPhoneText(phoneC)) return false;
+  // โครงเก่า: J = เบอร์จริง · โครงใหม่: J = สินค้า หรือ วันเวลาลงทะเบียน (แถวต้นเดือน)
+  if (isMetaPhoneText(phoneJ)) return false;
   return true;
 }
 function parseMetaDensuOctRow(row, disp) {
@@ -1097,6 +1189,13 @@ function parseMetaDensuOctRow(row, disp) {
     old.creditBureau = clean(row[1]);
     return old;
   }
+  // แถวโครงใหม่บางช่วง J = วันเวลาลงทะเบียน (ไม่มีสินค้าใน J) → สลับ J/K ตามชนิดข้อมูล
+  var colJ = metaCellText(row[9], disp && disp[9]);
+  var colK = row.length > 10 ? metaCellText(row[10], disp && disp[10]) : '';
+  var jIsDate = isMetaDateTimeCell(row[9], disp && disp[9]);
+  var kIsDate = row.length > 10 && isMetaDateTimeCell(row[10], disp && disp[10]);
+  var productType = colJ, registeredAt = colK;
+  if (jIsDate && !kIsDate) { productType = colK; registeredAt = colJ; }
   return {
     name:           clean(row[0]),
     phone:          metaCellText(row[2], disp && disp[2]),
@@ -1108,8 +1207,8 @@ function parseMetaDensuOctRow(row, disp) {
     creditBureau:   clean(row[3]),
     province:       clean(row[6]),
     housingType:    normalizeHousingType(clean(row[4])),
-    productType:    clean(row[9]),
-    registeredAt:   metaCellText(row[10], disp && disp[10]),
+    productType:    productType,
+    registeredAt:   registeredAt,
     lineId:         '',
     metaLayout:     'oct-new'
   };
