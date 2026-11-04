@@ -550,7 +550,7 @@
 
     <!-- Test mode banner -->
     <div x-show="testMode" class="rounded-xl bg-amber-50 ring-1 ring-amber-200 px-4 py-2.5 mb-4 text-[13px] text-amber-900 leading-relaxed">
-      <b>🧪 CRM v96</b> — Meta ต.ค. คอลัมน์ใหม่ · ชื่ออยู่ A · เบอร์อยู่ C
+      <b>🧪 CRM v97</b> — Meta พ.ย. · ชื่ออยู่ H · เบอร์อยู่ K
       <span x-show="rawCount != null" class="block mt-1 text-[12px] text-amber-800">
         รวม <span class="font-bold tabular-nums" x-text="customers.length"></span> รายการ
         <span x-show="rawCount > customers.length"> (ก่อน dedup Meta: <span class="tabular-nums" x-text="rawCount"></span>)</span>
@@ -1409,11 +1409,16 @@ const isTimeoutErr = (e) => /timeout|หมดเวลา/i.test(String(e && e.
 // เขียน Sheet มักสำเร็จแล้ว แต่ JSONP ตอบไม่ได้ — ห้ามโชว์ "โหลด Script ไม่ได้ / Deploy Anyone"
 const isWriteSoftOkErr = (e) => /timeout|หมดเวลา|โหลด Script|script|Failed|Network|network|Failed to fetch|เน็ต|Deploy|Anyone|URL ผิด/i.test(String(e && e.message || e || ''));
 const isSkipSheetErr = (e) => /sheet not found|ไม่พบ sheet|no config|timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
-const META_PAIR         = {'Meta Densu Oct':true,'Meta Densu Sep':true,'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
-const SOURCE_PRIORITY   = {'Meta Densu Oct':1,'Meta Densu Sep':2,'Meta Densu Aug':3,'Meta Densu July':4,'Meta Densu':5};
+const META_PAIR         = {'Meta Densu Nov':true,'Meta Densu Oct':true,'Meta Densu Sep':true,'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
+const SOURCE_PRIORITY   = {'Meta Densu Nov':0.5,'Meta Densu Oct':1,'Meta Densu Sep':2,'Meta Densu Aug':3,'Meta Densu July':4,'Meta Densu':5};
 // Meta ITAX = หลีดแยก (ไม่ dedup กับ Densu) · คอลัมน์เดียวกับ Meta Densu Oct
 // ทุกแท็บ POP UP (ชื่อสะกดต่างกัน) แสดงรวมการ์ด POP UP เดียว
 const SOURCE_ALIASES    = {
+  'Meta Densu November': 'Meta Densu Nov',
+  'Meta Densu Nov 2026': 'Meta Densu Nov',
+  'Meta Densu พ.ย.': 'Meta Densu Nov',
+  'Meta Densu พ.ย. 2569': 'Meta Densu Nov',
+  'Meta Desu Nov': 'Meta Densu Nov',
   'Meta Densu October': 'Meta Densu Oct',
   'Meta Densu Oct 2026': 'Meta Densu Oct',
   'Meta Densu ต.ค.': 'Meta Densu Oct',
@@ -1447,6 +1452,7 @@ function normalizeSource(src) {
   if (!src) return '';
   if (SOURCE_ALIASES[src]) return SOURCE_ALIASES[src];
   if (/tiktok/i.test(src)) return 'TikTok';
+  if (/meta\s*de[ns]su\s*(nov|november|พ\.?\s*ย)/i.test(src)) return 'Meta Densu Nov';
   if (/meta\s*de[ns]su\s*(oct|october|ต\.?\s*ค)/i.test(src)) return 'Meta Densu Oct';
   if (/meta\s*de[ns]su\s*(sep|september|ก\.?\s*ย)/i.test(src)) return 'Meta Densu Sep';
   if (/meta\s*de[ns]su\s*(aug|august|july|ส\.?\s*ค|ก\.?\s*ค)/i.test(src)) return 'Meta Densu Sep';
@@ -1674,6 +1680,22 @@ function app() {
       {col:'N', label:'Epromoter'},
       {col:'O', label:'บันทึกสถานะ'},
     ],
+    metaNovColumnLegend: [
+      {col:'A', label:'ชำระเงิน'},
+      {col:'B', label:'เคยติดบูโร'},
+      {col:'C', label:'จังหวัด'},
+      {col:'D', label:'ที่พัก'},
+      {col:'E', label:'สินค้า'},
+      {col:'F', label:'วันที่สะดวก'},
+      {col:'G', label:'เวลาที่สะดวก'},
+      {col:'H', label:'ชื่อ (full_name)'},
+      {col:'I', label:'วันเกิด'},
+      {col:'J', label:'Email'},
+      {col:'K', label:'เบอร์โทร'},
+      {col:'N', label:'Action (สถานะ)'},
+      {col:'O', label:'Epromoter'},
+      {col:'P', label:'บันทึกกิจกรรม / หมายเหตุ'},
+    ],
     metaOctColumnLegend: [
       {col:'A', label:'ชื่อ นามสกุล'},
       {col:'B', label:'Email'},
@@ -1731,6 +1753,8 @@ function app() {
     ],
 
     sourceDefs: [
+      {key:'Meta Densu Nov',              short:'Meta พ.ย.', label:'Meta Densu Nov', toneClass:'tone-violet', barClass:'bg-violet-500', icon:'meta', accent:'#4F46E5', tint:'#ecebff',
+        columnHelp:'พ.ย.: A=ชำระ · B=บูโร · C=จังหวัด · D=ที่พัก · E=สินค้า · F=วัน · G=เวลา · H=ชื่อ · J=Email · K=เบอร์ · N=Action · O=Epromoter · P=หมายเหตุ'},
       {key:'Meta Densu Oct',              short:'Meta ต.ค.', label:'Meta Densu Oct', toneClass:'tone-violet', barClass:'bg-violet-400', icon:'meta', accent:'#5B5FC7', tint:'#eef0ff',
         columnHelp:'ตั้งแต่ 2 ต.ค.: A=ชื่อ · B=Email · C=เบอร์ · E=ที่อยู่ · F=ชำระ · G=จังหวัด · H=วัน · I=เวลา · J=สินค้า · K=วันลงทะเบียน · N=สถานะ · O=Epromoter · P=หมายเหตุ'},
       {key:'Meta Densu Sep',              short:'Meta ก.ย.', label:'Meta Densu Sep', toneClass:'tone-violet', barClass:'bg-violet-300', icon:'meta', accent:'#7C83D6', tint:'#f4f5ff',
@@ -1982,7 +2006,7 @@ function app() {
       }catch(e){this.teamReportError='รวมข้อมูลไม่สำเร็จ กรุณาโหลดใหม่';}
       finally{this.teamReportLoading=false;}
     },
-    callReportSource: 'Meta Densu Oct',
+    callReportSource: 'Meta Densu Nov',
     callReportMessage: '',
     callReportReasons: [
       {key:'unreachable',label:'ติดต่อไม่ได้',help:'ปิดเครื่อง เบอร์โทรผิด เบอร์ไม่ครบ ไม่มีหมายเลขในระบบ โทรไม่ติด'},
@@ -2481,7 +2505,7 @@ function app() {
     },
     isMetaSource(src) {
       const s = normalizeSource(src);
-      return s === 'Meta Densu Oct' || s === 'Meta Densu Sep' || s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
+      return s === 'Meta Densu Nov' || s === 'Meta Densu Oct' || s === 'Meta Densu Sep' || s === 'Meta Densu Aug' || s === 'Meta Densu July' || s === 'Meta Densu' || s === 'Meta ITAX';
     },
     isTiktokSource(src) {
       return normalizeSource(src) === 'TikTok';
@@ -2565,7 +2589,7 @@ function app() {
       return s;
     },
     isMetaFilterActive() {
-      return this.filterSource === 'Meta Densu Oct' || this.filterSource === 'Meta Densu Sep' || this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
+      return this.filterSource === 'Meta Densu Nov' || this.filterSource === 'Meta Densu Oct' || this.filterSource === 'Meta Densu Sep' || this.filterSource === 'Meta Densu Aug' || this.filterSource === 'Meta Densu July' || this.filterSource === 'Meta Densu' || this.filterSource === 'Meta ITAX';
     },
     get metaLegendTitle() {
       if (this.filterSource === 'Meta Densu') return 'โครงสร้างชีต Meta Densu (เก่า)';
@@ -2573,11 +2597,13 @@ function app() {
       if (this.filterSource === 'Meta Densu July') return 'โครงสร้างชีต Meta Densu July';
       if (this.filterSource === 'Meta Densu Aug') return 'โครงสร้างชีต Meta Densu Aug';
       if (this.filterSource === 'Meta Densu Sep') return 'โครงสร้างชีต Meta Densu Sep';
-      return 'โครงสร้างชีต Meta Densu Oct';
+      if (this.filterSource === 'Meta Densu Oct') return 'โครงสร้างชีต Meta Densu Oct';
+      return 'โครงสร้างชีต Meta Densu Nov';
     },
     get activeMetaColumnLegend() {
       if (this.filterSource === 'Meta Densu') return this.metaLegacyColumnLegend;
-      if (this.filterSource === 'Meta Densu Oct' || !this.filterSource) return this.metaOctColumnLegend;
+      if (this.filterSource === 'Meta Densu Nov' || !this.filterSource) return this.metaNovColumnLegend;
+      if (this.filterSource === 'Meta Densu Oct') return this.metaOctColumnLegend;
       return this.metaColumnLegend;
     },
     customerMatchesSource(c, key) {

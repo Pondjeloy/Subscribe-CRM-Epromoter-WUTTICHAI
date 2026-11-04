@@ -74,12 +74,12 @@
 //  picCol=N(13) statusCol=M(12) notesCol=O(14)
 // ════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = '1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280'; // ต.ค. 2569
+var SPREADSHEET_ID = '1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280'; // พ.ย. 2569 (ไฟล์เดิม · แท็บ gid 916609132 เปลี่ยนชื่อเป็น Meta Densu Nov)
 var PROMOTER       = 'POND';
 
 // ชื่อ canonical ใน CRM (1 การ์ด POP UP) — resolveSheet หาแท็บจริงให้
 var SHEET_NAMES = [
-  'Meta Densu Oct','Meta Densu Sep','Meta Densu','Meta ITAX',
+  'Meta Densu Nov','Meta Densu Oct','Meta Densu Sep','Meta Densu','Meta ITAX',
   'TikTok',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
   'Lead Subscribe POP UP Braner',
@@ -88,6 +88,14 @@ var SHEET_NAMES = [
 
 // ชื่อแท็บทางเลือก (สะกดผิด / เปลี่ยนชื่อ / ตัวพิมพ์เล็กใหญ่)
 var SHEET_ALIASES = {
+  'Meta Densu Nov': [
+    'Meta Densu Nov',
+    'Meta Densu November',
+    'Meta Densu Nov 2026',
+    'Meta Densu พ.ย.',
+    'Meta Densu พ.ย. 2569',
+    'Meta Desu Nov'
+  ],
   'Meta Densu Oct': [
     'Meta Densu Oct',
     'Meta Densu October',
@@ -196,6 +204,13 @@ function doGet(e) {
 function getSheetConfig(name) {
   var cfg = {
 
+    // Meta Densu Nov (พ.ย. 2569) — แท็บ gid 916609132 · ฟอร์มใหม่ A=ชำระ B=บูโร C=จังหวัด D=ที่พัก E=สินค้า
+    // F=วันสะดวก G=เวลา H=ชื่อ I=วันเกิด J=Email K=เบอร์ · N=Action O=Epromoter P=หมายเหตุ
+    // แถวเก่าในแท็บเดียวกัน (โครง ต.ค./ก.ค.) -> fallback parseMetaDensuOctRow
+    'Meta Densu Nov': {
+      picCol:14, statusCol:13, notesCol:15,
+      parse: function(row, disp) { return parseMetaDensuNovRow(row, disp); }
+    },
     // Meta Densu Oct: แถวใหม่ตั้งแต่ 2 ต.ค. 2569 คนละคอลัมน์กับแถวเก่า
     // ใหม่ A=ชื่อ B=Email C=เบอร์ E=ที่อยู่ F=ชำระ G=จังหวัด H=วัน I=เวลา J=สินค้า K=ลงทะเบียน
     // เก่า A=ชำระ … H=ชื่อ J=เบอร์ · N=Status O=Epromoter P=หมายเหตุ ทั้งคู่
@@ -420,7 +435,7 @@ function lookupSheetConfig(name) {
   // getSheetConfig ข้างในมี exact keys — สแกน case-insensitive ผ่าน resolve ชื่อ canon
   var want = normalizeSheetKey(name);
   var keys = [
-    'Meta Densu Oct', 'Meta Densu Sep', 'Meta Densu Aug', 'Meta Densu July', 'Meta Densu', 'Meta ITAX',
+    'Meta Densu Nov', 'Meta Densu Oct', 'Meta Densu Sep', 'Meta Densu Aug', 'Meta Densu July', 'Meta Densu', 'Meta ITAX',
     'TikTok',
     'Lead Subscribe Lg.com', 'Lead LG Success', 'Lead Consult',
     'Lead Subscribe POP UP Braner', 'POP UP Bannar',
@@ -1214,6 +1229,39 @@ function parseMetaDensuOctRow(row, disp) {
   };
 }
 
+// ── Meta Densu Nov — ฟอร์มใหม่ (J=Email K=เบอร์) + fallback แถวเก่าในแท็บเดียวกัน ──
+function metaNovPhone(v, d) {
+  var s = metaCellText(v, d).replace(/^p:/i, '').replace(/\s+/g, '');
+  if (/^\+66\d{8,9}$/.test(s)) s = '0' + s.slice(3);
+  return s;
+}
+function isMetaNovLayout(row, disp) {
+  if (!row || row.length < 11) return false;
+  var email = clean(row[9]);
+  if (email.indexOf('@') < 0) return false;
+  return isMetaPhoneText(metaNovPhone(row[10], disp && disp[10]));
+}
+function parseMetaDensuNovRow(row, disp) {
+  if (!isMetaNovLayout(row, disp)) return parseMetaDensuOctRow(row, disp);
+  var ageRaw = calcAge(row[8]);
+  var age = (String(ageRaw).replace(/\D/g,'').length >= 9) ? '' : ageRaw;
+  return {
+    name:           clean(row[7]),
+    phone:          metaNovPhone(row[10], disp && disp[10]),
+    email:          clean(row[9]),
+    age:            age,
+    contactTime:    clean(row[6]),
+    convenientDate: metaCellText(row[5], disp && disp[5]),
+    paymentChannel: clean(row[0]),
+    creditBureau:   clean(row[1]),
+    province:       clean(row[2]),
+    housingType:    normalizeHousingType(clean(row[3])),
+    productType:    clean(row[4]),
+    lineId:         '',
+    metaLayout:     'nov-new'
+  };
+}
+
 function isJuly2026Row(row, dateCol, dispRow) {
   var v = row[dateCol];
   var dispVal = dispRow && dispRow[dateCol];
@@ -1235,8 +1283,9 @@ function isJuly2026Row(row, dateCol, dispRow) {
 }
 
 // ── Dedup Meta Densu Oct + แท็บเดือนก่อน (Oct ชนะถ้าเบอร์ซ้ำ) ──
-var META_PAIR = {'Meta Densu Oct':true, 'Meta Densu Sep':true, 'Meta Densu Aug':true, 'Meta Densu July':true, 'Meta Densu':true};
+var META_PAIR = {'Meta Densu Nov':true, 'Meta Densu Oct':true, 'Meta Densu Sep':true, 'Meta Densu Aug':true, 'Meta Densu July':true, 'Meta Densu':true};
 var SOURCE_PRIORITY = {
+  'Meta Densu Nov': 0.5,
   'Meta Densu Oct': 1,
   'Meta Densu Sep': 2,
   'Meta Densu Aug': 3,
