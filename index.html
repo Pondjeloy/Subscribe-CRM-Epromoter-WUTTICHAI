@@ -601,8 +601,8 @@
 
     <section class="rounded-xl border border-slate-200 bg-white p-4" aria-label="งานวันนี้">
       <div class="flex items-center justify-between mb-3"><h2 class="font-bold text-slate-800">งานวันนี้</h2><span class="text-xs text-slate-500">นับจากวันนัดที่บันทึก · เวลาไทย</span></div>
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3"><template x-for="v in workViews" :key="v.id"><button type="button" class="border rounded-xl p-3 text-left" :class="workView===v.id ? 'border-red-600 bg-red-50' : 'border-slate-200'" @click="selectWorkView(v.id)"><div class="text-sm" x-text="v.label"></div><div class="text-2xl font-bold tabular-nums mt-1" x-text="workCount(v.id)"></div></button></template></div>
-      <p class="text-xs text-slate-500 mt-3">เลยนัด = นัดก่อนวันนี้ที่ยังไม่ปิดงาน · รอเอกสาร = กิจกรรมล่าสุด · กดการ์ดเพื่อดูรายชื่อ</p>
+      <div class="grid grid-cols-2 lg:grid-cols-3 gap-3"><template x-for="v in workViews" :key="v.id"><button type="button" class="border rounded-xl p-3 text-left" :class="workView===v.id ? 'border-red-600 bg-red-50' : 'border-slate-200'" @click="selectWorkView(v.id)"><div class="text-sm" x-text="v.label"></div><div class="text-2xl font-bold tabular-nums mt-1" x-text="workCount(v.id)"></div></button></template></div>
+      <p class="text-xs text-slate-500 mt-3">เลยนัด = นัดก่อนวันนี้ที่ยังไม่ปิดงาน · กดการ์ดเพื่อดูรายชื่อ</p>
     </section>
     <div class="workspace-top">
       <div class="workspace-heading"><div><h1>รายชื่อลูกค้า</h1><p>จัดการการติดต่อ ติดตามงาน และดูข้อมูลลูกค้าในที่เดียว</p></div></div>
@@ -1579,8 +1579,7 @@ function app() {
     quickViewDefs: [
       {id:'unset',    iconPath:'M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3 M9 3h6v4H9z M8 12h8 M8 16h5', label:'ยังไม่ทำ',     desc:'ยังไม่ระบุ Status'},
       {id:'followup', iconPath:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z', label:'นัดวันนี้',   desc:'ตามวันนัดที่บันทึกไว้'},
-      {id:'noanswer', iconPath:'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z M1 1l22 22', label:'ลูกค้าที่ไม่รับสาย', desc:'บันทึกล่าสุดเป็นไม่รับสาย'},
-      {id:'docs',     iconPath:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M8 13h8 M8 17h5', label:'รอเอกสาร',     desc:'รอยื่นเอกสาร'},
+      {id:'noanswer', iconPath:'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z M1 1l22 22', label:'ลูกค้าที่ไม่รับสาย', desc:'บันทึกล่าสุดเป็นไม่รับสาย'},
     ],
     activityOpts: [
       {label:'ไม่รับสายครั้งที่ 1'},
@@ -1974,7 +1973,7 @@ function app() {
     },
 
     callReportEnabled: ['POND','WUTTICHAI'].includes(PROMOTER),
-    teamReportPromoters: ['POND','WUTTICHAI','CHANWIT','WICHIT','SHANCHANOK','PAIRAT','TAKDANAI','NOPPARAT','NARASAK','NIWAT','SURASAK'],
+    teamReportPromoters: ['POND','WUTTICHAI','CHANWIT','WICHIT','SHANCHANOK','PAIRAT','TAKDANAI','NOPPARAT','NARASAK','NIWAT','SURASAK','KASEDSIRI'],
     teamReportCustomers: [], teamReportLoading: false, teamReportLoaded: false,
     teamReportProgress: 0, teamReportError: '', teamReportUpdated: '',
     get teamReportSources() {
@@ -2072,7 +2071,7 @@ function app() {
     workClock: Date.now(),
     _workTimer: null,
     destroy() { if(this._workTimer) clearInterval(this._workTimer); },
-    workViews: [{id:'today',label:'นัดวันนี้'},{id:'overdue',label:'เลยนัด'},{id:'new',label:'ยังไม่ติดต่อ'},{id:'docs',label:'รอเอกสาร'}],
+    workViews: [{id:'today',label:'นัดวันนี้'},{id:'overdue',label:'เลยนัด'},{id:'new',label:'ยังไม่ติดต่อ'}],
     workDay() { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(this.workClock)); },
     nextAppointment(c) {
       if (!c || ['Purchased','Unqualified','Called but denied'].includes(c.status) || this.isSelloutSource(c.source)) return null;
@@ -2096,7 +2095,6 @@ function app() {
       if(id==='today') return !!ap && ap.day===this.workDay();
       if(id==='overdue') return !!ap && ap.day<this.workDay();
       if(id==='new') return !c.status && !(c.parsedNotes || []).length;
-      if(id==='docs') return /รอยื่นเอกสาร|รอเอกสาร/.test(c.parsedNotes?.[0]?.text || '');
       return true;
     },
     workCount(id) { return this.customers.filter(c=>this.workMatches(c,id)).length; },
@@ -2106,7 +2104,6 @@ function app() {
       const ap=this.nextAppointment(c);
       if(ap)return (ap.day<this.workDay()?'เลยนัด · ':'นัด · ')+ap.label;
       if(this.workMatches(c,'new'))return 'ติดต่อครั้งแรก';
-      if(this.workMatches(c,'docs'))return 'ติดตามเอกสาร';
       return '';
     },
     async completeAppointment() {
@@ -2299,7 +2296,6 @@ function app() {
       if (id==='unset') this.filterStatus='__unset__';
       else if (id==='followup') this.workView='today';
       else if (id==='noanswer') this.filterActivity='__noanswer__';
-      else if (id==='docs') this.workView='docs';
       this.page=1;
     },
     removeFilterTag(id) {
