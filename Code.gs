@@ -81,7 +81,7 @@
 //  E=Model F=Order G=Amount H=Policy I=Card J=Method K=Status L=PIC M=Remark
 // ════════════════════════════════════════════════════════
 
-var SPREADSHEET_ID = '1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280'; // พ.ย. 2569 (ไฟล์เดิม · แท็บ gid 916609132 เปลี่ยนชื่อเป็น Meta Densu Nov)
+var SPREADSHEET_ID = '1YkRZg1s7BFij0PREvI8jnVgqYr_S_CeN2xBidziMCU4'; // Promotion November 2026 (23 พ.ย. 2569 · มีแท็บ ลูกค้าประวัติดี 6 เดือน) · เดิม 1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280
 var PROMOTER       = 'POND';
 
 // ชื่อ canonical ใน CRM (1 การ์ด POP UP) — resolveSheet หาแท็บจริงให้
@@ -589,6 +589,7 @@ function goodHistoryPhone(v) {
   var digits = t.replace(/[^0-9]/g, '');
   if (/^66\d{9}$/.test(digits)) return '0' + digits.slice(2);
   if (/^[689]\d{8}$/.test(digits)) return '0' + digits;
+  if (/^0\d{9}$/.test(digits)) return digits; // 081-974-5595 -> 0819745595
   return t;
 }
 
