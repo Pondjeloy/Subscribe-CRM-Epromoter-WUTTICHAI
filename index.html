@@ -1263,15 +1263,27 @@
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">สินค้า <span class="normal-case font-semibold text-slate-300" x-show="productColMark(selectedCustomer)" x-text="productColMark(selectedCustomer)"></span></div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.productType"></div>
             </div>
-            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.orderNo">
-              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">OP</div>
+            <div x-show="selectedCustomer.contractNo">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Contract No.</div>
+              <div class="text-[14px] text-slate-800 font-medium tabular-nums break-all" x-text="selectedCustomer.contractNo"></div>
+            </div>
+            <div x-show="selectedCustomer.customerNo">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Customer No.</div>
+              <div class="text-[14px] text-slate-800 font-medium tabular-nums break-all" x-text="selectedCustomer.customerNo"></div>
+            </div>
+            <div x-show="selectedCustomer.registeredAt">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันลงทะเบียน</div>
+              <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.registeredAt"></div>
+            </div>
+            <div x-show="(isSelloutSource(selectedCustomer.source) || isOldLgSource(selectedCustomer.source)) && selectedCustomer.orderNo">
+              <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1" x-text="isOldLgSource(selectedCustomer.source) ? 'Order No.' : 'OP'"></div>
               <div class="text-[14px] text-slate-800 font-medium tabular-nums" x-text="selectedCustomer.orderNo"></div>
             </div>
             <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.sellDate">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันที่ขาย</div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.sellDate"></div>
             </div>
-            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.installDate">
+            <div x-show="(isSelloutSource(selectedCustomer.source) || isOldLgSource(selectedCustomer.source)) && selectedCustomer.installDate">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">วันติดตั้ง</div>
               <div class="text-[14px] text-slate-800 font-medium" x-text="selectedCustomer.installDate"></div>
             </div>
@@ -1279,11 +1291,11 @@
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">จำนวน</div>
               <div class="text-[14px] text-slate-800 font-medium tabular-nums" x-text="selectedCustomer.quantity"></div>
             </div>
-            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.amount">
+            <div x-show="(isSelloutSource(selectedCustomer.source) || isOldLgSource(selectedCustomer.source)) && selectedCustomer.amount">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Amount</div>
               <div class="text-[14px] text-slate-800 font-semibold tabular-nums" x-text="selectedCustomer.amount"></div>
             </div>
-            <div x-show="isSelloutSource(selectedCustomer.source) && selectedCustomer.policyName" class="col-span-2">
+            <div x-show="(isSelloutSource(selectedCustomer.source) || isOldLgSource(selectedCustomer.source)) && selectedCustomer.policyName" class="col-span-2">
               <div class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400 mb-1">Policy Name</div>
               <div class="text-[13px] text-slate-800 font-medium break-all" x-text="selectedCustomer.policyName"></div>
             </div>
@@ -1458,6 +1470,8 @@ function normalizeSource(src) {
   if (/meta\s*de[ns]su\s*(aug|august|july|ส\.?\s*ค|ก\.?\s*ค)/i.test(src)) return 'Meta Densu Sep';
   // fuzzy: ชื่อแท็บที่มี POP UP / Braner / Bannar
   if (/pop\s*up|braner|bannar|banner/i.test(src)) return 'Lead Subscribe POP UP Braner';
+  if (/ประวัติดี|good\s*history/i.test(src)) return 'ลูกค้าประวัติดี 6 เดือน';
+  if (/ลูกค้าเก่า/.test(src)) return 'ลูกค้าเก่า LG';
   if (/sell\s*out/i.test(src)) return 'Sell out Wuttichai.P';
   return src;
 }
@@ -1769,6 +1783,10 @@ function app() {
       {key:'Lead Consult',                 short:'Consult', label:'Lead Consult',  toneClass:'tone-orange', barClass:'bg-orange-400', icon:'consult', accent:'#C2410C', tint:'#fff3ea'},
       {key:'Lead Subscribe POP UP Braner', short:'POP UP',  label:'POP UP', toneClass:'tone-rose',   barClass:'bg-rose-400', icon:'popup', accent:'#BE123C', tint:'#fdecef',
         columnHelp:'Bannar(ก.ค.): B=ชื่อ C=เบอร์ F=Sale Consultant · Braner(เก่า): C+D=ชื่อ F=เบอร์ L=PIC'},
+      {key:'ลูกค้าเก่า LG', short:'ลูกค้าเก่า LG', label:'ลูกค้าเก่า LG', toneClass:'tone-sky', barClass:'bg-sky-600', icon:'success', accent:'#0369A1', tint:'#e8f3fb',
+        columnHelp:'A=Registration · B=ติดตั้ง/เริ่มสัญญา · C=ชื่อ · D=เบอร์ · E=Model · F=Order No. · G=Amount · H=Policy · I=Card · J=Recurring · K=Status · L=PIC · M=Remark'},
+      {key:'ลูกค้าประวัติดี 6 เดือน', short:'ประวัติดี 6 ด.', label:'ลูกค้าประวัติดี 6 เดือน', toneClass:'tone-emerald', barClass:'bg-teal-500', icon:'success', accent:'#0D9488', tint:'#e6f6f4',
+        columnHelp:'A=Contract No. · B=Customer No. · C=ชื่อ · D=Product · E=Model · F=เบอร์ · G=Status · H=PIC · I=Remark'},
       {key:'Sell out Wuttichai.P', short:'Sell out', label:'Sell out POND', toneClass:'tone-emerald', barClass:'bg-emerald-600', icon:'sellout', accent:'#0F766E', tint:'#e7f5f3',
         columnHelp:'A=No. · B=Date · C=OP · D=Category · E=Model · F=Qty · G=Amount · H=Policy · I=ติดตั้ง · J=ลูกค้า · K=เบอร์ · L=จังหวัด · N=Remark'},
     ],
@@ -2614,6 +2632,7 @@ function app() {
       if (c.sourceMerged) return c.sourceMerged.split(' · ').map(s => this.srcShort(s)).join(' + ');
       return this.srcShort(c.source);
     },
+    isOldLgSource(src) { return normalizeSource(src) === 'ลูกค้าเก่า LG'; },
     srcToneClass(src) { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.toneClass:'tone-slate'; },
     srcShort(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.short:normalizeSource(src)||src; },
     srcLabel(src)     { const d=this.sourceDefs.find(s=>s.key===normalizeSource(src)); return d?d.label:normalizeSource(src)||src; },

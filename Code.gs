@@ -74,6 +74,13 @@
 //  picCol=N(13) statusCol=M(12) notesCol=O(14)
 // ════════════════════════════════════════════════════════
 
+//  [ลูกค้าประวัติดี 6 เดือน] เพิ่ม 23 พ.ย. 2569 — ฐานลูกค้าเดิมที่ชำระดี 6 เดือน
+//  A=Contract No. B=Customer No. C=Customer Name D=Product E=Model
+//  F=Phone No. G=Status H=PIC I=Remark · อ่านหัวตารางจริงก่อน (คอลัมน์เลื่อนได้)
+//  [ลูกค้าเก่า LG] เพิ่ม 23 พ.ย. 2569 — A=Registration B=Installation C=Name D=Mobile
+//  E=Model F=Order G=Amount H=Policy I=Card J=Method K=Status L=PIC M=Remark
+// ════════════════════════════════════════════════════════
+
 var SPREADSHEET_ID = '1bCfGIsgqX2sehrHtmablFA0QPkVzCD2NGlpzOB9j280'; // พ.ย. 2569 (ไฟล์เดิม · แท็บ gid 916609132 เปลี่ยนชื่อเป็น Meta Densu Nov)
 var PROMOTER       = 'POND';
 
@@ -83,6 +90,8 @@ var SHEET_NAMES = [
   'TikTok',
   'Lead Subscribe Lg.com','Lead LG Success','Lead Consult',
   'Lead Subscribe POP UP Braner',
+  'ลูกค้าประวัติดี 6 เดือน',
+  'ลูกค้าเก่า LG',
   'Sell out Wuttichai.P'
 ];
 
@@ -151,6 +160,26 @@ var SHEET_ALIASES = {
     'POP UP Bannar',
     'POP UP',
     'Lead Subscribe POP UP'
+  ],
+  'ลูกค้าเก่า LG': [
+    'ลูกค้าเก่า LG',
+    'ลูกค้าเก่าLG',
+    'ลูกค้าเก่า LG.com',
+    'Lead ลูกค้าเก่า LG',
+    'หลีดลูกค้าเก่า LG',
+    'ลูกค้าเก่า'
+  ],
+  'ลูกค้าประวัติดี 6 เดือน': [
+    'ลูกค้าประวัติดี 6 เดือน',
+    'ลูกค้าประวัติดี 6เดือน',
+    'ลูกค้าประวัติดี6เดือน',
+    'ลูกค้าประวัติดี 6 ด.',
+    'ลูกค้าประวัติดี',
+    'Lead ลูกค้าประวัติดี 6 เดือน',
+    'หลีดลูกค้าประวัติดี 6 เดือน',
+    'ลูกค้าประวัติดี 6 เดือน (Good History)',
+    'Good History 6M',
+    'Good History 6 Months'
   ],
   'Sell out Wuttichai.P': [
     'Sell out Wuttichai.P',
@@ -301,6 +330,62 @@ function getSheetConfig(name) {
       };}
     },
 
+    // ลูกค้าประวัติดี 6 เดือน: A Contract No. B Customer No. C Customer Name D Product
+    // E Model F Phone No. G Status H PIC I Remark (refineGoodHistoryConfig อ่านหัวตารางจริงทับ)
+    'ลูกค้าประวัติดี 6 เดือน': {
+      picCol:7, statusCol:6, notesCol:8,
+      isGoodHistory: true, needsDisplay: true,
+      colMap: { contract:0, custNo:1, name:2, product:3, model:4, phone:5 },
+      parse: function(row, disp) {
+        var m = this.colMap, d = disp || row;
+        function at(i) { return i >= 0 && row.length > i ? cleanDisplay(row[i], d[i]) : ''; }
+        var product = at(m.product), model = at(m.model);
+        return {
+          name:           at(m.name),
+          phone:          goodHistoryPhone(at(m.phone)),
+          email:          '',
+          age:            '',
+          paymentChannel: '',
+          province:       '',
+          productType:    product && model ? (product + ' · ' + model) : (product || model),
+          lineId:         '',
+          contractNo:     at(m.contract),
+          customerNo:     at(m.custNo),
+          model:          model
+        };
+      }
+    },
+
+    // ลูกค้าเก่า LG: A Registration Time B Installation Date C Customer Name D Mobile No.
+    // E Model Code F Order No. G Total Subscription Amount H Price Policy Name
+    // I Payment Card Type J Method of Recurring Payment K Status L PIC M Remark
+    'ลูกค้าเก่า LG': {
+      picCol:11, statusCol:10, notesCol:12,
+      isGoodHistory: true, needsDisplay: true,
+      colMap: { registered:0, install:1, name:2, phone:3, model:4, orderNo:5, amount:6, policy:7, cardType:8, method:9 },
+      parse: function(row, disp) {
+        var m = this.colMap, d = disp || row;
+        function at(i) { return i >= 0 && row.length > i ? cleanDisplay(row[i], d[i]) : ''; }
+        var card = at(m.cardType), method = at(m.method);
+        return {
+          name:           at(m.name),
+          phone:          goodHistoryPhone(at(m.phone)),
+          email:          '',
+          age:            '',
+          paymentChannel: card && method && card.toUpperCase() !== method.toUpperCase() ? (card + ' · ' + method) : (card || method),
+          province:       '',
+          productType:    at(m.model),
+          lineId:         '',
+          model:          at(m.model),
+          registeredAt:   at(m.registered),
+          installDate:    at(m.install),
+          orderNo:        at(m.orderNo),
+          amount:         at(m.amount),
+          policyName:     at(m.policy)
+        };
+      }
+    },
+
     // POP UP Braner: A วันที่ B ยินยอม C ชื่อ D นามสกุล E อีเมล F เบอร์
     // G Line H จังหวัด I สินค้า J รหัสตัวแทน K Status L PIC M Remark
     'Lead Subscribe POP UP Braner': {
@@ -439,6 +524,8 @@ function lookupSheetConfig(name) {
     'TikTok',
     'Lead Subscribe Lg.com', 'Lead LG Success', 'Lead Consult',
     'Lead Subscribe POP UP Braner', 'POP UP Bannar',
+    'ลูกค้าประวัติดี 6 เดือน',
+    'ลูกค้าเก่า LG',
     'Sell out Wuttichai.P'
   ];
   for (var i = 0; i < keys.length; i++) {
@@ -462,6 +549,47 @@ function lookupSheetConfig(name) {
     }
   }
   return null;
+}
+
+// ลูกค้าประวัติดี 6 เดือน: หาคอลัมน์จากหัวตาราง ถ้าไม่เจอใช้ค่าเริ่มต้น A–I
+function refineGoodHistoryConfig(cfg, headers) {
+  var out = {};
+  for (var k in cfg) if (cfg.hasOwnProperty(k)) out[k] = cfg[k];
+  headers = headers || [];
+  function pick(cur, kws) { var i = findHeaderCol(headers, kws); return i >= 0 ? i : cur; }
+  // ลำดับคำค้นสำคัญ: คำเจาะจงก่อน (กัน 'Contract' ไปชน 'Start Date of Contract')
+  var KW = {
+    contract:   ['Contract No', 'เลขที่สัญญา'],
+    custNo:     ['Customer No', 'Customer ID', 'Cust No', 'รหัสลูกค้า'],
+    name:       ['Customer Name', 'ชื่อลูกค้า', 'ชื่อ-นามสกุล'],
+    product:    ['Product', 'ประเภทสินค้า'],
+    model:      ['Model', 'รุ่น'],
+    phone:      ['Phone No', 'Mobile No', 'Phone', 'Mobile', 'เบอร์'],
+    registered: ['Registration Time', 'Registration', 'วันลงทะเบียน'],
+    install:    ['Installation Date', 'Start Date of Contract', 'วันติดตั้ง'],
+    orderNo:    ['Order No', 'Order'],
+    amount:     ['Total Subscription Amount', 'Amount', 'ค่าเช่า'],
+    policy:     ['Price Policy', 'Policy'],
+    cardType:   ['Payment Card Type', 'Card Type'],
+    method:     ['Method of Recurring', 'Recurring Payment']
+  };
+  var m = {};
+  for (var c in cfg.colMap) if (cfg.colMap.hasOwnProperty(c)) m[c] = KW[c] ? pick(cfg.colMap[c], KW[c]) : cfg.colMap[c];
+  out.colMap    = m;
+  out.statusCol = pick(cfg.statusCol, ['Status', 'สถานะ']);
+  out.picCol    = pick(cfg.picCol,    ['PIC', 'Epromoter', 'E-Promoter']);
+  out.notesCol  = pick(cfg.notesCol,  ['Remark', 'หมายเหตุ']);
+  return out;
+}
+
+// เบอร์จากชีต (ตัวเลขล้วนอาจหาย 0 นำหน้า / มี +66)
+function goodHistoryPhone(v) {
+  var t = String(v || '').trim();
+  if (!t) return '';
+  var digits = t.replace(/[^0-9]/g, '');
+  if (/^66\d{9}$/.test(digits)) return '0' + digits.slice(2);
+  if (/^[689]\d{8}$/.test(digits)) return '0' + digits;
+  return t;
 }
 
 function findHeaderCol(headers, keywords) {
@@ -590,6 +718,10 @@ function getRuntimeConfig(canonicalName, sheet, data, promoter) {
   var cfg = lookupSheetConfig(canonicalName) || lookupSheetConfig(sheet.getName())
          || getSheetConfig(canonicalName) || getSheetConfig(sheet.getName());
   if (!cfg) return null;
+  if (cfg.isGoodHistory) {
+    var ghHeaders = (data && data.length) ? data[0] : sheet.getRange(1,1,1,Math.max(sheet.getLastColumn(),1)).getValues()[0];
+    return refineGoodHistoryConfig(cfg, ghHeaders);
+  }
   if (!cfg.isPopup && !isPopupSheetName(canonicalName) && !isPopupSheetName(sheet.getName())) {
     return cfg;
   }
@@ -713,6 +845,11 @@ function openSheetWithConfig(sheetName, promoter) {
   var actual = resolved.actualName; // ชื่อแท็บจริง
   var cfg = lookupSheetConfig(actual) || lookupSheetConfig(sheetName) || getSheetConfig(actual) || getSheetConfig(sheetName);
   // POP UP ต้องอ่านหัวตารางเพื่อ refine map — ชีตอื่นใช้ config ตายตัวพอ
+  // ลูกค้าประวัติดี / ลูกค้าเก่า LG: อ่านหัวตารางเพื่อหา Status/PIC/Remark จริง
+  if (cfg && cfg.isGoodHistory) {
+    var ghHead = sheet.getRange(1, 1, 1, Math.min(sheet.getLastColumn() || 1, 30)).getValues()[0];
+    cfg = refineGoodHistoryConfig(cfg, ghHead);
+  }
   if (!cfg || cfg.isPopup || isPopupSheetName(actual) || isPopupSheetName(sheetName)) {
     var lastCol = Math.min(sheet.getLastColumn() || 1, 30);
     var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
