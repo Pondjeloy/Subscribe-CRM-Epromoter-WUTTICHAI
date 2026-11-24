@@ -466,28 +466,33 @@
 <div class="modal-overlay" x-show="isLoggedIn && showConfig" x-transition style="display:none" @click.self="showConfig=false">
   <div class="bg-white rounded-2xl p-7 max-w-[520px] w-full shadow-2xl">
     <div class="flex items-center justify-between mb-5">
-      <div class="font-display font-bold text-[18px]">⚙️ ตั้งค่า Apps Script URL</div>
-      <button @click="showConfig=false" class="h-9 w-9 grid place-items-center rounded-xl text-slate-400 hover:bg-slate-100 transition text-xl">×</button>
+      <div class="font-display font-bold text-[18px]">🔌 สถานะการเชื่อมต่อ</div>
+      <button @click="showConfig=false" class="h-9 w-9 grid place-items-center rounded-xl text-slate-400 hover:bg-slate-100 transition text-xl" aria-label="ปิด">×</button>
+    </div>
+    <div class="rounded-xl p-4 mb-4 text-[14px] leading-relaxed" :class="loadErr ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-800'">
+      <div class="font-semibold" x-text="loadErr ? '⚠️ ยังโหลดข้อมูลล่าสุดไม่ได้' : (loading || softLoading ? '⏳ กำลังโหลดข้อมูล…' : '✅ เชื่อมต่อปกติ')"></div>
+      <div class="text-[13px] mt-1" x-show="lastFetch" x-text="'อัปเดตล่าสุด: ' + lastFetch"></div>
+      <div class="text-[13px] mt-1">รายชื่อในเครื่อง: <b x-text="customers.length.toLocaleString('th-TH')"></b> ราย</div>
     </div>
     <div class="bg-slate-50 rounded-xl p-4 mb-4 text-[13px] leading-relaxed text-slate-600">
-      <div class="font-semibold mb-1">📋 วิธีรับ URL (ทำครั้งเดียว)</div>
-      <div><b>1.</b> Google Sheet → Extensions → Apps Script → วางโค้ด Code.gs</div>
-      <div><b>2.</b> Run → testConnection → Authorize</div>
-      <div><b>3.</b> Deploy → Web App · Execute as: Me · Anyone → คัดลอก URL</div>
+      <div class="font-semibold mb-1">ถ้าเชื่อมต่อไม่ได้</div>
+      <div><b>1.</b> ล็อกอินบัญชี Google ใน Chrome (รูปโปรไฟล์มุมขวาบนของ Chrome)</div>
+      <div><b>2.</b> เช็คอินเทอร์เน็ต แล้วกด 🔌 ทดสอบ ด้านล่าง</div>
+      <div><b>3.</b> ยังไม่ได้ ให้รีเฟรชหน้าเว็บ แล้วกด "โหลดข้อมูลใหม่"</div>
+      <div><b>4.</b> ยังไม่ได้อีก แคปหน้าจอนี้ส่งให้ POND</div>
     </div>
-    <input type="url" x-model="configUrl" placeholder="https://script.google.com/macros/s/.../exec"
-      class="w-full h-11 px-4 rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:outline-none text-[14px] mb-3" style="font-family:inherit"/>
     <div class="flex gap-2 mb-4">
       <button class="h-10 px-4 rounded-xl text-[13px] font-semibold text-slate-700 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition"
-              @click="testConn()" :disabled="!configUrl||testLoading">
+              @click="testConn()" :disabled="testLoading">
         <span x-show="!testLoading">🔌 ทดสอบ</span><span x-show="testLoading">กำลังทดสอบ...</span>
       </button>
       <span x-show="testMsg" class="text-[13px] flex-1 flex items-center" :class="testOk?'text-emerald-600':'text-rose-600'" x-text="testMsg"></span>
     </div>
     <div class="flex gap-3">
-      <button class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white" style="background:var(--accent)" @click="saveConfig()" :disabled="!configUrl">บันทึก & โหลดข้อมูล</button>
-      <button class="h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition" @click="showConfig=false">ยกเลิก</button>
+      <button class="flex-1 h-11 rounded-xl text-[14px] font-bold text-white" style="background:var(--accent)" @click="showConfig=false; reloadCustomers()">โหลดข้อมูลใหม่</button>
+      <button class="h-11 px-5 rounded-xl text-[14px] font-semibold text-slate-600 bg-white ring-1 ring-slate-200 hover:bg-slate-50 transition" @click="showConfig=false">ปิด</button>
     </div>
+    <div class="text-[11px] text-slate-400 mt-3" x-text="'CRM ' + crmBuild"></div>
   </div>
 </div>
 
@@ -531,7 +536,7 @@
       <span x-show="!loading && !softLoading">โหลด</span>
       <span x-show="loading || softLoading" x-cloak>กำลังโหลด...</span>
     </button>
-    <button class="btn-icon btn-settings" @click="showConfig=true" title="ตั้งค่า URL">
+    <button class="btn-icon btn-settings" @click="showConfig=true" title="สถานะการเชื่อมต่อ">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>
     </button>
     <a href="https://pondjeloy.github.io/LG_Subscribe_Calculator_Nov2026/" target="_blank" class="btn-text">
@@ -1426,7 +1431,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '25.11.2026.V114';
+const CRM_BUILD       = '25.11.2026.V115';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1871,10 +1876,11 @@ function app() {
       if (this.apiUrl) this.fetchData();
     },
     async testConn() {
-      if (!this.configUrl) return;
+      // [V115] ทดสอบลิงก์ปัจจุบันเสมอ (ไม่มีช่องกรอก URL แล้ว)
+      if (!this.apiUrl) return;
       this.testLoading = true; this.testMsg = '';
       try {
-        const j = await jsonpCall(this.configUrl.trim(), {action:'ping'});
+        const j = await jsonpCall(this.apiUrl, {action:'ping'}, 20000);
         this.testMsg = j.success ? '✅ เชื่อมต่อสำเร็จ' : '⚠️ '+(j.error||'error');
         this.testOk  = !!j.success;
       } catch(e) { this.testMsg = '❌ '+e.message; this.testOk = false; }
@@ -3285,7 +3291,7 @@ function jsonpCall(baseUrl, params={}, timeout=30000) {
       if (settled) return;
       settled = true;
       cleanup();
-      reject(new Error('โหลด Script ไม่ได้ — URL ผิด / เน็ตหลุด / ยังไม่ได้ Deploy Anyone'));
+      reject(new Error('โหลด Script ไม่ได้ — ตรวจอินเทอร์เน็ต และล็อกอิน Google ใน Chrome แล้วลองใหม่'));
     };
     document.head.appendChild(script);
   });
