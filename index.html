@@ -1426,7 +1426,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '25.11.2026.V113';
+const CRM_BUILD       = '25.11.2026.V114';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1439,7 +1439,8 @@ const API_URL_RETIRED = ['https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIz
 function storedApiUrl() {
   let u = '';
   try { u = (localStorage.getItem(API_URL_KEY) || '').trim(); } catch (e) {}
-  if (!u || API_URL_RETIRED.includes(u)) {
+  // [V114] ลิงก์ที่บันทึกไว้ไม่ใช่ลิงก์ปัจจุบัน (เช่น deployment เก่าที่เก็บถาวรแล้ว) → ใช้ลิงก์ปัจจุบันเสมอ
+  if (!u || u !== API_URL_DEFAULT) {
     if (u) { try { localStorage.setItem(API_URL_KEY, API_URL_DEFAULT); } catch (e) {} }
     return API_URL_DEFAULT;
   }
