@@ -1426,12 +1426,25 @@
 </div>
 
 <script>
-const CRM_BUILD       = '24.11.2026.V111';
+const CRM_BUILD       = '24.11.2026.V112';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
 const LOGIN_SESSION_KEY = 'lgCrmLoggedIn_wuttichai';
 const API_URL_KEY       = 'lgCrmApiUrl_wuttichai';
+
+// [V112] Apps Script โปรเจกต์ใหม่ (V111 snapshot) — ใครบันทึกลิงก์เก่าไว้ในเครื่อง ย้ายให้อัตโนมัติ
+const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyxQb_89uA6tD9PxvV_MRpaUuBmYXyGUzf-hf1glpI-hsGDnTHR4fHPwtkTQULlObRG5g/exec';
+const API_URL_RETIRED = ['https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec'];
+function storedApiUrl() {
+  let u = '';
+  try { u = (localStorage.getItem(API_URL_KEY) || '').trim(); } catch (e) {}
+  if (!u || API_URL_RETIRED.includes(u)) {
+    if (u) { try { localStorage.setItem(API_URL_KEY, API_URL_DEFAULT); } catch (e) {} }
+    return API_URL_DEFAULT;
+  }
+  return u;
+}
 const CACHE_KEY         = 'lgCrmCache_wuttichai_v14';
 const CACHE_VER_KEY     = 'lgCrmCacheSchema';
 // เขียน: รอแค่ชีตหลัก · alt ยิงเบื้องหลัง · เน็ต/timeout/script error = soft-ok (ไม่โชว์ error แดง)
@@ -1578,8 +1591,8 @@ function app() {
     loginPw: '', loginErr: '',
 
     /* ── Config ── */
-    apiUrl:    (localStorage.getItem(API_URL_KEY) || '').trim() || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
-    configUrl: (localStorage.getItem(API_URL_KEY) || '').trim() || 'https://script.google.com/macros/s/AKfycbwnuMh3TBNWlIzlTfI05Tv_X1Y3NJThhFdxWaXgtlp27GQDGFiYD4V9Np9evv5cszPK/exec',
+    apiUrl:    storedApiUrl(),
+    configUrl: storedApiUrl(),
     showConfig: false,
     testLoading: false, testMsg: '', testOk: false,
 
