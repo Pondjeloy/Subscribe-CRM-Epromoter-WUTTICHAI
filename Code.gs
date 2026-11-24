@@ -208,15 +208,20 @@ function doGet(e) {
   try {
     switch (action) {
       case 'ping':          result = { success:true, message:'API ready', promoter:promoter }; break;
-      case 'getCustomers':  result = getCustomers(promoter); break;
+      // [V111] ตอบจาก snapshot ที่เตรียมไว้ (เร็ว) · fresh=1 = อ่านชีตสด · v=<version> = ถ้าไม่เปลี่ยนตอบ notModified
+      case 'getCustomers':  result = getCustomersFast(promoter, p.v || '', p.fresh === '1'); break;
+      case 'getCustomersLive': result = getCustomers(promoter); break;
+      case 'snapStatus':    result = snapStatus(); break;
+      case 'opStatus':      result = opStatus(p.op || ''); break;
       case 'debugSheets':   result = debugSheets(promoter); break;
       case 'getHeaders':    result = getHeaders(); break;
       case 'checkRows':     result = checkRows(p.sheet||'Lead LG Success', parseInt(p.n||'5',10), promoter); break;
-      case 'updateStatus':  result = updateStatus(p.sheet, parseInt(p.row,10), p.status||''); break;
+      // [V111] เขียนชีต: op = รหัสงานจาก CRM · ส่งซ้ำ (retry) จะไม่เขียนซ้ำ ตอบผลเดิม
+      case 'updateStatus':  result = runOnce_(p.op, function(){ return updateStatus(p.sheet, parseInt(p.row,10), p.status||''); }); break;
       case 'getNotes':      result = getNotes(p.sheet, parseInt(p.row,10)); break;
-      case 'appendNote':    result = appendNote(p.sheet, parseInt(p.row,10), p.note||''); break;
-      case 'updateNotes':   result = updateNotes(p.sheet, parseInt(p.row,10), p.notes||''); break;
-      case 'setNoteHighlight': result = setNoteHighlight(p.sheet, parseInt(p.row,10), parseInt(p.level||'0',10)); break;
+      case 'appendNote':    result = runOnce_(p.op, function(){ return appendNote(p.sheet, parseInt(p.row,10), p.note||''); }); break;
+      case 'updateNotes':   result = runOnce_(p.op, function(){ return updateNotes(p.sheet, parseInt(p.row,10), p.notes||''); }); break;
+      case 'setNoteHighlight': result = runOnce_(p.op, function(){ return setNoteHighlight(p.sheet, parseInt(p.row,10), parseInt(p.level||'0',10)); }); break;
       default:              result = { success:false, error:'Unknown action: '+action };
     }
   } catch(err) {
@@ -735,7 +740,7 @@ function getRuntimeConfig(canonicalName, sheet, data, promoter) {
 // · ข้าม auto PIC scan ถ้า picCol match แล้ว · จำกัด lastCol
 function getCustomers(promoter) {
   var t0 = Date.now();
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var ss = openSs_();
   var sheetNames = SHEET_NAMES;
   var all = [], idNum = 1, sourceCounts = {}, sheetsFound = {};
   var usedSheetIds = {}; // กันอ่านแท็บ POP UP ซ้ำ
@@ -770,11 +775,12 @@ function getCustomers(promoter) {
     if (lastRow < 2 || lastCol < 1) continue;
     // จำกัดคอลัมน์: Consult ใช้ถึง ~X(23) · Meta ถึง P(15) · กันชีตกว้างเกินจำเป็น
     var maxCol = Math.min(lastCol, 30);
-    var range = sheet.getRange(1, 1, lastRow, maxCol);
-    var data  = range.getValues();
     // Meta ใช้ display สำหรับวันที่/เบอร์ — ชีตอื่น parse จาก values พอ (เร็วขึ้น ~2x)
     var needsDisp = !!(META_PAIR[sName] || sName === 'Meta ITAX' || sName === 'TikTok' || (baseCfg && baseCfg.needsDisplay) || sName.indexOf('Meta') === 0 || (baseCfg && baseCfg.isSellout));
-    var disp = needsDisp ? range.getDisplayValues() : null;
+    // [V111] readRange_ จำผลอ่านไว้ระหว่าง rebuild — 12 Epromoter อ่านชีตเดียวกันแค่รอบเดียว
+    var read  = readRange_(sheet, lastRow, maxCol, needsDisp);
+    var data  = read.data;
+    var disp  = needsDisp ? read.disp : null;
     var cfg  = getRuntimeConfig(sName, sheet, data, promoter);
     if (!cfg) continue;
     var housingCol = needsDisp && !cfg.isSellout ? findHousingCol(data[0], data) : -1;
@@ -886,6 +892,7 @@ function updateStatus(sheetName, rowNum, newStatus) {
     return { success:false, error:'ชีต Sell out ไม่มีคอลัมน์ Status — แก้ที่ Remark' };
   }
   opened.sheet.getRange(rowNum, opened.cfg.statusCol+1).setValue(newStatus);
+  ovPut_(opened.name, rowNum, { status:newStatus });
   return { success:true, sheet:opened.name, row:rowNum, status:newStatus };
 }
 
@@ -912,7 +919,9 @@ function appendNote(sheetName, rowNum, note) {
   var lines = cur ? String(cur).split(/\r?\n/) : [];
   var last = lines.length ? clean(lines[lines.length - 1]) : '';
   if (last === add) return { success:true, sheet:opened.name, skipped:true };
-  cell.setValue(cur ? cur + '\n' + add : add);
+  var next = cur ? cur + '\n' + add : add;
+  cell.setValue(next);
+  ovPut_(opened.name, rowNum, { notes:next });
   return { success:true, sheet:opened.name };
 }
 
@@ -950,6 +959,7 @@ function updateNotes(sheetName, rowNum, notes) {
   if (!opened || !opened.ok) return { success:false, error:(opened && opened.error) || ('Sheet not found: '+sheetName) };
   if (opened.cfg.notesCol===undefined) return { success:false, error:'No config/notesCol for '+opened.name };
   opened.sheet.getRange(rowNum, opened.cfg.notesCol+1).setValue(notes);
+  ovPut_(opened.name, rowNum, { notes:clean(notes) });
   return { success:true, sheet:opened.name };
 }
 
@@ -1484,4 +1494,261 @@ function dedupeCustomers(list) {
   var merged = dedupeMetaOnly(meta).concat(rest);
   for (i = 0; i < merged.length; i++) merged[i].id = id++;
   return merged;
+}
+
+// ════════════════════════════════════════════════════════
+//  [V111 · 24 พ.ย. 2569] โหลด CRM เร็ว: Snapshot + Overlay + เขียนครั้งเดียว
+//  1) rebuildSnapshots (trigger ทุก 10 นาที) อ่านชีตรอบเดียว → เตรียมรายชื่อ 12 Epromoter
+//     เก็บใน CacheService (gzip) · ข้ามรอบถ้าชีตไม่ถูกแก้ตั้งแต่รอบก่อน
+//  2) getCustomers ตอบจาก snapshot ทันที + ทับด้วย overlay (Status/Remark ที่เพิ่งบันทึกจาก CRM)
+//     ส่ง v=<version> มา ถ้าไม่มีอะไรเปลี่ยน → notModified (ไม่ต้องส่งรายชื่อทั้งก้อน)
+//  3) เขียนชีตแนบ op=<รหัสงาน> → retry ซ้ำไม่เขียนซ้ำ · opStatus ถามได้ว่าบันทึกสำเร็จหรือยัง
+//  ติดตั้งครั้งแรก: เลือกฟังก์ชัน setupSnapshots → Run (อนุญาตสิทธิ์) แล้ว Deploy → New version
+// ════════════════════════════════════════════════════════
+var CRM_PROMOTERS = ['POND','WUTTICHAI','CHANWIT','WICHIT','SHANCHANOK','PAIRAT','TAKDANAI','NOPPARAT','NARASAK','NIWAT','SURASAK','KASETSIRI'];
+var SNAP_TTL          = 21600;  // วินาที (6 ชม. = สูงสุดของ CacheService)
+var SNAP_CHUNK        = 90000;  // ตัวอักษรต่อชิ้น (CacheService จำกัด 100KB/คีย์)
+var REBUILD_EVERY_MIN = 10;
+var REBUILD_MAX_AGE   = 60 * 60 * 1000; // ชีตไม่เปลี่ยนก็ rebuild อย่างน้อยชั่วโมงละครั้ง
+var OV_KEY            = 'crm_ov';
+
+var __SS = null, __READ_MEMO = null;
+function openSs_() {
+  if (!__SS) __SS = SpreadsheetApp.openById(SPREADSHEET_ID);
+  return __SS;
+}
+function readRange_(sheet, lastRow, maxCol, wantDisp) {
+  var key = sheet.getSheetId() + ':' + lastRow + ':' + maxCol;
+  var hit = __READ_MEMO && __READ_MEMO[key];
+  if (hit && (!wantDisp || hit.disp)) return hit;
+  var range = sheet.getRange(1, 1, lastRow, maxCol);
+  var out = { data: hit ? hit.data : range.getValues(), disp: wantDisp ? range.getDisplayValues() : null };
+  if (__READ_MEMO) __READ_MEMO[key] = out;
+  return out;
+}
+
+function snapKey_(promoter) { return 'snap_' + normalizeKey(promoter); }
+
+function snapPut_(promoter, payload, builtAt) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var b64 = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(payload), 'application/json')).getBytes());
+    var n = Math.ceil(b64.length / SNAP_CHUNK) || 1;
+    var meta = { v: builtAt.toString(36) + '-' + b64.length.toString(36), n: n, builtAt: builtAt,
+                 count: payload.count, buildMs: payload.ms, bytes: b64.length };
+    var k = snapKey_(promoter), obj = {};
+    for (var i = 0; i < n; i++) obj[k + '_' + meta.v + '_' + i] = b64.substr(i * SNAP_CHUNK, SNAP_CHUNK);
+    cache.putAll(obj, SNAP_TTL);
+    cache.put(k + '_meta', JSON.stringify(meta), SNAP_TTL); // meta หลังสุด → ไม่มีวันอ่านเจอชิ้นไม่ครบ
+    return meta;
+  } catch (e) {
+    Logger.log('snapPut_ ' + promoter + ': ' + e);
+    return null;
+  }
+}
+
+function snapGet_(promoter) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var k = snapKey_(promoter);
+    var metaRaw = cache.get(k + '_meta');
+    if (!metaRaw) return null;
+    var meta = JSON.parse(metaRaw), keys = [];
+    for (var i = 0; i < meta.n; i++) keys.push(k + '_' + meta.v + '_' + i);
+    var got = cache.getAll(keys), parts = [];
+    for (var j = 0; j < keys.length; j++) {
+      if (!got[keys[j]]) return null;
+      parts.push(got[keys[j]]);
+    }
+    var json = Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(parts.join('')), 'application/x-gzip')).getDataAsString('UTF-8');
+    return { meta: meta, payload: JSON.parse(json) };
+  } catch (e) {
+    Logger.log('snapGet_ ' + promoter + ': ' + e);
+    return null;
+  }
+}
+
+// ── Overlay: ค่าที่ CRM เพิ่งเขียน (ยังไม่อยู่ใน snapshot) ──
+function ovGet_() {
+  try {
+    var s = CacheService.getScriptCache().get(OV_KEY);
+    return s ? JSON.parse(s) : {};
+  } catch (e) { return {}; }
+}
+function ovSave_(ov) {
+  var keys = Object.keys(ov);
+  var s = JSON.stringify(ov);
+  // กันเกิน 100KB: ทิ้งรายการเก่าสุดก่อน
+  if (s.length > 95000) {
+    keys.sort(function(a, b) { return ov[a].t - ov[b].t; });
+    while (keys.length && s.length > 90000) { delete ov[keys.shift()]; s = JSON.stringify(ov); }
+  }
+  CacheService.getScriptCache().put(OV_KEY, s, SNAP_TTL);
+}
+function ovPut_(sheetName, rowNum, fields) {
+  try {
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(8000)) return;
+    try {
+      var ov = ovGet_();
+      var key = sheetName + '|' + rowNum;
+      var cur = ov[key] || {};
+      for (var f in fields) if (fields.hasOwnProperty(f)) cur[f] = fields[f];
+      cur.t = Date.now();
+      ov[key] = cur;
+      ovSave_(ov);
+    } finally { lock.releaseLock(); }
+  } catch (e) { Logger.log('ovPut_: ' + e); }
+}
+function ovPrune_(olderThan) {
+  try {
+    var lock = LockService.getScriptLock();
+    if (!lock.tryLock(8000)) return;
+    try {
+      var ov = ovGet_(), changed = false;
+      for (var k in ov) if (ov.hasOwnProperty(k) && ov[k].t < olderThan) { delete ov[k]; changed = true; }
+      if (changed) ovSave_(ov);
+    } finally { lock.releaseLock(); }
+  } catch (e) { Logger.log('ovPrune_: ' + e); }
+}
+function applyOverlay_(payload, builtAt, ov) {
+  var maxT = 0, list = payload.data || [];
+  if (!Object.keys(ov).length) return 0;
+  for (var i = 0; i < list.length; i++) {
+    var c = list[i];
+    var o = ov[c.source + '|' + c.row];
+    if (!o || o.t < builtAt) continue;
+    if (o.hasOwnProperty('status')) c.status = o.status;
+    if (o.hasOwnProperty('notes')) c.notes = o.notes;
+    if (o.t > maxT) maxT = o.t;
+  }
+  return maxT;
+}
+
+// ── getCustomers แบบเร็ว ──
+function getCustomersFast(promoter, clientVersion, fresh) {
+  var t0 = Date.now();
+  var snap = fresh ? null : snapGet_(promoter);
+  var payload, meta;
+  if (snap) {
+    payload = snap.payload; meta = snap.meta;
+  } else {
+    payload = getCustomers(promoter);           // อ่านชีตสด (ครั้งแรก / cache หาย / กดโหลดใหม่)
+    meta = snapPut_(promoter, payload, t0) || { v: 'live' + t0.toString(36), builtAt: t0 };
+  }
+  var maxT = applyOverlay_(payload, meta.builtAt, ovGet_());
+  var version = meta.v + (maxT ? '.' + maxT.toString(36) : '');
+  if (clientVersion && clientVersion === version) {
+    return { success:true, notModified:true, version:version, builtAt:meta.builtAt, ms:Date.now() - t0 };
+  }
+  payload.version = version;
+  payload.builtAt = meta.builtAt;
+  payload.cached  = !!snap;
+  payload.buildMs = payload.ms;
+  payload.ms      = Date.now() - t0;
+  return payload;
+}
+
+// ── Trigger: เตรียม snapshot ทุก 10 นาที ──
+function rebuildSnapshots(force) {
+  force = (force === true);
+  var cache = CacheService.getScriptCache();
+  var props = PropertiesService.getScriptProperties();
+  if (cache.get('crm_rebuilding')) return 'busy';
+  var lastBuild = Number(props.getProperty('snapLastBuild') || 0);
+  if (!force) {
+    var lastUpd = 0;
+    try { lastUpd = DriveApp.getFileById(SPREADSHEET_ID).getLastUpdated().getTime(); } catch (e) {}
+    var allPresent = CRM_PROMOTERS.every(function(p) { return !!cache.get(snapKey_(p) + '_meta'); });
+    if (allPresent && lastUpd && lastUpd < lastBuild && Date.now() - lastBuild < REBUILD_MAX_AGE) return 'skip (ชีตไม่เปลี่ยน)';
+  }
+  cache.put('crm_rebuilding', '1', 330);
+  var t0 = Date.now(), done = [], failed = [];
+  __READ_MEMO = {};
+  try {
+    for (var i = 0; i < CRM_PROMOTERS.length; i++) {
+      var p = CRM_PROMOTERS[i];
+      try {
+        var payload = getCustomers(p);
+        if (snapPut_(p, payload, t0)) done.push(p + ':' + payload.count); else failed.push(p);
+      } catch (e) { failed.push(p + ' ' + e); }
+    }
+    props.setProperty('snapLastBuild', String(t0));
+    props.setProperty('snapLastBuildMs', String(Date.now() - t0));
+    props.setProperty('snapLastResult', JSON.stringify({ done: done, failed: failed }).slice(0, 8000));
+    ovPrune_(t0);
+  } finally {
+    __READ_MEMO = null;
+    cache.remove('crm_rebuilding');
+  }
+  var msg = 'rebuilt ' + done.length + '/' + CRM_PROMOTERS.length + ' in ' + Math.round((Date.now() - t0) / 1000) + 's' + (failed.length ? ' · failed: ' + failed.join(', ') : '');
+  Logger.log(msg);
+  return msg;
+}
+
+// ── ติดตั้ง: Run ฟังก์ชันนี้ครั้งเดียวในหน้า Apps Script ──
+function setupSnapshots() {
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'rebuildSnapshots') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('rebuildSnapshots').timeBased().everyMinutes(REBUILD_EVERY_MIN).create();
+  var msg = rebuildSnapshots(true);
+  Logger.log('ติดตั้ง trigger ทุก ' + REBUILD_EVERY_MIN + ' นาทีแล้ว · ' + msg);
+  return msg;
+}
+
+function snapStatus() {
+  var cache = CacheService.getScriptCache();
+  var props = PropertiesService.getScriptProperties();
+  var list = {};
+  CRM_PROMOTERS.forEach(function(p) {
+    var m = cache.get(snapKey_(p) + '_meta');
+    list[p] = m ? JSON.parse(m) : null;
+  });
+  var triggers = ScriptApp.getProjectTriggers().filter(function(t) { return t.getHandlerFunction() === 'rebuildSnapshots'; }).length;
+  var lb = Number(props.getProperty('snapLastBuild') || 0);
+  return { success:true, triggers:triggers, lastBuild: lb ? new Date(lb).toString() : '',
+           lastBuildMs: Number(props.getProperty('snapLastBuildMs') || 0),
+           lastResult: props.getProperty('snapLastResult') || '',
+           overlay: Object.keys(ovGet_()).length, snapshots: list };
+}
+
+// ── เขียนครั้งเดียวต่อ op (กันบันทึกซ้ำจาก retry / JSONP timeout) ──
+function runOnce_(op, fn) {
+  op = String(op || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  if (!op) return fn();                          // CRM รุ่นเก่า (ไม่ส่ง op) ทำงานแบบเดิม
+  var cache = CacheService.getScriptCache(), key = 'op_' + op, state = null;
+  var lock = LockService.getScriptLock();
+  if (lock.tryLock(8000)) {
+    try {
+      state = cache.get(key);
+      if (!state) cache.put(key, 'pending', 600);
+    } finally { lock.releaseLock(); }
+  } else {
+    state = cache.get(key);
+  }
+  if (state === 'pending') {
+    for (var i = 0; i < 20; i++) {               // อีกคำขอกำลังเขียนรายการเดียวกัน — รอผล
+      Utilities.sleep(1000);
+      var s = cache.get(key);
+      if (s && s !== 'pending') { var r0 = JSON.parse(s); r0.replay = true; return r0; }
+      if (!s) break;
+    }
+    return { success:false, error:'timeout: รายการนี้กำลังบันทึกอยู่ — รอยืนยันจากชีต' };
+  }
+  if (state) { var r1 = JSON.parse(state); r1.replay = true; return r1; }
+  var res;
+  try { res = fn(); } catch (e) { cache.remove(key); throw e; }
+  if (res && res.success) cache.put(key, JSON.stringify(res), SNAP_TTL);
+  else cache.remove(key);
+  return res;
+}
+
+function opStatus(op) {
+  op = String(op || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  if (!op) return { success:false, error:'Missing op' };
+  var s = CacheService.getScriptCache().get('op_' + op);
+  if (!s) return { success:true, done:false, pending:false };
+  if (s === 'pending') return { success:true, done:false, pending:true };
+  return { success:true, done:true, result:JSON.parse(s) };
 }

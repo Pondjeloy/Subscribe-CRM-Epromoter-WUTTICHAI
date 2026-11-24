@@ -1426,7 +1426,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '23.11.2026.V110';
+const CRM_BUILD       = '24.11.2026.V111';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -1439,6 +1439,9 @@ const WRITE_TIMEOUT_MS  = 60000;
 const NOTES_LOAD_MS     = 25000;
 const isTimeoutErr = (e) => /timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
 // เขียน Sheet มักสำเร็จแล้ว แต่ JSONP ตอบไม่ได้ — ห้ามโชว์ "โหลด Script ไม่ได้ / Deploy Anyone"
+// [V111] รหัสงานเขียนชีต — ส่งซ้ำ (retry) ด้วย op เดิม server จะไม่เขียนซ้ำ
+const newOpId = () => 'o' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+const WRITE_ACTIONS = new Set(['updateStatus','appendNote','updateNotes','setNoteHighlight']);
 const isWriteSoftOkErr = (e) => /timeout|หมดเวลา|โหลด Script|script|Failed|Network|network|Failed to fetch|เน็ต|Deploy|Anyone|URL ผิด/i.test(String(e && e.message || e || ''));
 const isSkipSheetErr = (e) => /sheet not found|ไม่พบ sheet|no config|timeout|หมดเวลา/i.test(String(e && e.message || e || ''));
 const META_PAIR         = {'Meta Densu Nov':true,'Meta Densu Oct':true,'Meta Densu Sep':true,'Meta Densu Aug':true,'Meta Densu July':true,'Meta Densu':true};
@@ -1865,10 +1868,11 @@ function app() {
     },
 
     /* ── Data ── */
-    _persistCache() {
+    _persistCache(versions) {
       try {
         const data = this.customers.map(({parsedNotes, _lastTouch, ...rest}) => rest);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now()}));
+        // [V111] versions = รุ่นข้อมูลจาก server (ไม่ส่ง = แก้บนจอแล้ว → รอบหน้าโหลดเต็ม)
+        localStorage.setItem(CACHE_KEY, JSON.stringify({data, ts: Date.now(), sourceCounts: this.sourceCounts, rawCount: this.rawCount, versions: versions || undefined}));
       } catch {}
     },
     _applyCustomerData(data, sourceCounts, rawCount, ts, label) {
@@ -1883,10 +1887,10 @@ function app() {
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
-        const {data, ts, sourceCounts, rawCount} = parsed;
+        const {data, ts, sourceCounts, rawCount, versions} = parsed;
         if (!Array.isArray(data) || !data.length) return null;
         if (!ignoreTtl && Date.now() - ts > CACHE_TTL) return null;
-        return {data, ts, sourceCounts, rawCount};
+        return {data, ts, sourceCounts, rawCount, versions};
       } catch { return null; }
     },
     _loadCache() {
@@ -1937,9 +1941,25 @@ function app() {
             const tmo = attempt === 1 ? 60000 : 90000;
             // ชื่อในชีตเขียนทั้ง POND และ WUTTICHAI — ดึงทั้งสองชุดมาแสดงในรายชื่อเดียวกัน
             const fetchNames = PROMOTER === 'POND' ? ['POND', 'WUTTICHAI'] : [PROMOTER];
-            const settled = await Promise.allSettled(fetchNames.map(name =>
-              jsonpCall(apiUrl, {action:'getCustomers', promoter:name}, tmo)
-            ));
+            // [V111] ส่ง version ที่มีอยู่ → server ตอบ notModified ถ้าไม่มีอะไรเปลี่ยน · ปุ่มโหลด = fresh (อ่านชีตสด)
+            const prevVers = (!opts.force && this.customers.length) ? (((this._readCache(true) || {}).versions) || {}) : {};
+            const callOne = (name, withV) => jsonpCall(apiUrl, {action:'getCustomers', promoter:name, v: withV ? (prevVers[name] || undefined) : undefined, fresh: opts.force ? '1' : undefined}, tmo);
+            const settled = await Promise.allSettled(fetchNames.map(name => callOne(name, true)));
+            if (myGen !== this._fetchGen) return;
+            const isNM = r => r.status === 'fulfilled' && r.value && r.value.success && r.value.notModified;
+            if (settled.length && settled.every(isNM)) {
+              const n0 = new Date();
+              const nmMs = Math.max(...settled.map(r => Number(r.value.ms) || 0));
+              this.lastFetch = String(n0.getHours()).padStart(2,'0')+':'+String(n0.getMinutes()).padStart(2,'0')+' น. · ล่าสุดแล้ว · '+(nmMs/1000).toFixed(1)+'s';
+              this._persistCache(Object.fromEntries(fetchNames.map((nm, i) => [nm, settled[i].value.version])));
+              break;
+            }
+            // บางชื่อไม่เปลี่ยน แต่อีกชื่อเปลี่ยน → ขอชื่อที่ไม่เปลี่ยนแบบเต็มมารวมใหม่
+            for (let i = 0; i < settled.length; i++) {
+              if (!isNM(settled[i])) continue;
+              try { settled[i] = {status:'fulfilled', value: await callOne(fetchNames[i], false)}; }
+              catch (e2) { settled[i] = {status:'rejected', reason: e2}; }
+            }
             if (myGen !== this._fetchGen) return;
             const callErr = (r) => r.status === 'rejected'
               ? (r.reason && r.reason.message)
@@ -1962,10 +1982,15 @@ function app() {
             let ts = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+' น.';
             if (PROMOTER === 'POND') ts += fail.length ? ' · WUTTICHAI ยังไม่ครบ' : ' · POND+WUTTICHAI';
             if (json.rawCount != null && json.rawCount !== raw.length) ts += ' · raw ' + json.rawCount;
-            if (json.ms != null) ts += ' · ' + Math.round(json.ms/1000) + 's';
+            if (json.ms != null) ts += ' · ' + (json.ms/1000).toFixed(1) + 's';
             if (attempt > 1) ts += ' · retry ' + attempt;
             this._applyCustomerData(raw, json.sourceCounts || null, json.rawCount != null ? json.rawCount : raw.length, Date.now(), ts);
-            localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount}));
+            const versions = {};
+            fetchNames.forEach((nm, i) => {
+              const v = settled[i].status === 'fulfilled' && settled[i].value && settled[i].value.version;
+              if (v && (i === 0 || extraOk)) versions[nm] = v;
+            });
+            localStorage.setItem(CACHE_KEY, JSON.stringify({data:raw, ts:Date.now(), sourceCounts:this.sourceCounts, rawCount:this.rawCount, versions}));
             break;
           } catch (e) {
             if (myGen !== this._fetchGen) return;
@@ -2847,10 +2872,11 @@ function app() {
       try {
         // เขียนชีตหลัก · ถ้า script/เน็ตพัง ลองซ้ำ 1 ครั้งเงียบๆ
         let j = null, lastErr = null;
+        const statusOp = newOpId(); // [V111] retry ใช้ op เดิม
         for (let attempt = 1; attempt <= 2; attempt++) {
           try {
             j = await jsonpCall(this.apiUrl, {
-              action:'updateStatus', sheet:src, row:row, status:ns, promoter:PROMOTER
+              action:'updateStatus', sheet:src, row:row, status:ns, promoter:PROMOTER, op:statusOp
             }, WRITE_TIMEOUT_MS);
             if (!j?.success) throw new Error(j?.error || 'บันทึกไม่สำเร็จ');
             lastErr = null;
@@ -2981,9 +3007,9 @@ function app() {
       }
     },
     async _writeJsonp(params) {
-      // appendNote ห้าม retry — timeout มักแปลว่า Sheet เขียนสำเร็จแล้ว ยิงซ้ำจะซ้ำบรรทัด
-      // updateStatus / updateNotes ทับค่าได้ ลอง 2 รอบได้
-      const maxAttempt = params.action === 'appendNote' ? 1 : 2;
+      // [V111] ทุกรอบใช้ op เดิม → server ไม่เขียนซ้ำ จึง retry ได้ทุกชนิด (รวม appendNote)
+      if (!params.op) params = {...params, op: newOpId()};
+      const maxAttempt = 2;
       let lastErr = null;
       for (let attempt = 1; attempt <= maxAttempt; attempt++) {
         try {
@@ -2997,6 +3023,11 @@ function app() {
         }
       }
       if (lastErr && isWriteSoftOkErr(lastErr)) {
+        // [V111] ถาม server ตรงๆ ว่างาน op นี้บันทึกสำเร็จหรือยัง
+        try {
+          const s = await jsonpCall(this.apiUrl, {action:'opStatus', op: params.op}, NOTES_LOAD_MS);
+          if (s?.success && s.done) return {ok:true, soft:false, data:s.result};
+        } catch (e) { /* ตรวจแบบเดิมต่อ */ }
         if (params.action==='appendNote' || params.action==='updateNotes') {
           try {
             const r=await jsonpCall(this.apiUrl,{action:'getNotes',sheet:params.sheet,row:params.row,promoter:PROMOTER},NOTES_LOAD_MS);
@@ -3162,6 +3193,7 @@ function app() {
 }
 
 function jsonpCall(baseUrl, params={}, timeout=30000) {
+  if (WRITE_ACTIONS.has(params.action) && !params.op) params = {...params, op: newOpId()};
   return new Promise((resolve, reject) => {
     const cbName = '__lgCb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
     let settled = false;
