@@ -1426,7 +1426,7 @@
 </div>
 
 <script>
-const CRM_BUILD       = '24.11.2026.V112';
+const CRM_BUILD       = '25.11.2026.V113';
 const CACHE_SCHEMA    = 'v28';
 const NOTE_DATE_ONLY  = true;
 const LOGIN_PASSWORD    = 'wuttichai1234';
@@ -2059,6 +2059,25 @@ function app() {
       if(!this.callReportEnabled || this.teamReportLoading)return;
       if(!this.apiUrl){this.teamReportError='ยังไม่ได้ตั้งค่าการเชื่อมต่อข้อมูล';return;}
       this.teamReportLoading=true;this.teamReportLoaded=false;this.teamReportProgress=0;this.teamReportError='';this.callReportMessage='';
+      // [V113] ดึงครั้งเดียวจาก server (snapshot · ไม่มีชื่อ/เบอร์จริง) — ไม่ได้ค่อยถอยไปดึงทีละคนแบบเดิม
+      try{
+        const r=await jsonpCall(this.apiUrl,{action:'getTeamReport'},90000);
+        if(r?.success && Array.isArray(r.rows)){
+          const S=r.srcs||[],T=r.txts||[''];
+          const data=r.rows.map(x=>{
+            const c={source:S[x[0]],row:x[1],phone:x[2],status:T[x[3]]||'',notes:T[x[4]]||''};
+            if(x[5])c.sourceMerged=T[x[5]];
+            if(x[6]&&x[6].length)c.altRows=x[6].map(a=>({source:S[a[0]],row:a[1],status:T[a[2]]||''}));
+            return c;
+          });
+          this.teamReportCustomers=dedupeCustomersByPhone(data).map(c=>({...c,parsedNotes:this._parseNotes(c.notes || '')}));
+          this.teamReportProgress=this.teamReportPromoters.length;
+          this.teamReportUpdated=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok'});
+          this.teamReportLoaded=true;
+          this.teamReportLoading=false;
+          return;
+        }
+      }catch(e){ /* ถอยไปดึงทีละคน */ }
       const payloads=[],failed=[];let next=0;
       const worker=async()=>{
         while(next<this.teamReportPromoters.length){

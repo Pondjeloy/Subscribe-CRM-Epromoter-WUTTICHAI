@@ -212,6 +212,7 @@ function doGet(e) {
       case 'getCustomers':  result = getCustomersFast(promoter, p.v || '', p.fresh === '1'); break;
       case 'getCustomersLive': result = getCustomers(promoter); break;
       case 'snapStatus':    result = snapStatus(); break;
+      case 'getTeamReport': result = getTeamReport(); break;   // [V113] รายงานทั้งทีมครั้งเดียว (ไม่มีชื่อ/เบอร์จริง)
       case 'opStatus':      result = opStatus(p.op || ''); break;
       case 'debugSheets':   result = debugSheets(promoter); break;
       case 'getHeaders':    result = getHeaders(); break;
@@ -1751,4 +1752,72 @@ function opStatus(op) {
   if (!s) return { success:true, done:false, pending:false };
   if (s === 'pending') return { success:true, done:false, pending:true };
   return { success:true, done:true, result:JSON.parse(s) };
+}
+
+
+// ════════════════════════════════════════════════════════
+//  [V113 · 25 พ.ย. 2569] รายงานสรุปผลการติดต่อทั้งทีม — เรียกครั้งเดียว
+//  ใช้ snapshot ของ 12 Epromoter (+ overlay) ส่งเฉพาะที่รายงานใช้:
+//  แหล่งลีด · แถว · Status · "บันทึกล่าสุด 1 บรรทัด" · แถวซ้ำ (altRows)
+//  ไม่ส่งชื่อ / ที่อยู่ / อีเมล · เบอร์ → รหัสลับ (hash + salt) ใช้กันนับคนซ้ำเท่านั้น
+//  ข้อความซ้ำๆ (เช่น "ไม่รับสายครั้งที่ 1") เก็บเป็นตารางเดียว → ขนาดเล็กมาก
+// ════════════════════════════════════════════════════════
+function teamSalt_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty('teamReportSalt');
+  if (!s) { s = Utilities.getUuid(); props.setProperty('teamReportSalt', s); }
+  return s;
+}
+function pseudoPhone_(phone, salt) {
+  var k = phoneKey(phone);
+  if (!k) return '';
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + '|' + k);
+  var d = '0';
+  for (var i = 0; i < 11; i++) d += String(((bytes[i] % 10) + 10) % 10);
+  return d;                                    // 12 หลัก ขึ้นต้น 0 — phoneKey ฝั่ง CRM ใช้ต่อได้ แต่ย้อนเป็นเบอร์จริงไม่ได้
+}
+function lastNoteLine_(notes) {
+  var lines = clean(notes).split(/\r?\n/);
+  for (var i = lines.length - 1; i >= 0; i--) {
+    var t = clean(lines[i]);
+    if (t) return t;
+  }
+  return '';
+}
+
+function getTeamReport() {
+  var t0 = Date.now(), ov = ovGet_(), salt = teamSalt_();
+  var seen = {}, srcIdx = {}, srcs = [], txtIdx = { '': 0 }, txts = [''], rows = [], live = [];
+  function si(s) { s = String(s || ''); if (!srcIdx.hasOwnProperty(s)) { srcIdx[s] = srcs.length; srcs.push(s); } return srcIdx[s]; }
+  function ti(s) { s = String(s || ''); if (!txtIdx.hasOwnProperty(s)) { txtIdx[s] = txts.length; txts.push(s); } return txtIdx[s]; }
+  __READ_MEMO = {};
+  try {
+    for (var p = 0; p < CRM_PROMOTERS.length; p++) {
+      var name = CRM_PROMOTERS[p];
+      var snap = snapGet_(name), payload, builtAt;
+      if (snap) { payload = snap.payload; builtAt = snap.meta.builtAt; }
+      else {                                   // cache หาย → อ่านชีตสด (อ่านแต่ละแท็บครั้งเดียวด้วย memo)
+        builtAt = Date.now();
+        payload = getCustomers(name);
+        snapPut_(name, payload, builtAt);
+        live.push(name);
+      }
+      applyOverlay_(payload, builtAt, ov);
+      var list = payload.data || [];
+      for (var i = 0; i < list.length; i++) {
+        var c = list[i];
+        if (/^\s*sell\s*out/i.test(c.source || '')) continue;   // รายงานไม่รวม Sell out
+        var key = c.source + '|' + c.row;
+        if (seen[key]) continue;
+        seen[key] = 1;
+        var alts = (c.altRows || []).map(function(a) { return [si(a.source), a.row, ti(clean(a.status))]; });
+        rows.push([si(c.source), c.row, pseudoPhone_(c.phone, salt), ti(clean(c.status)),
+                   ti(lastNoteLine_(c.notes)), c.sourceMerged ? ti(c.sourceMerged) : 0, alts]);
+      }
+    }
+  } finally {
+    __READ_MEMO = null;
+  }
+  return { success:true, promoters:CRM_PROMOTERS.slice(), srcs:srcs, txts:txts, rows:rows,
+           live:live, ms:Date.now() - t0 };
 }
